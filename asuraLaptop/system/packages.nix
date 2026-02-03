@@ -26,6 +26,7 @@
     # Desktop Environment
     waybar swaybg swww wlogout xdg-utils
     swaylock networkmanager tuigreet
+    xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-user-dirs
 
     # GTK and Icon Dependencies for ambxst (minimal set)
     gtk3 gtk4 adwaita-icon-theme hicolor-icon-theme

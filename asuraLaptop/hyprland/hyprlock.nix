@@ -14,9 +14,9 @@
 
       background = [
         {
-          path = "/etc/nixos/asuraLaptop/hyprland/lock-images/lockscreen.png";
-          blur_passes = 3;
-          blur_size = 8;
+          path = "${./lock-images/lockscreen.png}";
+          blur_passes = 1;
+          blur_size = 3;
         }
       ];
 

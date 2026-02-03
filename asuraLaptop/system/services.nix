@@ -11,6 +11,22 @@
     printing.enable = true;
   };
 
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-gtk
+      xdg-desktop-portal-hyprland
+    ];
+    config.common.default = [ "hyprland" "gtk" ];
+  };
+
+  security.wrappers."gpu-screen-recorder" = {
+    source = "${pkgs.gpu-screen-recorder}/bin/gpu-screen-recorder";
+    owner = "root";
+    group = "root";
+    setuid = true;
+  };
+
   # Enable dconf for GNOME applications
   programs.dconf.enable = true;
 
