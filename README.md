@@ -7,6 +7,7 @@ A meticulously crafted NixOS configuration that actually works™️. Built with
 ## 📸 Screenshots
 
 ![Lockscreen](./screenshots/lockscreen.png)
+![Desktop](./screenshots/Screenshot_2026-02-03-18-44-51.png)
 
 ## 🏗️ System Architecture
 
