@@ -4,6 +4,7 @@
 {
   imports = [
     ../../../asuraLaptop/wofi/default.nix
+    ../../../asuraLaptop/ambxst/home.nix
     ../../../asuraLaptop/waybar/default.nix
   ];
 

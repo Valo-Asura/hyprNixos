@@ -160,6 +160,8 @@ code                 # Launch Kiro
 
 ## 🧩 Ambxst Keybinds
 
+Thanks to Ambxst for the beautiful QuickShell config.
+
 ### Dashboard
 | Keybind | Action |
 | --- | --- |

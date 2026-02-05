@@ -7,7 +7,7 @@
     microfetch zsh fish
 
     # System Tools
-    polkit udisks2 udiskie dconf
+    polkit udisks2 udiskie
 
     # Screenshot and Screen Recording
     grimblast hyprshot
@@ -27,18 +27,18 @@
     swaylock networkmanager tuigreet
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-user-dirs
 
-    # GTK and Icon Dependencies (minimal set)
+    # Ambxst required packages (system-level integration; core deps come from Ambxst package)
+    dconf
     gtk3 gtk4 adwaita-icon-theme
     gsettings-desktop-schemas
-
-    # Input and Accessibility
     at-spi2-atk at-spi2-core
+    libgtop
 
     # Multimedia
     vlc librewolf
 
     # Hyprland Panel Dependencies
-    libgtop bluez dart-sass
+    bluez dart-sass
     hyprsunset hypridle
 
     # Development
