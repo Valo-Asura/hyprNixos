@@ -44,8 +44,10 @@
     hyprsunset hypridle btop grimblast gpu-screen-recorder
 
     # Development
-    vscode wget kiro git eza bat fd ripgrep direnv nixfmt-classic nil inter
-
+    wget git eza bat fd ripgrep direnv nixfmt-classic nil inter
+    #ide
+    vscode antigravity kiro 
+    
     # Terminal enhancements and fun tools
     bottom htop btop tree dialog fzf
     fortune cowsay lolcat figlet

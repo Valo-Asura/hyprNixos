@@ -21,11 +21,7 @@
     };
     hyprpaper.url = "github:hyprwm/hyprpaper";
     hyprpolkitagent.url = "github:hyprwm/hyprpolkitagent";
-    ags.url = "github:aylur/ags";
-    astal = {
-      url = "github:aylur/astal";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    
     ambxst.url = "github:Axenide/Ambxst";
     zen-browser.url = "github:youwen5/zen-browser-flake";
   };

@@ -5,6 +5,7 @@
   imports = [
     ../../../asuraLaptop/wofi/default.nix
     ../../../asuraLaptop/ags/ags.nix
+    ../../../asuraLaptop/waybar/default.nix
   ];
 
   home.packages = with pkgs; [
