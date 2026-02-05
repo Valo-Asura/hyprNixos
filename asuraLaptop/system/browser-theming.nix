@@ -50,7 +50,6 @@
   environment.systemPackages = with pkgs; [
     # Thumbnail generators
     ffmpegthumbnailer  # Video thumbnails
-    imagemagick        # Image processing
     poppler-utils      # PDF thumbnails
     libgsf             # Office document thumbnails
 

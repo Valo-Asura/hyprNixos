@@ -1,0 +1,24 @@
+# Ambxst Agent Guide
+- **Run desktop**: `qs -p shell.qml` (requires QuickShell/Qt environment)
+- **Single component check**: launch `qs -p modules/widgets/dashboard/Dashboard.qml` for targeted smoke tests
+- **Tests**: no automated suite; rely on manual QA focused on touched flows
+- **Lint**: none configured; keep QML formatting consistent with Qt Creator defaults
+- **Dependencies**: avoid package installs unless user approves; expect local QuickShell toolchain
+- **Imports**: order as QtQuick → Quickshell → `qs.modules.*` → project modules → config singletons
+- **Pragmas**: use `pragma Singleton` for globals and `pragma ComponentBehavior: Bound` to stabilize bindings
+- **Formatting**: 4-space indent, soft-wrap near 100 chars, align multi-line bindings for readability
+- **Types**: declare explicit QML types (`property int`, `property alias`); reserve `var` for truly dynamic data
+- **Required props**: mark with `required property` and clamp user-configurable values before use
+- **Config access**: retrieve settings through `Config` singleton; do not hardcode theme/layout numbers
+- **Naming**: files/components PascalCase, ids/properties camelCase, loaders suffixed `Loader`
+- **Signals/handlers**: prefer verbNoun naming (`togglePlay`), keep handlers concise and without side effects
+- **Error handling**: protect service calls, emit `console.warn` with context, degrade gracefully when data missing
+- **State management**: centralize shared state in `globals/GlobalStates.qml`; avoid duplicating timers or models
+- **Assets**: keep wallpapers under `assets/wallpapers_example/`; sync palette JSON with `Config` expectations
+- **Comments**: English only, short notes before non-obvious logic; favor self-explanatory code otherwise
+- **Version control**: never revert user work; review `git status` before staging and keep commits scoped
+- **Manual validation**: after QML edits reload shell, check bar/dashboard animations, and verify notifications
+- **References**:
+  - [Quickshell Repository](https://github.com/quickshell-mirror/quickshell)
+  - [Illogical Impulse](https://github.com/end-4/dots-hyprland)
+  - [Caelestia](https://github.com/caelestia-dots/shell)

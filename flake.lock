@@ -6,17 +6,14 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1769047659,
-        "narHash": "sha256-khB7WvvQB+FFiP7mljFRqNAba92iVEJP76PRGotc0kw=",
-        "owner": "Axenide",
-        "repo": "Ambxst",
-        "rev": "849b55c46335905de4c2516f45e2fa3344bfcbce",
-        "type": "github"
+        "lastModified": 1770302423,
+        "narHash": "sha256-EZK2BifUbO+nExoZmab8gbjLJ6/usV+tRgU8kDRogfU=",
+        "path": "/etc/nixos/asuraLaptop/ambxst",
+        "type": "path"
       },
       "original": {
-        "owner": "Axenide",
-        "repo": "Ambxst",
-        "type": "github"
+        "path": "/etc/nixos/asuraLaptop/ambxst",
+        "type": "path"
       }
     },
     "aquamarine": {

@@ -22,7 +22,7 @@
     hyprpaper.url = "github:hyprwm/hyprpaper";
     hyprpolkitagent.url = "github:hyprwm/hyprpolkitagent";
     
-    ambxst.url = "github:Axenide/Ambxst";
+    ambxst.url = "path:/etc/nixos/asuraLaptop/ambxst";
     zen-browser.url = "github:youwen5/zen-browser-flake";
   };
 

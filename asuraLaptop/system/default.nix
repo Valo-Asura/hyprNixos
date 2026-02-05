@@ -15,6 +15,7 @@
     ./audio.nix
     ./services.nix
     ./programs.nix
+    ./ambxst.nix
     ./packages.nix
     ./environment.nix
     ./theming.nix

@@ -88,50 +88,5 @@
       echo "🎯 Optimization complete! Run 'power-status' to check current settings."
     '')
     
-    (pkgs.writeShellScriptBin "thermal-monitor" ''
-      echo "🌡️  Real-time Thermal Monitoring"
-      echo "Press Ctrl+C to stop"
-      echo "================================="
-      
-      while true; do
-        clear
-        echo "🌡️  Thermal Status - $(date)"
-        echo "================================="
-        
-        # CPU temperature
-        if command -v sensors >/dev/null 2>&1; then
-          echo "🔥 CPU Temperature:"
-          sensors | grep -E "(Core|Package|Tctl)" | head -4
-          echo ""
-        fi
-        
-        # CPU frequency
-        echo "⚡ CPU Frequency:"
-        if [ -f /proc/cpuinfo ]; then
-          grep "cpu MHz" /proc/cpuinfo | head -4 | awk '{printf "  Core %d: %.0f MHz\n", NR-1, $4}'
-        fi
-        
-        # Load average
-        echo ""
-        echo "📊 System Load:"
-        echo "  $(uptime | awk -F'load average:' '{print $2}')"
-        
-        # System thermal zones
-        echo ""
-        echo "🌡️  Thermal Zones:"
-        if [ -d /sys/class/thermal ]; then
-          for zone in /sys/class/thermal/thermal_zone*; do
-            if [ -f "$zone/type" ] && [ -f "$zone/temp" ]; then
-              type=$(cat "$zone/type" 2>/dev/null || echo "unknown")
-              temp=$(cat "$zone/temp" 2>/dev/null || echo "0")
-              temp_c=$((temp / 1000))
-              echo "  $type: ''${temp_c}°C"
-            fi
-          done
-        fi
-        
-        sleep 2
-      done
-    '')
   ];
 }
