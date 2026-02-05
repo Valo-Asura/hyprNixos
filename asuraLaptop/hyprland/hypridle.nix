@@ -7,7 +7,7 @@
       general = {
         ignore_dbus_inhibit = false;
         lock_cmd = "pidof hyprlock || ${pkgs.hyprlock}/bin/hyprlock";
-        before_sleep_cmd = "loginctl lock-session";
+        before_sleep_cmd = "pidof hyprlock || ${pkgs.hyprlock}/bin/hyprlock";
         after_sleep_cmd = "hyprctl dispatch dpms on";
       };
 

@@ -7,13 +7,13 @@ get_cmd() {
     local type=$1
     if [ -f "$CONFIG_FILE" ]; then
         if [ "$type" == "before" ]; then
-            jq -r '.idle.general.before_sleep_cmd // "loginctl lock-session"' "$CONFIG_FILE"
+            jq -r '.idle.general.before_sleep_cmd // "hyprlock"' "$CONFIG_FILE"
         else
             jq -r '.idle.general.after_sleep_cmd // "ambxst screen on"' "$CONFIG_FILE"
         fi
     else
         if [ "$type" == "before" ]; then
-            echo "loginctl lock-session"
+            echo "hyprlock"
         else
             echo "ambxst screen on"
         fi

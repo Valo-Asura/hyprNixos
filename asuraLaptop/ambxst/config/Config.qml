@@ -1030,7 +1030,7 @@ Singleton {
             property JsonObject idle: JsonObject {
                 property JsonObject general: JsonObject {
                     property string lock_cmd: "ambxst lock"
-                    property string before_sleep_cmd: "loginctl lock-session"
+                    property string before_sleep_cmd: "hyprlock"
                     property string after_sleep_cmd: "ambxst screen on"
                 }
                 property list<var> listeners: [
@@ -1041,7 +1041,7 @@ Singleton {
                     },
                     {
                         "timeout": 300,
-                        "onTimeout": "loginctl lock-session"
+                        "onTimeout": "hyprlock"
                     },
                     {
                         "timeout": 330,
@@ -1462,7 +1462,7 @@ Singleton {
                         property list<string> modifiers: ["SUPER"]
                         property string key: "L"
                         property string dispatcher: "exec"
-                        property string argument: "loginctl lock-session"
+                        property string argument: "hyprlock"
                         property string flags: ""
                     }
                     property JsonObject overview: JsonObject {
@@ -1536,7 +1536,7 @@ Singleton {
                 },
                 "system": {
                     "config": { "modifiers": ["SUPER", "SHIFT"], "key": "C", "dispatcher": "exec", "argument": "ambxst run config", "flags": "" },
-                    "lockscreen": { "modifiers": ["SUPER"], "key": "L", "dispatcher": "exec", "argument": "loginctl lock-session", "flags": "" },
+                    "lockscreen": { "modifiers": ["SUPER"], "key": "L", "dispatcher": "exec", "argument": "hyprlock", "flags": "" },
                     "overview": { "modifiers": ["SUPER"], "key": "TAB", "dispatcher": "exec", "argument": "ambxst run overview", "flags": "" },
                     "powermenu": { "modifiers": ["SUPER"], "key": "ESCAPE", "dispatcher": "exec", "argument": "ambxst run powermenu", "flags": "" },
                     "tools": { "modifiers": ["SUPER"], "key": "S", "dispatcher": "exec", "argument": "ambxst run tools", "flags": "" },
@@ -2477,7 +2477,7 @@ Singleton {
                     "actions": [
                         {
                             "dispatcher": "exec",
-                            "argument": "loginctl lock-session",
+                            "argument": "hyprlock",
                             "flags": "l",
                             "compositor": {
                                 "type": "hyprland",

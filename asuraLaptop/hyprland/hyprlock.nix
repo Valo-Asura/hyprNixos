@@ -26,27 +26,17 @@
           position = "0, -80";
           monitor = "";
           dots_center = true;
-          fade_on_empty = false;
+          fade_on_empty = true;
           font_color = "rgb(202, 211, 245)";
           inner_color = "rgb(91, 96, 120)";
           outer_color = "rgb(24, 25, 38)";
           outline_thickness = 5;
-          placeholder_text = "Password...";
+          placeholder_text = "";
           shadow_passes = 2;
         }
       ];
 
       label = [
-        {
-          monitor = "";
-          text = "Hi there, $USER";
-          color = "rgb(200, 200, 200)";
-          font_size = 25;
-          font_family = "Noto Sans";
-          position = "0, 160";
-          halign = "center";
-          valign = "center";
-        }
         {
           monitor = "";
           text = "$TIME";

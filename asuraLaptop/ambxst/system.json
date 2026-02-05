@@ -1,10 +1,10 @@
-.pragma library
-
-var data = {
-    "disks": ["/"],
+{
+    "disks": [
+        "/"
+    ],
     "idle": {
         "general": {
-            "lock_cmd": "ambxst lock",
+            "lock_cmd": "hyprlock",
             "before_sleep_cmd": "hyprlock",
             "after_sleep_cmd": "ambxst screen on"
         },

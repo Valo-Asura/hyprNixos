@@ -1135,7 +1135,7 @@
       "actions": [
         {
           "dispatcher": "exec",
-          "argument": "loginctl lock-session",
+          "argument": "hyprlock",
           "flags": "l",
           "compositor": {
             "type": "hyprland",
