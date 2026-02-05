@@ -1,27 +1,8 @@
 {
   "nodes": {
-    "ags": {
-      "inputs": {
-        "astal": "astal",
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "lastModified": 1764289441,
-        "narHash": "sha256-ak+lgFiYE5PHByN1/BRkO5JP498hno6Ix24C1Qf/vec=",
-        "owner": "aylur",
-        "repo": "ags",
-        "rev": "e169694390548dfd38ff40f1ef2163d6c3ffe3ea",
-        "type": "github"
-      },
-      "original": {
-        "owner": "aylur",
-        "repo": "ags",
-        "type": "github"
-      }
-    },
     "ambxst": {
       "inputs": {
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs",
         "quickshell": "quickshell"
       },
       "locked": {
@@ -101,47 +82,6 @@
       "original": {
         "owner": "hyprwm",
         "repo": "aquamarine",
-        "type": "github"
-      }
-    },
-    "astal": {
-      "inputs": {
-        "nixpkgs": [
-          "ags",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1764173295,
-        "narHash": "sha256-Jh4VtPcK2Ov+RTcV9FtyQRsxiJmXFQGfqX6jjM7/mgc=",
-        "owner": "aylur",
-        "repo": "astal",
-        "rev": "7d1fac8a4b2a14954843a978d2ddde86168c75ef",
-        "type": "github"
-      },
-      "original": {
-        "owner": "aylur",
-        "repo": "astal",
-        "type": "github"
-      }
-    },
-    "astal_2": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1769774308,
-        "narHash": "sha256-8Ve6VdUpcYbl8bS5oyDwVnnNobyPxdPmUHGgSDyOazQ=",
-        "owner": "aylur",
-        "repo": "astal",
-        "rev": "eb235f8813bdea2a4a38ac228f2efc4e2a8a90af",
-        "type": "github"
-      },
-      "original": {
-        "owner": "aylur",
-        "repo": "astal",
         "type": "github"
       }
     },
@@ -685,7 +625,7 @@
         "hyprutils": "hyprutils_2",
         "hyprwayland-scanner": "hyprwayland-scanner_2",
         "hyprwire": "hyprwire_2",
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": "nixpkgs_2",
         "systems": "systems_2"
       },
       "locked": {
@@ -706,7 +646,7 @@
       "inputs": {
         "hyprland-qt-support": "hyprland-qt-support",
         "hyprutils": "hyprutils_4",
-        "nixpkgs": "nixpkgs_4",
+        "nixpkgs": "nixpkgs_3",
         "systems": "systems_3"
       },
       "locked": {
@@ -1034,22 +974,6 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1763966396,
-        "narHash": "sha256-6eeL1YPcY1MV3DDStIDIdy/zZCDKgHdkCmsrLJFiZf0=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "5ae3b07d8d6527c42f17c876e404993199144b6a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
         "lastModified": 1766902085,
         "narHash": "sha256-coBu0ONtFzlwwVBzmjacUQwj3G+lybcZ1oeNSQkgC0M=",
         "owner": "NixOS",
@@ -1063,7 +987,7 @@
         "type": "indirect"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_2": {
       "locked": {
         "lastModified": 1765779637,
         "narHash": "sha256-KJ2wa/BLSrTqDjbfyNx70ov/HdgNBCBBSQP3BIzKnv4=",
@@ -1079,7 +1003,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_4": {
+    "nixpkgs_3": {
       "locked": {
         "lastModified": 1748929857,
         "narHash": "sha256-lcZQ8RhsmhsK8u7LIFsJhsLh/pzR9yZ8yqpTzyGdj+Q=",
@@ -1095,7 +1019,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_5": {
+    "nixpkgs_4": {
       "locked": {
         "lastModified": 1770056022,
         "narHash": "sha256-yvCz+Qmci1bVucXEyac3TdoSPMtjqVJmVy5wro6j/70=",
@@ -1111,7 +1035,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_6": {
+    "nixpkgs_5": {
       "locked": {
         "lastModified": 1769461804,
         "narHash": "sha256-msG8SU5WsBUfVVa/9RPLaymvi5bI8edTavbIq3vRlhI=",
@@ -1198,15 +1122,13 @@
     },
     "root": {
       "inputs": {
-        "ags": "ags",
         "ambxst": "ambxst",
-        "astal": "astal_2",
         "home-manager": "home-manager",
         "hyprland": "hyprland",
         "hyprland-plugins": "hyprland-plugins",
         "hyprpaper": "hyprpaper",
         "hyprpolkitagent": "hyprpolkitagent",
-        "nixpkgs": "nixpkgs_5",
+        "nixpkgs": "nixpkgs_4",
         "stylix": "stylix",
         "zen-browser": "zen-browser"
       }
@@ -1430,7 +1352,7 @@
     },
     "zen-browser": {
       "inputs": {
-        "nixpkgs": "nixpkgs_6"
+        "nixpkgs": "nixpkgs_5"
       },
       "locked": {
         "lastModified": 1769747637,

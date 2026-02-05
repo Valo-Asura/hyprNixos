@@ -1,10 +1,9 @@
 { 
-
   "position": "top",
   "exlusive": "true",
   "passthrough": "true",
   "gtk-layer-shell": "true",
-  "margin-top": 10,
+  "margin-top": 1,
   "margin-left": 10,
   "margin-right": 10,
   "height": 41,
@@ -12,7 +11,7 @@
     "custom/weather",
     "cpu",
     "memory",
-    "disk",
+    "disk"
   ],
   "modules-center": [
     "hyprland/workspaces"
@@ -64,8 +63,7 @@
       "urgent": "",
       "persistent": "",
       "focused": "",
-      "default": "",
-
+      "default": ""
         },
     "sort-by-number": true,
     "persistent-workspaces": {
@@ -138,7 +136,7 @@
 
   "format-ar": "ara",
 
-  "format-en": "eng",
+  "format-en": "eng"
 
 },
   "disk":{
@@ -146,5 +144,5 @@
   "path": "/home",
 	"format": "<span color='#a6e3a1'> </span><span color='#cdd6f4'>{free}</span>",
 	"unit": "GB"
-},
+}
 }
