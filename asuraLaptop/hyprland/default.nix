@@ -48,11 +48,11 @@ in {
       ];
 
       monitor = [
-        "eDP-1,highres,0x0,1"
+        "eDP-1,1920x1080@144,0x0,1"
         "DP-7,disable"
         "DP-8,disable"
         "DP-9,disable"
-        "HDMI-A-1,3440x1440@144,auto,1"
+        "HDMI-A-1,preferred,auto,1"
         ",preferred,auto,1"
       ];
 
