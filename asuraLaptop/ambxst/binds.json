@@ -39,7 +39,7 @@
       },
       "tmux": {
         "modifiers": [
-          "SUPER"
+          "ALT"
         ],
         "key": "T",
         "dispatcher": "exec",
@@ -82,12 +82,12 @@
         ],
         "key": "L",
         "dispatcher": "exec",
-        "argument": "loginctl lock-session",
+        "argument": "hyprlock",
         "flags": ""
       },
       "overview": {
         "modifiers": [
-          "SUPER"
+          "ALT"
         ],
         "key": "TAB",
         "dispatcher": "exec",

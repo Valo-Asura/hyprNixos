@@ -12,6 +12,7 @@
       "$mainMod, T, exec, ${pkgs.kitty}/bin/kitty" # Kitty
       "$mainMod, C, exec, code --enable-features=UseOzonePlatform --ozone-platform=wayland" # VSCode
       "$mainMod, E, exec, ${pkgs.telegram-desktop}/bin/telegram-desktop" # Telegram
+      "$mainMod, W, exec, ${pkgs.wofi}/bin/wofi" # Wofi
       # "ALT, TAB, plugin:expo:toggle"
       "ctrl, l, exec, ${pkgs.hyprlock}/bin/hyprlock" # Lock screen
       "$mainMod, L, exec, ${pkgs.hyprlock}/bin/hyprlock" # Lock screen (Super+L)

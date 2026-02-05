@@ -15,8 +15,8 @@
       background = [
         {
           path = "${./lock-images/lockscreen.png}";
-          blur_passes = 1;
-          blur_size = 3;
+          blur_passes = 0;
+          blur_size = 0;
         }
       ];
 
@@ -50,12 +50,15 @@
         {
           monitor = "";
           text = "$TIME";
-          color = "rgb(200, 200, 200)";
-          font_size = 55;
-          font_family = "Noto Sans";
-          position = "0, 0";
+          color = "rgb(232, 236, 255)";
+          font_size = 64;
+          font_family = "Noto Sans Bold";
+          position = "0, 10";
           halign = "center";
           valign = "center";
+          shadow_passes = 3;
+          shadow_size = 2;
+          shadow_color = "rgb(0, 0, 0)";
         }
       ];
     };
