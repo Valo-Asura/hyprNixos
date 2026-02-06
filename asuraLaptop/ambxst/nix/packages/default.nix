@@ -53,6 +53,14 @@ let
     export AMBXST_QS="${quickshellPkg}/bin/qs"
     export PATH="${envAmbxst}/bin:$PATH"
 
+    # Load AI secrets if provided via sops-nix
+    for var in OPENCLAW_GATEWAY_TOKEN OPENAI_API_KEY OPENROUTER_API_KEY GEMINI_API_KEY MISTRAL_API_KEY GITHUB_TOKEN; do
+      secret_path="/run/secrets/$var"
+      if [ -r "$secret_path" ]; then
+        export "$var"="$(cat "$secret_path")"
+      fi
+    done
+
     # Set QML2_IMPORT_PATH to include modules from envAmbxst (like syntax-highlighting)
     export QML2_IMPORT_PATH="${envAmbxst}/lib/qt-6/qml:$QML2_IMPORT_PATH"
     export QML_IMPORT_PATH="$QML2_IMPORT_PATH"

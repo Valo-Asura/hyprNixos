@@ -12,6 +12,7 @@
     };
     modules = [
       inputs.stylix.nixosModules.stylix
+      inputs.sops-nix.nixosModules.sops
       ../system
       inputs.home-manager.nixosModules.home-manager
       {

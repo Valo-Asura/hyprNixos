@@ -25,6 +25,7 @@
     ./filesystems.nix
     ./windows-mount-helper.nix
     ./thermal.nix
+    ./secrets.nix
     ./fan-control-tools.nix
     ./power-management-tools.nix
   ];

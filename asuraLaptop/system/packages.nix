@@ -42,9 +42,10 @@
     hyprsunset hypridle
 
     # Development
-    wget git eza bat fd ripgrep direnv nixfmt-classic nil inter
-    #ide
-    vscode antigravity kiro
+    wget git eza bat fd ripgrep direnv nixfmt nil inter
+
+    # ide
+    vscode antigravity kiro 
     
     # Terminal enhancements and fun tools
     bottom btop tree dialog fzf

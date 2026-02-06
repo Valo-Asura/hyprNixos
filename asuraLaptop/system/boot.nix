@@ -12,8 +12,9 @@
         useOSProber = true;
         device = "nodev";
         efiInstallAsRemovable = false;
+        theme = ../assets/grub-theme;
       };
     };
-    kernelPackages = pkgs.linuxPackages_zen;
+    kernelPackages = pkgs.linuxPackages_latest_zen;
   };
 }

@@ -139,7 +139,7 @@ QtObject {
         }
 
         console.log(`HyprlandConfig: Applying ignorealpha: ${ignoreAlphaValue}, explicit: ${Config.hyprland.blurExplicitIgnoreAlpha}`);
-        batchCommand += ` ; keyword layerrule noanim,quickshell ; keyword layerrule blur,quickshell ; keyword layerrule blurpopups,quickshell ; keyword layerrule ignorealpha ${ignoreAlphaValue},quickshell`;
+        batchCommand += ` ; keyword layerrule "no_anim on, match:namespace quickshell" ; keyword layerrule "blur on, match:namespace quickshell" ; keyword layerrule "blur_popups on, match:namespace quickshell" ; keyword layerrule "ignore_alpha ${ignoreAlphaValue}, match:namespace quickshell"`;
         console.log("HyprlandConfig: Applying hyprctl batch command.");
         hyprctlProcess.command = ["hyprctl", "--batch", batchCommand];
         hyprctlProcess.running = true;

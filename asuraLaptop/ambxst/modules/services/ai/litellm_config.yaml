@@ -31,6 +31,11 @@ model_list:
     litellm_params:
       model: openrouter/anthropic/claude-3.5-sonnet
       api_key: os.environ/OPENROUTER_API_KEY
+  - model_name: openclaw
+    litellm_params:
+      model: openai/openclaw
+      api_base: http://127.0.0.1:18789/v1
+      api_key: os.environ/OPENCLAW_GATEWAY_TOKEN
   
   # Wildcards for dynamic discovery
   - model_name: gemini/*

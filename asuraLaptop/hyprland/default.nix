@@ -124,15 +124,20 @@ in {
         disable_splash_rendering = true;
         force_default_wallpaper = 0;
         focus_on_activate = true;
-        new_window_takes_over_fullscreen = 2;
         enable_swallow = false;
         swallow_regex = "";
       };
 
-      windowrulev2 =
-        [ "float, tag:modal" "pin, tag:modal" "center, tag:modal" ];
+      windowrule = [
+        "match:tag modal, float = true"
+        "match:tag modal, pin = true"
+        "match:tag modal, center = true"
+      ];
 
-      layerrule = [ "noanim, launcher" "noanim, ^ags-.*" ];
+      layerrule = [
+        "no_anim on, match:namespace launcher"
+        "no_anim on, match:namespace ^ags-.*$"
+      ];
 
       input = {
         kb_layout = keyboardLayout;

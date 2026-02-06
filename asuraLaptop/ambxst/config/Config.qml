@@ -1195,7 +1195,7 @@ Singleton {
             property string systemPrompt: "You are a helpful assistant running on a Linux system. You have access to some tools to control the system."
             property string tool: "none"
             property list<var> extraModels: []
-            property string defaultModel: "gemini-pro"
+            property string defaultModel: "openclaw"
         }
     }
 

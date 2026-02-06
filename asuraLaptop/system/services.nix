@@ -5,6 +5,7 @@
   services = {
     blueman.enable = true;
     dbus.enable = true;
+    fwupd.enable = true;
     udisks2.enable = true;
     gvfs.enable = true;
     upower.enable = true;

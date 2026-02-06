@@ -158,6 +158,12 @@ clean                # nix-collect-garbage -d
 code                 # Launch Kiro
 ```
 
+## 🤖 Ambxst + OpenClaw AI
+
+If you want the AI dashboard working out of the box (Ambxst → LiteLLM → OpenClaw), follow the noob‑friendly guide:
+
+`docs/AMBXST_OPENCLAW_GUIDE.md`
+
 ## 🧩 Ambxst Keybinds
 
 Thanks to Ambxst for the beautiful QuickShell config.
