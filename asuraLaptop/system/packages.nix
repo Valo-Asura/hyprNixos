@@ -45,7 +45,7 @@
     wget git eza bat fd ripgrep direnv nixfmt nil inter
 
     # ide
-    vscode antigravity kiro 
+    vscode antigravity kiro lmstudio
     
     # Terminal enhancements and fun tools
     bottom btop tree dialog fzf
