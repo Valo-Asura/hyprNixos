@@ -37,7 +37,6 @@ nixos-laptop/
 ## 🧠 Local AI (LM Studio)
 
 Quick path to run Ambxst AI against a local LM Studio model:
-- Guide: `/home/asura/Downloads/AMBXST_LMSTUDIO_GUIDE.md`
 - Config files:
   - `/etc/nixos/asuraLaptop/ambxst/modules/services/ai/litellm_config.yaml`
   - `/etc/nixos/asuraLaptop/ambxst/ai.json`
