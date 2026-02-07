@@ -27,6 +27,9 @@ in {
     };
   };
 
+  # Ensure existing mimeapps.list is overwritten without backup conflicts
+  xdg.configFile."mimeapps.list".force = true;
+
   # Xarchiver defaults: extract to current directory
   home.file.".config/xarchiver/xarchiverrc".text = ''
 [xarchiver]
