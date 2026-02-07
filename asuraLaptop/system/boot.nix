@@ -3,6 +3,11 @@
 
 {
   boot = {
+    consoleLogLevel = 3;
+    initrd = {
+      verbose = false;
+      stage1Greeting = "";
+    };
     loader = {
       systemd-boot.enable = false;
       efi.canTouchEfiVariables = true;
@@ -31,5 +36,14 @@
       grub.enable = false;
     };
     kernelPackages = pkgs.linuxPackages_zen;
+    kernelParams = [
+      "quiet"
+      "loglevel=3"
+      "rd.systemd.show_status=false"
+      "systemd.show_status=false"
+      "rd.udev.log_level=3"
+      "udev.log_level=3"
+      "vt.global_cursor_default=0"
+    ];
   };
 }
