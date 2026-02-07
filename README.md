@@ -37,9 +37,37 @@ nixos-laptop/
 ## 🧠 Local AI (LM Studio)
 
 Quick path to run Ambxst AI against a local LM Studio model:
+- Guide: `/home/asura/Downloads/AMBXST_LMSTUDIO_GUIDE.md`
 - Config files:
   - `/etc/nixos/asuraLaptop/ambxst/modules/services/ai/litellm_config.yaml`
   - `/etc/nixos/asuraLaptop/ambxst/ai.json`
+
+## 🖼️ Ambxst Wallpapers
+
+**Wallpaper config file (user state):**
+- `~/.local/share/Ambxst/wallpapers.json`
+
+Key fields inside:
+- `wallPath`: directory Ambxst scans for wallpapers
+- `currentWall`: full path to the selected wallpaper
+
+**Recommended folder:**
+- `~/Pictures/Wallpapers`
+
+**How to set it**
+1. Put your wallpapers in `~/Pictures/Wallpapers`.
+2. Open the Ambxst wallpaper UI:
+   - Keybind: `SUPER` + `,` (comma), or run `ambxst run dashboard-wallpapers`.
+3. Set the wallpaper directory and pick a wallpaper.
+
+**Manual edit (if you prefer)**
+Edit `~/.local/share/Ambxst/wallpapers.json` and set:
+```
+"wallPath": "/home/asura/Pictures/Wallpapers",
+"currentWall": "/home/asura/Pictures/Wallpapers/your-image.png"
+```
+
+Supported types: `jpg`, `png`, `webp`, `gif`, `mp4`, `webm`, `mkv`.
 
 ## 🚀 Quick Setup (Flake Workflow)
 
