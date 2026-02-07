@@ -44,6 +44,11 @@
     # Nemo specific cache directories
     "d /home/asura/.cache/nemo 0755 asura users -"
     "d /home/asura/.local/share/nemo 0755 asura users -"
+
+    # Ensure ownership/permissions are correct even if root created them
+    "Z /home/asura/.cache/thumbnails 0755 asura users - -"
+    "Z /home/asura/.cache/nemo 0755 asura users - -"
+    "Z /home/asura/.local/share/nemo 0755 asura users - -"
   ];
 
   # Additional packages for thumbnail generation
