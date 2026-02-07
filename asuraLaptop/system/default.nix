@@ -22,6 +22,7 @@
     ./browser-theming.nix
     ./nemo-fixes.nix
     ./maintenance.nix
+    ./performance.nix
     ./filesystems.nix
     ./windows-mount-helper.nix
     ./thermal.nix

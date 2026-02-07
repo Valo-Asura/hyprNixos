@@ -7,6 +7,7 @@
     ./theming
     ./applications
     ./browsers.nix
+    ./file-manager.nix
     ./zen-browser.nix
   ];
 }

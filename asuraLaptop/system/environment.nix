@@ -38,7 +38,18 @@
     etc."xdg/mime/defaults.list".text = ''
       [Default Applications]
       inode/directory=nemo.desktop
+      application/zip=xarchiver.desktop
+      application/x-zip-compressed=xarchiver.desktop
+      application/x-7z-compressed=xarchiver.desktop
+      application/x-rar=xarchiver.desktop
+      application/vnd.rar=xarchiver.desktop
+      application/x-tar=xarchiver.desktop
       application/x-compressed-tar=xarchiver.desktop
+      application/x-gzip=xarchiver.desktop
+      application/gzip=xarchiver.desktop
+      application/x-bzip2=xarchiver.desktop
+      application/x-xz=xarchiver.desktop
+      application/x-iso9660-image=xarchiver.desktop
     '';
   };
 }

@@ -2,7 +2,8 @@
 { inputs, pkgs, ... }:
 
 let
-  openclawPkg = inputs.nix-openclaw.packages.${pkgs.system}.openclaw;
+  openclawPkgs = pkgs.callPackage "${inputs.nix-openclaw}/nix/packages" { };
+  openclawPkg = openclawPkgs.openclaw;
   openclawGateway = pkgs.writeShellScriptBin "openclaw-gateway" ''
     set -euo pipefail
 

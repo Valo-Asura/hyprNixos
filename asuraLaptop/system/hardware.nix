@@ -1,5 +1,5 @@
 # Hardware Configuration
-{ config, ... }:
+{ config, lib, ... }:
 
 {
   hardware.cpu.intel.updateMicrocode = true;
@@ -17,6 +17,7 @@
       package = config.boot.kernelPackages.nvidiaPackages.production;
       prime = {
         sync.enable = true;
+        offload.enable = lib.mkForce false;
         intelBusId = "PCI:0:2:0";
         nvidiaBusId = "PCI:1:0:0";
       };

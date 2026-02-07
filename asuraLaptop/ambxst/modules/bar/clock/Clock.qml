@@ -603,6 +603,23 @@ Item {
         dayUpdateTimer.start();
     }
 
+    function formatTime12h(now) {
+        var hours24 = now.getHours();
+        var minutes = now.getMinutes();
+        var hours12 = hours24 % 12;
+        if (hours12 === 0) hours12 = 12;
+
+        var hh = (hours12 < 10 ? "0" : "") + hours12;
+        var mm = (minutes < 10 ? "0" : "") + minutes;
+        var ampm = hours24 < 12 ? "AM" : "PM";
+
+        return {
+            time: hh + ":" + mm + " " + ampm,
+            hours: hh,
+            minutes: mm
+        };
+    }
+
     function updateDay() {
         var now = new Date();
         var day = Qt.formatDateTime(now, Qt.locale(), "ddd");
@@ -617,11 +634,10 @@ Item {
         repeat: true
         onTriggered: {
             var now = new Date();
-            var formatted = Qt.formatDateTime(now, "hh:mm");
-            var parts = formatted.split(":");
-            root.currentTime = formatted;
-            root.currentHours = parts[0];
-            root.currentMinutes = parts[1];
+            var formatted = formatTime12h(now);
+            root.currentTime = formatted.time;
+            root.currentHours = formatted.hours;
+            root.currentMinutes = formatted.minutes;
         }
     }
 
@@ -634,11 +650,10 @@ Item {
 
     Component.onCompleted: {
         var now = new Date();
-        var formatted = Qt.formatDateTime(now, "hh:mm");
-        var parts = formatted.split(":");
-        root.currentTime = formatted;
-        root.currentHours = parts[0];
-        root.currentMinutes = parts[1];
+        var formatted = formatTime12h(now);
+        root.currentTime = formatted.time;
+        root.currentHours = formatted.hours;
+        root.currentMinutes = formatted.minutes;
         updateDay();
     }
 }

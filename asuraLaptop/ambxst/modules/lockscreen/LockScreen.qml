@@ -170,6 +170,12 @@ WlSessionLockSurface {
         height: hoursText.height + (hoursText.height * 0.5)
         z: 10
 
+        function formatHour12(date) {
+            var h = date.getHours() % 12;
+            if (h === 0) h = 12;
+            return (h < 10 ? "0" : "") + h;
+        }
+
         Row {
             id: clockRow
             spacing: 0
@@ -177,7 +183,7 @@ WlSessionLockSurface {
 
             Text {
                 id: hoursText
-                text: Qt.formatTime(new Date(), "hh")
+                text: clockContainer.formatHour12(new Date())
                 font.family: "League Gothic"
                 font.pixelSize: 240
                 color: Colors.primaryFixed
@@ -254,7 +260,7 @@ WlSessionLockSurface {
             running: true
             repeat: true
             onTriggered: {
-                hoursText.text = Qt.formatTime(new Date(), "hh");
+                hoursText.text = clockContainer.formatHour12(new Date());
                 minutesText.text = Qt.formatTime(new Date(), "mm");
             }
         }

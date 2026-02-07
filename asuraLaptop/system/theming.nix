@@ -56,5 +56,12 @@
         buildInputs = old.buildInputs ++ [ pkgs.libdbusmenu-gtk3 pkgs.ddcutil ];
       });
     })
+    (final: prev: {
+      pnpm_10 = prev.pnpm_10.overrideAttrs (old: {
+        passthru = (old.passthru or {}) // {
+          fetchDeps = args: final.fetchPnpmDeps (args // { pnpm = prev.pnpm_10; });
+        };
+      });
+    })
   ];
 }
