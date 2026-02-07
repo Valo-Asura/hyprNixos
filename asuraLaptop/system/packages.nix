@@ -43,6 +43,7 @@
 
     # Development
     wget git eza bat fd ripgrep direnv nixfmt nil inter
+    sops
 
     # ide
     vscode antigravity kiro lmstudio

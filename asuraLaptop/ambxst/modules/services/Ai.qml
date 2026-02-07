@@ -24,15 +24,22 @@ Singleton {
     property bool persistenceReady: false
     property string savedModelId: ""
     property bool isRestored: false
+    property bool suppressModelPersist: false
 
     onCurrentModelChanged: {
-        if (persistenceReady && currentModel && isRestored) {
+        if (persistenceReady && currentModel && isRestored && !suppressModelPersist) {
             StateService.set("lastAiModel", currentModel.model);
         }
     }
 
+    function getDefaultModelId() {
+        if (Config.ai && Config.ai.defaultModel && Config.ai.defaultModel.length > 0)
+            return Config.ai.defaultModel;
+        return "gpt-4o-mini";
+    }
+
     function restoreModel() {
-        const lastModelId = StateService.get("lastAiModel", "gemini-pro");
+        const lastModelId = StateService.get("lastAiModel", getDefaultModelId());
         savedModelId = lastModelId;
 
         // Attempt immediate restoration if models are already loaded
@@ -115,6 +122,12 @@ Singleton {
     property bool isLoading: false
     property string lastError: ""
     property string responseBuffer: ""
+    property int requestSerial: 0
+    property int retryAttempt: 0
+    property int maxRetryAttempts: 3
+    property int defaultRetryDelayMs: 15000
+    property int pendingRetrySerial: -1
+    property bool fallbackUsed: false
 
     // Current Chat
     property var currentChat: [] // Array of { role: "user"|"assistant", content: "..." }
@@ -198,10 +211,63 @@ Singleton {
         }
     }
 
+    function normalizeKeyId(input) {
+        if (!input)
+            return "";
+        let trimmed = input.trim();
+        if (trimmed.length === 0)
+            return "";
+
+        let lower = trimmed.toLowerCase();
+        if (lower.includes("_"))
+            return trimmed.toUpperCase();
+
+        switch (lower) {
+        case "openai":
+            return "OPENAI_API_KEY";
+        case "gemini":
+        case "google":
+            return "GEMINI_API_KEY";
+        case "mistral":
+            return "MISTRAL_API_KEY";
+        case "openrouter":
+            return "OPENROUTER_API_KEY";
+        case "github":
+            return "GITHUB_TOKEN";
+        case "anthropic":
+            return "ANTHROPIC_API_KEY";
+        case "groq":
+            return "GROQ_API_KEY";
+        case "deepseek":
+            return "DEEPSEEK_API_KEY";
+        default:
+            return trimmed.toUpperCase();
+        }
+    }
+
+    function getStoredApiKey(keyId) {
+        if (!keyId)
+            return "";
+
+        let envKey = Quickshell.env(keyId);
+        if (envKey && envKey.length > 0)
+            return envKey;
+
+        if (Config.ai && Config.ai.apiKeys) {
+            if (Config.ai.apiKeys[keyId])
+                return Config.ai.apiKeys[keyId];
+            let upper = keyId.toUpperCase();
+            if (Config.ai.apiKeys[upper])
+                return Config.ai.apiKeys[upper];
+        }
+
+        return "";
+    }
+
     function getApiKey(model) {
         if (!model.requires_key)
             return "";
-        return Quickshell.env(model.key_id) || "";
+        return getStoredApiKey(model.key_id);
     }
 
     function processCommand(text) {
@@ -238,8 +304,44 @@ Singleton {
                 modelSelectionRequested();
             }
             return true;
+        case "/key": {
+            let rawArgs = args.trim();
+            if (!rawArgs) {
+                pushSystemMessage("Usage: **`/key openai sk-...`** or **`/key OPENAI_API_KEY=sk-...`**");
+                return true;
+            }
+
+            let keyId = "";
+            let keyValue = "";
+            if (rawArgs.includes("=")) {
+                let idx = rawArgs.indexOf("=");
+                keyId = rawArgs.slice(0, idx).trim();
+                keyValue = rawArgs.slice(idx + 1).trim();
+            } else {
+                let parts = rawArgs.split(" ");
+                keyId = parts.shift();
+                keyValue = parts.join(" ").trim();
+            }
+
+            keyId = normalizeKeyId(keyId);
+            if (!keyId || !keyValue) {
+                pushSystemMessage("Usage: **`/key openai sk-...`** or **`/key OPENAI_API_KEY=sk-...`**");
+                return true;
+            }
+
+            let updated = Config.ai && Config.ai.apiKeys ? JSON.parse(JSON.stringify(Config.ai.apiKeys)) : ({});
+            updated[keyId] = keyValue;
+            if (Config.ai) {
+                Config.ai.apiKeys = updated;
+                Config.saveAi();
+            }
+
+            pushSystemMessage("Saved API key for **" + keyId + "**. Refreshing models...");
+            fetchAvailableModels();
+            return true;
+        }
         case "/help":
-            pushSystemMessage("🤖 **Assistant Commands**\n\n" + "**`/new`**\n" + "Starts a fresh conversation context.\n\n" + "**`/model [name]`**\n" + "Switches the active AI model.\n" + "• **List models:** Type `/model` without arguments.\n" + "• **Switch:** Type `/model gemini` or `/model mistral`.\n\n" + "**`/help`**\n" + "Shows this help message.\n\n" + "💡 **Tips:**\n" + "• **Edit:** Click the pen icon on any message to modify it.\n" + "• **Regenerate:** Click the refresh icon to get a new response.\n" + "• **Copy:** Use the copy button to grab code or text.");
+            pushSystemMessage("🤖 **Assistant Commands**\n\n" + "**`/new`**\n" + "Starts a fresh conversation context.\n\n" + "**`/model [name]`**\n" + "Switches the active AI model.\n" + "• **List models:** Type `/model` without arguments.\n" + "• **Switch:** Type `/model gemini` or `/model mistral`.\n\n" + "**`/key <provider> <key>`**\n" + "Saves an API key (e.g. `/key openai sk-...`).\n\n" + "**`/help`**\n" + "Shows this help message.\n\n" + "💡 **Tips:**\n" + "• **Edit:** Click the pen icon on any message to modify it.\n" + "• **Regenerate:** Click the refresh icon to get a new response.\n" + "• **Copy:** Use the copy button to grab code or text.");
             return true;
         }
 
@@ -318,11 +420,27 @@ Singleton {
         makeRequest();
     }
 
-    function makeRequest() {
+    function makeRequest(resetRetry) {
+        if (resetRetry === undefined)
+            resetRetry = true;
+
+        if (resetRetry) {
+            requestSerial++;
+            retryAttempt = 0;
+            pendingRetrySerial = -1;
+            fallbackUsed = false;
+            retryTimer.stop();
+        }
+
         // Prepare Request
         let apiKey = getApiKey(currentModel);
         if (!apiKey && currentModel.requires_key) {
-            lastError = "API Key missing for " + currentModel.name;
+            let keyId = currentModel.key_id || "API key";
+            let hint = "Set " + keyId + " with /key or as an environment variable.";
+            if (currentModel.key_get_link && currentModel.key_get_link.length > 0) {
+                hint += " Get a key at " + currentModel.key_get_link;
+            }
+            lastError = "API Key missing for " + currentModel.name + ". " + hint;
             isLoading = false;
 
             let errChat = Array.from(currentChat);
@@ -371,6 +489,69 @@ Singleton {
 
         // Write body to temp file
         writeTempBody(JSON.stringify(body), headers, endpoint);
+    }
+
+    function shouldRetry(reply) {
+        if (!reply || !reply.error)
+            return false;
+
+        if (retryAttempt >= maxRetryAttempts)
+            return false;
+
+        if (reply.errorCode !== undefined && reply.errorCode !== null) {
+            let codeNum = parseInt(reply.errorCode, 10);
+            if (!isNaN(codeNum) && codeNum === 429)
+                return true;
+            if (reply.errorCode === "429")
+                return true;
+            if (typeof reply.errorCode === "string" && /rate|limit/i.test(reply.errorCode))
+                return true;
+        }
+
+        if (reply.errorStatus === "RESOURCE_EXHAUSTED")
+            return true;
+
+        let msg = (reply.errorMessage || reply.content || "");
+        if (/rate limit|quota|too many requests|resource_exhausted/i.test(msg))
+            return true;
+
+        return false;
+    }
+
+    function scheduleRetry(delayMs) {
+        let safeDelay = delayMs;
+        if (!safeDelay || safeDelay < 1000)
+            safeDelay = 1000;
+        safeDelay += 500;
+
+        retryAttempt++;
+        pendingRetrySerial = requestSerial;
+        retryTimer.interval = safeDelay;
+        retryTimer.stop();
+        retryTimer.start();
+
+        let seconds = Math.round(safeDelay / 1000);
+        lastError = "Rate limited. Retrying in " + seconds + "s (" + retryAttempt + "/" + maxRetryAttempts + ")";
+    }
+
+    function isOpenAiModel(model) {
+        if (!model)
+            return false;
+        let provider = (model.api_format || "").toLowerCase();
+        if (provider.includes("openai"))
+            return true;
+        return false;
+    }
+
+    function findGeminiFallbackModel() {
+        for (let i = 0; i < models.length; i++) {
+            let m = models[i];
+            let provider = (m.api_format || "").toLowerCase();
+            let id = (m.model || "").toLowerCase();
+            if (provider.includes("google") || id.includes("gemini"))
+                return m;
+        }
+        return null;
     }
 
     function writeTempBody(jsonBody, headers, endpoint) {
@@ -464,10 +645,38 @@ Singleton {
         }
 
         onExited: exitCode => {
-            root.isLoading = false;
             if (exitCode === 0) {
                 let responseText = curlStdout.text;
                 let reply = root.currentStrategy.parseResponse(responseText);
+
+                if (root.shouldRetry(reply)) {
+                    if (!root.fallbackUsed && root.isOpenAiModel(root.currentModel)) {
+                        let fallback = root.findGeminiFallbackModel();
+                        if (fallback && fallback.model !== root.currentModel.model) {
+                            root.fallbackUsed = true;
+                            root.suppressModelPersist = true;
+                            root.currentModel = fallback;
+                            root.suppressModelPersist = false;
+                            root.updateStrategy();
+                            root.pushSystemMessage("OpenAI rate limit hit. Switching to **" + fallback.name + "** and retrying...");
+                            root.makeRequest(true);
+                            return;
+                        }
+                    }
+
+                    let delayMs = root.defaultRetryDelayMs;
+                    if (reply.retryAfter && reply.retryAfter > 0)
+                        delayMs = Math.ceil(reply.retryAfter * 1000);
+                    root.scheduleRetry(delayMs);
+                    return;
+                }
+
+                root.isLoading = false;
+                if (reply.error) {
+                    root.lastError = reply.errorMessage || reply.content || "Unknown API error";
+                } else {
+                    root.lastError = "";
+                }
 
                 let newChat = Array.from(root.currentChat);
 
@@ -510,6 +719,17 @@ Singleton {
                 });
                 root.currentChat = errChat;
             }
+        }
+    }
+
+    Timer {
+        id: retryTimer
+        repeat: false
+        onTriggered: {
+            if (pendingRetrySerial !== requestSerial)
+                return;
+            // Keep isLoading true and retry the same request.
+            makeRequest(false);
         }
     }
 
@@ -643,6 +863,71 @@ Singleton {
     property bool fetchingModels: false
     property int pendingFetches: 0
 
+    function addBuiltInModels() {
+        let newModels = [];
+        let openAiModels = [
+            {
+                name: "GPT-4o Mini",
+                model: "gpt-4o-mini"
+            },
+            {
+                name: "GPT-4o",
+                model: "gpt-4o"
+            }
+        ];
+
+        for (let i = 0; i < openAiModels.length; i++) {
+            let item = openAiModels[i];
+            let m = aiModelFactory.createObject(root, {
+                name: item.name,
+                icon: Qt.resolvedUrl("../../../assets/aiproviders/openai.svg"),
+                description: "OpenAI Model",
+                endpoint: "https://api.openai.com/v1",
+                model: item.model,
+                api_format: "OpenAI",
+                requires_key: true,
+                key_id: "OPENAI_API_KEY",
+                key_get_link: "https://platform.openai.com/api-keys",
+                key_get_description: "Create an OpenAI API key"
+            });
+            if (m)
+                newModels.push(m);
+        }
+
+        if (newModels.length > 0)
+            mergeModels(newModels);
+    }
+
+    function addExtraModels() {
+        if (!Config.ai || !Config.ai.extraModels || Config.ai.extraModels.length === 0)
+            return;
+
+        let newModels = [];
+        for (let i = 0; i < Config.ai.extraModels.length; i++) {
+            let item = Config.ai.extraModels[i];
+            if (!item || !item.model || !item.endpoint || !item.api_format)
+                continue;
+
+            let m = aiModelFactory.createObject(root, {
+                name: item.name || item.model,
+                icon: item.icon || "",
+                description: item.description || "",
+                endpoint: item.endpoint,
+                model: item.model,
+                api_format: item.api_format,
+                requires_key: item.requires_key === true,
+                key_id: item.key_id || "",
+                key_get_link: item.key_get_link || "",
+                key_get_description: item.key_get_description || ""
+            });
+            if (m)
+                newModels.push(m);
+        }
+
+        if (newModels.length > 0)
+            mergeModels(newModels);
+    }
+
     function fetchAvailableModels() {
         if (fetchingModels)
             return;
@@ -652,24 +937,39 @@ Singleton {
         // but point them all to the local LiteLLM proxy for execution.
         pendingFetches = 0;
 
+        // Built-in + user-configured models
+        addBuiltInModels();
+        addExtraModels();
+
         // Gemini
-        if (Quickshell.env("GEMINI_API_KEY")) {
+        let geminiKey = getStoredApiKey("GEMINI_API_KEY");
+        if (geminiKey) {
             pendingFetches++;
-            fetchProcessGemini.command = ["bash", "-c", "curl -s 'https://generativelanguage.googleapis.com/v1beta/models?key=" + Quickshell.env("GEMINI_API_KEY") + "'"];
+            fetchProcessGemini.command = ["bash", "-c", "curl -s 'https://generativelanguage.googleapis.com/v1beta/models?key=" + geminiKey + "'"];
             fetchProcessGemini.running = true;
         }
 
-        // Mistral
-        if (Quickshell.env("MISTRAL_API_KEY")) {
+        // OpenAI (direct)
+        let openAiKey = getStoredApiKey("OPENAI_API_KEY");
+        if (openAiKey) {
             pendingFetches++;
-            fetchProcessMistral.command = ["bash", "-c", "curl -s https://api.mistral.ai/v1/models -H 'Authorization: Bearer " + Quickshell.env("MISTRAL_API_KEY") + "'"];
+            fetchProcessOpenAi.command = ["bash", "-c", "curl -s https://api.openai.com/v1/models -H 'Authorization: Bearer " + openAiKey + "'"];
+            fetchProcessOpenAi.running = true;
+        }
+
+        // Mistral
+        let mistralKey = getStoredApiKey("MISTRAL_API_KEY");
+        if (mistralKey) {
+            pendingFetches++;
+            fetchProcessMistral.command = ["bash", "-c", "curl -s https://api.mistral.ai/v1/models -H 'Authorization: Bearer " + mistralKey + "'"];
             fetchProcessMistral.running = true;
         }
 
         // OpenRouter
-        if (Quickshell.env("OPENROUTER_API_KEY")) {
+        let openRouterKey = getStoredApiKey("OPENROUTER_API_KEY");
+        if (openRouterKey) {
             pendingFetches++;
-            fetchProcessOpenRouter.command = ["bash", "-c", "curl -s https://openrouter.ai/api/v1/models -H 'Authorization: Bearer " + Quickshell.env("OPENROUTER_API_KEY") + "'"];
+            fetchProcessOpenRouter.command = ["bash", "-c", "curl -s https://openrouter.ai/api/v1/models -H 'Authorization: Bearer " + openRouterKey + "'"];
             fetchProcessOpenRouter.running = true;
         }
 
@@ -679,14 +979,14 @@ Singleton {
         fetchProcessOllama.running = true;
 
         // GitHub Models (Static fallback/simulation as before since listing is complex)
-        if (Quickshell.env("GITHUB_TOKEN")) {
+        if (getStoredApiKey("GITHUB_TOKEN")) {
             pendingFetches++;
             fetchProcessGithub.command = ["echo", '{"data": [{"id": "gpt-4o"}, {"id": "gpt-4o-mini"}]}'];
             fetchProcessGithub.running = true;
         }
 
-        // If no keys are set, fallback to checking LiteLLM itself (in case it has a config we can read)
-        if (pendingFetches === 0) {
+        // Check LiteLLM for locally configured models (especially when Gemini key isn't available)
+        if (pendingFetches === 0 || !geminiKey) {
             pendingFetches++;
             fetchProcessLiteLLM.command = ["bash", "-c", "curl -s http://127.0.0.1:4000/v1/models"];
             fetchProcessLiteLLM.running = true;
@@ -793,9 +1093,49 @@ Singleton {
         }
     }
 
-    // fetchProcessOpenAi removed as it's redundant (LiteLLM usually covers it via standard endpoint or config)
-    // But if we wanted to fetch directly from OpenAI we could. For now let's rely on LiteLLM config for pure OpenAI
-    // or we could add it back if needed. The user complained about seeing ONLY OpenAI, so adding other providers is key.
+    Process {
+        id: fetchProcessOpenAi
+        stdout: StdioCollector {
+            id: fetchOpenAiOut
+        }
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                try {
+                    let data = JSON.parse(fetchOpenAiOut.text);
+                    if (data.data) {
+                        let newModels = [];
+                        for (let i = 0; i < data.data.length; i++) {
+                            let item = data.data[i];
+                            let id = item.id;
+                            let lower = id.toLowerCase();
+
+                            if (!(lower.startsWith("gpt") || lower.startsWith("o")))
+                                continue;
+
+                            let m = aiModelFactory.createObject(root, {
+                                name: id,
+                                icon: Qt.resolvedUrl("../../../assets/aiproviders/openai.svg"),
+                                description: "OpenAI Model",
+                                endpoint: "https://api.openai.com/v1",
+                                model: id,
+                                api_format: "OpenAI",
+                                requires_key: true,
+                                key_id: "OPENAI_API_KEY",
+                                key_get_link: "https://platform.openai.com/api-keys",
+                                key_get_description: "Create an OpenAI API key"
+                            });
+                            if (m)
+                                newModels.push(m);
+                        }
+                        mergeModels(newModels);
+                    }
+                } catch (e) {
+                    console.log("OpenAI fetch error: " + e);
+                }
+            }
+            checkFetchCompletion();
+        }
+    }
 
     Process {
         id: fetchProcessMistral

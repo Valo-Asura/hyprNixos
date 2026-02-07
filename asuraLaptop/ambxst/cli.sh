@@ -404,8 +404,8 @@ help | --help | -h)
 	show_help
 	;;
 "")
-	# Run daemon priority script (backgrounded to not block startup)
-	bash "${SCRIPT_DIR}/scripts/daemon_priority.sh" &
+	# Run daemon priority script and wait briefly for LiteLLM to be ready
+	AMBXST_WAIT_LITELLM=1 bash "${SCRIPT_DIR}/scripts/daemon_priority.sh"
 
 	# Set QS_ICON_THEME environment variable
 	if command -v gsettings >/dev/null 2>&1; then

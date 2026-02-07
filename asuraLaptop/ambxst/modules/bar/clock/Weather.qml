@@ -140,7 +140,7 @@ StyledRect {
     }
 
     function fetchWeatherWithCoords(lat, lon) {
-        var url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current_weather=true";
+        var url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,weather_code";
         weatherProcess.command = ["curl", "-s", url];
         weatherProcess.running = true;
     }
@@ -266,10 +266,17 @@ StyledRect {
                 if (raw.length > 0) {
                     try {
                         var data = JSON.parse(raw);
-                        if (data.current_weather) {
-                            var weather = data.current_weather;
-                            var code = parseInt(weather.weathercode);
-                            var temp = parseFloat(weather.temperature);
+                        var current = data.current || data.current_weather;
+                        if (current) {
+                            var codeVal = current.weather_code !== undefined ? current.weather_code : current.weathercode;
+                            var tempVal = current.temperature_2m !== undefined ? current.temperature_2m : current.temperature;
+                            if (codeVal === undefined || codeVal === null || codeVal === "")
+                                codeVal = 0;
+                            if (tempVal === undefined || tempVal === null || tempVal === "")
+                                tempVal = 0;
+
+                            var code = parseInt(codeVal);
+                            var temp = parseFloat(tempVal);
 
                             if (Config.weather.unit === "F") {
                                 temp = (temp * 9 / 5) + 32;

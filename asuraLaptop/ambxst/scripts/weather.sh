@@ -81,7 +81,7 @@ fetch_weather() {
 	local lat="$1"
 	local lon="$2"
 
-	local url="https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weathercode&timezone=auto&forecast_days=7"
+	local url="https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code&timezone=auto&forecast_days=7"
 
 	local response
 	response=$(http_get "$url")
@@ -93,7 +93,7 @@ fetch_weather() {
 
 	# Validate response has required fields
 	local has_current has_daily
-	has_current=$(echo "$response" | jq -r '.current_weather // empty')
+	has_current=$(echo "$response" | jq -r 'if (.current or .current_weather) then 1 else empty end')
 	has_daily=$(echo "$response" | jq -r '.daily // empty')
 
 	if [[ -z "$has_current" || -z "$has_daily" ]]; then

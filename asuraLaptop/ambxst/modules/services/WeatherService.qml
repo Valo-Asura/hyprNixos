@@ -370,13 +370,25 @@ QtObject {
                             return;
                         }
 
-                        if (data.current_weather && data.daily) {
-                            var weather = data.current_weather;
+                        var current = data.current || data.current_weather;
+                        if (current && data.daily) {
+                            var weather = current;
                             var daily = data.daily;
 
-                            root.weatherCode = parseInt(weather.weathercode);
-                            root.currentTemp = convertTemp(parseFloat(weather.temperature));
-                            root.windSpeed = parseFloat(weather.windspeed);
+                            var codeVal = weather.weather_code !== undefined ? weather.weather_code : weather.weathercode;
+                            var tempVal = weather.temperature_2m !== undefined ? weather.temperature_2m : weather.temperature;
+                            var windVal = weather.wind_speed_10m !== undefined ? weather.wind_speed_10m : weather.windspeed;
+
+                            if (codeVal === undefined || codeVal === null || codeVal === "")
+                                codeVal = 0;
+                            if (tempVal === undefined || tempVal === null || tempVal === "")
+                                tempVal = 0;
+                            if (windVal === undefined || windVal === null || windVal === "")
+                                windVal = 0;
+
+                            root.weatherCode = parseInt(codeVal);
+                            root.currentTemp = convertTemp(parseFloat(tempVal));
+                            root.windSpeed = parseFloat(windVal);
 
                             if (daily.temperature_2m_max && daily.temperature_2m_max.length > 0) {
                                 root.maxTemp = convertTemp(parseFloat(daily.temperature_2m_max[0]));
@@ -409,8 +421,8 @@ QtObject {
                                 forecastData.push({
                                     date: daily.time[i],
                                     dayName: dayName,
-                                    weatherCode: daily.weathercode ? daily.weathercode[i] : 0,
-                                    emoji: getWeatherCodeEmoji(daily.weathercode ? daily.weathercode[i] : 0),
+                                    weatherCode: daily.weather_code ? daily.weather_code[i] : (daily.weathercode ? daily.weathercode[i] : 0),
+                                    emoji: getWeatherCodeEmoji(daily.weather_code ? daily.weather_code[i] : (daily.weathercode ? daily.weathercode[i] : 0)),
                                     maxTemp: convertTemp(daily.temperature_2m_max ? daily.temperature_2m_max[i] : 0),
                                     minTemp: convertTemp(daily.temperature_2m_min ? daily.temperature_2m_min[i] : 0)
                                 });
