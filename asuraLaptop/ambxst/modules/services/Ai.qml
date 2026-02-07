@@ -83,19 +83,30 @@ Singleton {
         target: StateService
         function onStateLoaded() {
             restoreModel();
+            syncApiKeysFromState();
         }
     }
 
     Component.onCompleted: {
+        // Ensure ai.json has apiKeys even if older config existed
+        if (Config.ai && Config.ai.apiKeys === undefined) {
+            Config.ai.apiKeys = {};
+            Config.saveAi();
+        }
+
+        // Ensure built-in OpenAI models are always present
+        addBuiltInModels();
+
+        // If state already loaded, sync any stored keys into config
+        syncApiKeysFromState();
+
         // Try restoration immediately if possible, or wait for signal
         if (StateService.initialized) {
             restoreModel();
         }
 
-        // Dynamic fetch if no models
-        if (models.length === 0) {
-            fetchAvailableModels();
-        }
+        // Light model refresh (local/LiteLLM) without heavy remote calls
+        fetchAvailableModels();
 
         // Initialize chat
         reloadHistory();
@@ -128,6 +139,8 @@ Singleton {
     property int defaultRetryDelayMs: 15000
     property int pendingRetrySerial: -1
     property bool fallbackUsed: false
+    property double lastModelFetchMs: 0
+    property int minFetchIntervalMs: 300000
 
     // Current Chat
     property var currentChat: [] // Array of { role: "user"|"assistant", content: "..." }
@@ -211,6 +224,58 @@ Singleton {
         }
     }
 
+    function ensureOpenAiModel(modelId, name) {
+        let id = modelId || "gpt-4o-mini";
+        for (let i = 0; i < models.length; i++) {
+            if (models[i].model === id)
+                return models[i];
+        }
+
+        let m = aiModelFactory.createObject(root, {
+            name: name || id,
+            icon: Qt.resolvedUrl("../../../assets/aiproviders/openai.svg"),
+            description: "OpenAI Model",
+            endpoint: "https://api.openai.com/v1",
+            model: id,
+            api_format: "OpenAI",
+            requires_key: true,
+            key_id: "OPENAI_API_KEY",
+            key_get_link: "https://platform.openai.com/api-keys",
+            key_get_description: "Create an OpenAI API key"
+        });
+        if (m) {
+            mergeModels([m]);
+            return m;
+        }
+        return null;
+    }
+
+    function ensureGeminiModel(modelId, name) {
+        let id = modelId || "gemini-2.5-flash";
+        if (id.startsWith("gemini/"))
+            id = id.slice("gemini/".length);
+        let liteId = "gemini/" + id;
+        for (let i = 0; i < models.length; i++) {
+            if (models[i].model === liteId)
+                return models[i];
+        }
+
+        let m = aiModelFactory.createObject(root, {
+            name: name || id,
+            icon: Qt.resolvedUrl("../../../assets/aiproviders/google.svg"),
+            description: "Google Gemini Model",
+            endpoint: "http://127.0.0.1:4000/v1",
+            model: liteId,
+            api_format: "Google",
+            requires_key: false
+        });
+        if (m) {
+            mergeModels([m]);
+            return m;
+        }
+        return null;
+    }
+
     function normalizeKeyId(input) {
         if (!input)
             return "";
@@ -261,6 +326,13 @@ Singleton {
                 return Config.ai.apiKeys[upper];
         }
 
+        let stateKeys = getStateApiKeys();
+        if (stateKeys[keyId])
+            return stateKeys[keyId];
+        let upperState = keyId.toUpperCase();
+        if (stateKeys[upperState])
+            return stateKeys[upperState];
+
         return "";
     }
 
@@ -285,18 +357,28 @@ Singleton {
             return true;
         case "/model":
             if (args) {
-                // Fuzzy search or exact match
-                let found = false;
-                for (let i = 0; i < models.length; i++) {
-                    if (models[i].name.toLowerCase().includes(args.toLowerCase()) || models[i].model.toLowerCase() === args.toLowerCase()) {
-                        setModel(models[i].name);
-                        found = true;
-                        break;
+                let target = args.trim();
+                if (!target) {
+                    pushSystemMessage("Usage: **`/model <name>`**");
+                    return true;
+                }
+
+                let foundModel = findModelByQuery(target);
+                if (!foundModel) {
+                    let lower = target.toLowerCase();
+                    if (lower.startsWith("gpt") || lower.startsWith("o") || lower.includes("openai")) {
+                        foundModel = ensureOpenAiModel(target, target);
+                    } else if (lower.includes("gemini") || lower.includes("flash") || lower.includes("pro")) {
+                        foundModel = ensureGeminiModel(target, target);
                     }
                 }
-                if (!found) {
-                    pushSystemMessage("Model '" + args + "' not found.");
+
+                if (!foundModel) {
+                    pushSystemMessage("Model '" + target + "' not found. Refreshing models...");
+                    fetchAvailableModels(true);
                 } else {
+                    currentModel = foundModel;
+                    updateStrategy();
                     pushSystemMessage("Switched to model: " + currentModel.name);
                 }
             } else {
@@ -335,9 +417,12 @@ Singleton {
                 Config.ai.apiKeys = updated;
                 Config.saveAi();
             }
+            if (StateService.initialized) {
+                StateService.set("aiApiKeys", updated);
+            }
 
             pushSystemMessage("Saved API key for **" + keyId + "**. Refreshing models...");
-            fetchAvailableModels();
+            fetchAvailableModels(true);
             return true;
         }
         case "/help":
@@ -430,6 +515,26 @@ Singleton {
             pendingRetrySerial = -1;
             fallbackUsed = false;
             retryTimer.stop();
+        }
+
+        if (!currentModel) {
+            let fallback = findOpenAiFallbackModel();
+            if (!fallback)
+                fallback = findGeminiFallbackModel();
+            if (fallback) {
+                currentModel = fallback;
+                updateStrategy();
+            } else {
+                lastError = "No AI model available. Add a model or set an API key.";
+                isLoading = false;
+                let errChat = Array.from(currentChat);
+                errChat.push({
+                    role: "assistant",
+                    content: "Error: " + lastError
+                });
+                currentChat = errChat;
+                return;
+            }
         }
 
         // Prepare Request
@@ -534,6 +639,17 @@ Singleton {
         lastError = "Rate limited. Retrying in " + seconds + "s (" + retryAttempt + "/" + maxRetryAttempts + ")";
     }
 
+    function isModelNotFound(reply) {
+        if (!reply || !reply.error)
+            return false;
+
+        if (reply.errorCode === "model_not_found")
+            return true;
+
+        let msg = (reply.errorMessage || reply.content || "");
+        return /model.*not found|model_not_found|unknown model/i.test(msg);
+    }
+
     function isOpenAiModel(model) {
         if (!model)
             return false;
@@ -543,12 +659,72 @@ Singleton {
         return false;
     }
 
+    function isGeminiModel(model) {
+        if (!model)
+            return false;
+        let provider = (model.api_format || "").toLowerCase();
+        let id = (model.model || "").toLowerCase();
+        return provider.includes("google") || id.includes("gemini");
+    }
+
     function findGeminiFallbackModel() {
         for (let i = 0; i < models.length; i++) {
             let m = models[i];
             let provider = (m.api_format || "").toLowerCase();
             let id = (m.model || "").toLowerCase();
             if (provider.includes("google") || id.includes("gemini"))
+                return m;
+        }
+        let geminiKey = getStoredApiKey("GEMINI_API_KEY");
+        if (!geminiKey)
+            return null;
+        return ensureGeminiModel("gemini-2.5-flash", "Gemini 2.5 Flash");
+    }
+
+    function findOpenAiFallbackModel() {
+        let openAiKey = getStoredApiKey("OPENAI_API_KEY");
+        if (!openAiKey)
+            return null;
+        for (let i = 0; i < models.length; i++) {
+            let m = models[i];
+            if (isOpenAiModel(m))
+                return m;
+        }
+        return ensureOpenAiModel(getDefaultModelId(), "GPT-4o Mini");
+    }
+
+    function getStateApiKeys() {
+        if (!StateService.initialized)
+            return ({});
+        let stored = StateService.get("aiApiKeys", ({}));
+        if (!stored || typeof stored !== "object")
+            return ({});
+        return stored;
+    }
+
+    function syncApiKeysFromState() {
+        if (!StateService.initialized || !Config.ai)
+            return;
+        let stateKeys = getStateApiKeys();
+        if (!stateKeys || Object.keys(stateKeys).length === 0)
+            return;
+
+        let configKeys = Config.ai.apiKeys || ({});
+        if (!configKeys || Object.keys(configKeys).length === 0) {
+            Config.ai.apiKeys = stateKeys;
+            Config.saveAi();
+        }
+    }
+
+    function findModelByQuery(query) {
+        if (!query)
+            return null;
+        let q = query.toLowerCase();
+        for (let i = 0; i < models.length; i++) {
+            let m = models[i];
+            let name = (m.name || "").toLowerCase();
+            let id = (m.model || "").toLowerCase();
+            if (name.includes(q) || id === q || id.endsWith("/" + q))
                 return m;
         }
         return null;
@@ -649,6 +825,22 @@ Singleton {
                 let responseText = curlStdout.text;
                 let reply = root.currentStrategy.parseResponse(responseText);
 
+                if (root.isModelNotFound(reply) && !root.fallbackUsed) {
+                    let fallback = root.findOpenAiFallbackModel();
+                    if (!fallback)
+                        fallback = root.findGeminiFallbackModel();
+                    if (fallback && root.currentModel && fallback.model !== root.currentModel.model) {
+                        root.fallbackUsed = true;
+                        root.suppressModelPersist = true;
+                        root.currentModel = fallback;
+                        root.suppressModelPersist = false;
+                        root.updateStrategy();
+                        root.pushSystemMessage("Model not found. Switching to **" + fallback.name + "** and retrying...");
+                        root.makeRequest(true);
+                        return;
+                    }
+                }
+
                 if (root.shouldRetry(reply)) {
                     if (!root.fallbackUsed && root.isOpenAiModel(root.currentModel)) {
                         let fallback = root.findGeminiFallbackModel();
@@ -659,6 +851,19 @@ Singleton {
                             root.suppressModelPersist = false;
                             root.updateStrategy();
                             root.pushSystemMessage("OpenAI rate limit hit. Switching to **" + fallback.name + "** and retrying...");
+                            root.makeRequest(true);
+                            return;
+                        }
+                    }
+                    if (!root.fallbackUsed && root.isGeminiModel(root.currentModel)) {
+                        let fallback = root.findOpenAiFallbackModel();
+                        if (fallback && fallback.model !== root.currentModel.model) {
+                            root.fallbackUsed = true;
+                            root.suppressModelPersist = true;
+                            root.currentModel = fallback;
+                            root.suppressModelPersist = false;
+                            root.updateStrategy();
+                            root.pushSystemMessage("Gemini rate limit hit. Switching to **" + fallback.name + "** and retrying...");
                             root.makeRequest(true);
                             return;
                         }
@@ -928,68 +1133,86 @@ Singleton {
             mergeModels(newModels);
     }
 
-    function fetchAvailableModels() {
+    function fetchAvailableModels(force) {
+        if (force === undefined)
+            force = false;
         if (fetchingModels)
             return;
 
+        addBuiltInModels();
+        addExtraModels();
+
+        let now = Date.now();
+        if (!force && lastModelFetchMs > 0 && (now - lastModelFetchMs) < minFetchIntervalMs) {
+            return;
+        }
+
+        lastModelFetchMs = now;
         fetchingModels = true;
         // We'll fetch from multiple sources again to populate the list dynamically
         // but point them all to the local LiteLLM proxy for execution.
         pendingFetches = 0;
 
-        // Built-in + user-configured models
-        addBuiltInModels();
-        addExtraModels();
+        if (force) {
+            // Gemini
+            let geminiKey = getStoredApiKey("GEMINI_API_KEY");
+            if (geminiKey) {
+                pendingFetches++;
+                fetchProcessGemini.command = ["bash", "-c", "curl -s 'https://generativelanguage.googleapis.com/v1beta/models?key=" + geminiKey + "'"];
+                fetchProcessGemini.running = true;
+            }
 
-        // Gemini
-        let geminiKey = getStoredApiKey("GEMINI_API_KEY");
-        if (geminiKey) {
-            pendingFetches++;
-            fetchProcessGemini.command = ["bash", "-c", "curl -s 'https://generativelanguage.googleapis.com/v1beta/models?key=" + geminiKey + "'"];
-            fetchProcessGemini.running = true;
-        }
+            // OpenAI (direct)
+            let openAiKey = getStoredApiKey("OPENAI_API_KEY");
+            if (openAiKey) {
+                pendingFetches++;
+                fetchProcessOpenAi.command = ["bash", "-c", "curl -s https://api.openai.com/v1/models -H 'Authorization: Bearer " + openAiKey + "'"];
+                fetchProcessOpenAi.running = true;
+            }
 
-        // OpenAI (direct)
-        let openAiKey = getStoredApiKey("OPENAI_API_KEY");
-        if (openAiKey) {
-            pendingFetches++;
-            fetchProcessOpenAi.command = ["bash", "-c", "curl -s https://api.openai.com/v1/models -H 'Authorization: Bearer " + openAiKey + "'"];
-            fetchProcessOpenAi.running = true;
-        }
+            // Mistral
+            let mistralKey = getStoredApiKey("MISTRAL_API_KEY");
+            if (mistralKey) {
+                pendingFetches++;
+                fetchProcessMistral.command = ["bash", "-c", "curl -s https://api.mistral.ai/v1/models -H 'Authorization: Bearer " + mistralKey + "'"];
+                fetchProcessMistral.running = true;
+            }
 
-        // Mistral
-        let mistralKey = getStoredApiKey("MISTRAL_API_KEY");
-        if (mistralKey) {
-            pendingFetches++;
-            fetchProcessMistral.command = ["bash", "-c", "curl -s https://api.mistral.ai/v1/models -H 'Authorization: Bearer " + mistralKey + "'"];
-            fetchProcessMistral.running = true;
-        }
+            // OpenRouter
+            let openRouterKey = getStoredApiKey("OPENROUTER_API_KEY");
+            if (openRouterKey) {
+                pendingFetches++;
+                fetchProcessOpenRouter.command = ["bash", "-c", "curl -s https://openrouter.ai/api/v1/models -H 'Authorization: Bearer " + openRouterKey + "'"];
+                fetchProcessOpenRouter.running = true;
+            }
 
-        // OpenRouter
-        let openRouterKey = getStoredApiKey("OPENROUTER_API_KEY");
-        if (openRouterKey) {
-            pendingFetches++;
-            fetchProcessOpenRouter.command = ["bash", "-c", "curl -s https://openrouter.ai/api/v1/models -H 'Authorization: Bearer " + openRouterKey + "'"];
-            fetchProcessOpenRouter.running = true;
+            // GitHub Models (Static fallback/simulation as before since listing is complex)
+            if (getStoredApiKey("GITHUB_TOKEN")) {
+                pendingFetches++;
+                fetchProcessGithub.command = ["echo", '{"data": [{"id": "gpt-4o"}, {"id": "gpt-4o-mini"}]}'];
+                fetchProcessGithub.running = true;
+            }
         }
 
         // Ollama (Local)
         pendingFetches++;
-        fetchProcessOllama.command = ["bash", "-c", "curl -s http://127.0.0.1:11434/api/tags"];
+        fetchProcessOllama.command = ["bash", "-c", "curl -s --max-time 1 http://127.0.0.1:11434/api/tags"];
         fetchProcessOllama.running = true;
 
-        // GitHub Models (Static fallback/simulation as before since listing is complex)
-        if (getStoredApiKey("GITHUB_TOKEN")) {
-            pendingFetches++;
-            fetchProcessGithub.command = ["echo", '{"data": [{"id": "gpt-4o"}, {"id": "gpt-4o-mini"}]}'];
-            fetchProcessGithub.running = true;
-        }
+        // Check LiteLLM for locally configured models
+        pendingFetches++;
+        fetchProcessLiteLLM.command = ["bash", "-c", "curl -s --max-time 1 http://127.0.0.1:4000/v1/models"];
+        fetchProcessLiteLLM.running = true;
 
-        // Check LiteLLM for locally configured models (especially when Gemini key isn't available)
-        if (pendingFetches === 0 || !geminiKey) {
-            pendingFetches++;
-            fetchProcessLiteLLM.command = ["bash", "-c", "curl -s http://127.0.0.1:4000/v1/models"];
-            fetchProcessLiteLLM.running = true;
+        if (pendingFetches === 0) {
+            fetchingModels = false;
+            tryRestore();
+            if (!currentModel && models.length > 0) {
+                currentModel = models[0];
+                isRestored = true;
+            } else if (!isRestored && currentModel) {
+                isRestored = true;
+            }
         }
     }
 

@@ -49,9 +49,8 @@
     vscode antigravity kiro lmstudio
     
     # Terminal enhancements and fun tools
-    bottom btop tree dialog fzf
-    fortune cowsay lolcat figlet
-    cmatrix sl toilet boxes neofetch speedtest-cli curl
+    btop tree dialog fzf
+    figlet speedtest-cli curl
     yq mc ranger
 
     # Python Environment

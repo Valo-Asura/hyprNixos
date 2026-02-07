@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.globals
+import qs.modules.services
 import qs.config
 
 Item {
@@ -127,6 +128,10 @@ Item {
                             sectionId: "prefixes"
                         }
                         SectionButton {
+                            text: "AI"
+                            sectionId: "ai"
+                        }
+                        SectionButton {
                             text: "Weather"
                             sectionId: "weather"
                         }
@@ -141,6 +146,271 @@ Item {
                         SectionButton {
                             text: "Idle"
                             sectionId: "idle"
+                        }
+                    }
+
+                    // =====================
+                    // AI SECTION
+                    // =====================
+                    ColumnLayout {
+                        visible: root.currentSection === "ai"
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            text: "AI"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            font.weight: Font.Medium
+                            color: Colors.overSurfaceVariant
+                            Layout.bottomMargin: -4
+                        }
+
+                        Text {
+                            text: "Configure Ambxst AI defaults and API keys"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-2)
+                            color: Colors.overSurfaceVariant
+                            opacity: 0.7
+                        }
+
+                        function updateApiKey(keyId, value) {
+                            let updated = Config.ai && Config.ai.apiKeys ? JSON.parse(JSON.stringify(Config.ai.apiKeys)) : ({});
+                            updated[keyId] = value;
+                            if (Config.ai) {
+                                Config.ai.apiKeys = updated;
+                                Config.saveAi();
+                            }
+                            if (StateService.initialized) {
+                                StateService.set("aiApiKeys", updated);
+                            }
+                            Ai.fetchAvailableModels(true);
+                        }
+
+                        // Default model
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "Default Model"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                color: Colors.overBackground
+                                Layout.preferredWidth: 140
+                            }
+
+                            StyledRect {
+                                variant: "common"
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 36
+                                radius: Styling.radius(-2)
+
+                                TextInput {
+                                    id: defaultModelInput
+                                    anchors.fill: parent
+                                    anchors.margins: 8
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                    color: Colors.overBackground
+                                    selectByMouse: true
+                                    clip: true
+                                    verticalAlignment: TextInput.AlignVCenter
+
+                                    readonly property string configValue: Config.ai.defaultModel
+
+                                    onConfigValueChanged: {
+                                        if (text !== configValue) {
+                                            text = configValue;
+                                        }
+                                    }
+
+                                    Component.onCompleted: text = configValue
+
+                                    onEditingFinished: {
+                                        if (Config.ai && text.trim() !== Config.ai.defaultModel) {
+                                            Config.ai.defaultModel = text.trim();
+                                            Config.saveAi();
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: !defaultModelInput.text && !defaultModelInput.activeFocus
+                                        text: "e.g. gpt-4o-mini"
+                                        font: defaultModelInput.font
+                                        color: Colors.overSurfaceVariant
+                                    }
+                                }
+                            }
+                        }
+
+                        // System prompt
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Text {
+                                text: "System Prompt"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                color: Colors.overBackground
+                            }
+
+                            StyledRect {
+                                variant: "common"
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 120
+                                radius: Styling.radius(-2)
+
+                                TextArea {
+                                    id: systemPromptInput
+                                    anchors.fill: parent
+                                    anchors.margins: 8
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                    color: Colors.overBackground
+                                    wrapMode: TextEdit.Wrap
+
+                                    readonly property string configValue: Config.ai.systemPrompt
+
+                                    onConfigValueChanged: {
+                                        if (text !== configValue) {
+                                            text = configValue;
+                                        }
+                                    }
+
+                                    Component.onCompleted: text = configValue
+
+                                    onActiveFocusChanged: {
+                                        if (!activeFocus && Config.ai && text !== Config.ai.systemPrompt) {
+                                            Config.ai.systemPrompt = text;
+                                            Config.saveAi();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // OpenAI Key
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "OpenAI Key"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                color: Colors.overBackground
+                                Layout.preferredWidth: 140
+                            }
+
+                            StyledRect {
+                                variant: "common"
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 36
+                                radius: Styling.radius(-2)
+
+                                TextInput {
+                                    id: openAiKeyInput
+                                    anchors.fill: parent
+                                    anchors.margins: 8
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                    color: Colors.overBackground
+                                    echoMode: TextInput.Password
+                                    selectByMouse: true
+                                    clip: true
+                                    verticalAlignment: TextInput.AlignVCenter
+
+                                    readonly property string configValue: (Config.ai && Config.ai.apiKeys) ? (Config.ai.apiKeys.OPENAI_API_KEY || "") : ""
+
+                                    onConfigValueChanged: {
+                                        if (text !== configValue) {
+                                            text = configValue;
+                                        }
+                                    }
+
+                                    Component.onCompleted: text = configValue
+
+                                    onEditingFinished: {
+                                        updateApiKey("OPENAI_API_KEY", text.trim());
+                                    }
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: !openAiKeyInput.text && !openAiKeyInput.activeFocus
+                                        text: "sk-..."
+                                        font: openAiKeyInput.font
+                                        color: Colors.overSurfaceVariant
+                                    }
+                                }
+                            }
+                        }
+
+                        // Gemini Key
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "Gemini Key"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                color: Colors.overBackground
+                                Layout.preferredWidth: 140
+                            }
+
+                            StyledRect {
+                                variant: "common"
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 36
+                                radius: Styling.radius(-2)
+
+                                TextInput {
+                                    id: geminiKeyInput
+                                    anchors.fill: parent
+                                    anchors.margins: 8
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                    color: Colors.overBackground
+                                    echoMode: TextInput.Password
+                                    selectByMouse: true
+                                    clip: true
+                                    verticalAlignment: TextInput.AlignVCenter
+
+                                    readonly property string configValue: (Config.ai && Config.ai.apiKeys) ? (Config.ai.apiKeys.GEMINI_API_KEY || "") : ""
+
+                                    onConfigValueChanged: {
+                                        if (text !== configValue) {
+                                            text = configValue;
+                                        }
+                                    }
+
+                                    Component.onCompleted: text = configValue
+
+                                    onEditingFinished: {
+                                        updateApiKey("GEMINI_API_KEY", text.trim());
+                                    }
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: !geminiKeyInput.text && !geminiKeyInput.activeFocus
+                                        text: "AIza..."
+                                        font: geminiKeyInput.font
+                                        color: Colors.overSurfaceVariant
+                                    }
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "Tip: You can also set keys via chat with `/key openai sk-...`"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-2)
+                            color: Colors.overSurfaceVariant
+                            opacity: 0.7
+                            wrapMode: Text.WordWrap
                         }
                     }
 

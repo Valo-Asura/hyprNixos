@@ -34,13 +34,27 @@ nixos-laptop/
 - 🛠️ **Developer Friendly**: Direnv, modern CLI tools, and sanity
 - 🎨 **Actually Pretty**: Dark theme that won't burn your retinas
 
-## 🧠 Local AI (LM Studio)
+## 🧠 Ambxst AI (Cloud + Local)
 
-Quick path to run Ambxst AI against a local LM Studio model:
+**Default model:** `gpt-4o-mini`  
+**Auto fallback:** If OpenAI hits rate limits and Gemini is available, Ambxst switches to Gemini automatically.
+
+**Set API keys (recommended)**
+- In Ambxst chat, run: `/key openai sk-...`
+- Optional Gemini fallback: `/key gemini <key>`
+- Keys are stored in `~/.config/Ambxst/config/ai.json`
+
+**If key saving fails (permission denied)**
+```bash
+sudo chown -R $USER:$USER ~/.config/Ambxst
+```
+
+**Local AI (LM Studio)**
 - Guide: `/home/asura/Downloads/AMBXST_LMSTUDIO_GUIDE.md`
 - Config files:
   - `/etc/nixos/asuraLaptop/ambxst/modules/services/ai/litellm_config.yaml`
-  - `/etc/nixos/asuraLaptop/ambxst/ai.json`
+  - `/etc/nixos/asuraLaptop/ambxst/ai.json` (repo defaults)
+  - `~/.config/Ambxst/config/ai.json` (user overrides)
 
 ## 🖼️ Ambxst Wallpapers
 
@@ -195,7 +209,7 @@ code                 # Launch Kiro
 
 ## 🤖 Ambxst + OpenClaw AI
 
-If you want the AI dashboard working out of the box (Ambxst → LiteLLM → OpenClaw), follow the noob‑friendly guide:
+If you want the AI dashboard working out of the box (Ambxst → LiteLLM → OpenClaw), follow:
 
 `docs/AMBXST_OPENCLAW_GUIDE.md`
 

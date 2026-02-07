@@ -269,7 +269,7 @@ Popup {
                     if (!confirming) {
                         confirming = true;
                     } else {
-                        Ai.fetchAvailableModels();
+                        Ai.fetchAvailableModels(true);
                         confirming = false;
                     }
                 }

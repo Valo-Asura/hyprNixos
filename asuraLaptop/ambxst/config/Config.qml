@@ -3279,6 +3279,12 @@ Singleton {
             var current = JSON.parse(raw);
             var validated = ConfigValidator.validate(current, defaults);
 
+            if (name === "ai") {
+                if (validated.apiKeys === undefined || validated.apiKeys === null) {
+                    validated.apiKeys = {};
+                }
+            }
+
             if (JSON.stringify(current) !== JSON.stringify(validated)) {
                 console.log("Merging and updating " + name + ".json...");
                 rawLoader.setText(JSON.stringify(validated, null, 4));

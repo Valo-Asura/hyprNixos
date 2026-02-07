@@ -23,12 +23,56 @@ if command -v litellm >/dev/null; then
 	REPO_ROOT=$(dirname "$SCRIPT_DIR")
 	CONFIG_PATH="$REPO_ROOT/modules/services/ai/litellm_config.yaml"
 
-	# Load Gemini API key from sops-managed secret if present
+	# Load API keys from sops-managed secrets if present
 	if [ -r /run/secrets/GEMINI_API_KEY ]; then
 		export GEMINI_API_KEY
 		GEMINI_API_KEY="$(cat /run/secrets/GEMINI_API_KEY)"
-	else
-		echo "Warning: /run/secrets/GEMINI_API_KEY not readable; Gemini will fail"
+	fi
+	if [ -r /run/secrets/OPENAI_API_KEY ]; then
+		export OPENAI_API_KEY
+		OPENAI_API_KEY="$(cat /run/secrets/OPENAI_API_KEY)"
+	fi
+
+	# Fallback: load keys from user config (set via /key)
+	if { [ -z "${GEMINI_API_KEY:-}" ] || [ -z "${OPENAI_API_KEY:-}" ]; } && command -v jq >/dev/null 2>&1; then
+		AI_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/Ambxst/config/ai.json"
+		if [ -r "$AI_CONFIG" ]; then
+			if [ -z "${GEMINI_API_KEY:-}" ]; then
+				GEMINI_API_KEY="$(jq -r '.apiKeys.GEMINI_API_KEY // empty' "$AI_CONFIG")"
+				if [ -n "$GEMINI_API_KEY" ]; then
+					export GEMINI_API_KEY
+				fi
+			fi
+			if [ -z "${OPENAI_API_KEY:-}" ]; then
+				OPENAI_API_KEY="$(jq -r '.apiKeys.OPENAI_API_KEY // empty' "$AI_CONFIG")"
+				if [ -n "$OPENAI_API_KEY" ]; then
+					export OPENAI_API_KEY
+				fi
+			fi
+		fi
+	fi
+
+	# Fallback: load keys from Ambxst state if config is read-only
+	if { [ -z "${GEMINI_API_KEY:-}" ] || [ -z "${OPENAI_API_KEY:-}" ]; } && command -v jq >/dev/null 2>&1; then
+		STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/Ambxst/states.json"
+		if [ -r "$STATE_FILE" ]; then
+			if [ -z "${GEMINI_API_KEY:-}" ]; then
+				GEMINI_API_KEY="$(jq -r '.aiApiKeys.GEMINI_API_KEY // empty' "$STATE_FILE")"
+				if [ -n "$GEMINI_API_KEY" ]; then
+					export GEMINI_API_KEY
+				fi
+			fi
+			if [ -z "${OPENAI_API_KEY:-}" ]; then
+				OPENAI_API_KEY="$(jq -r '.aiApiKeys.OPENAI_API_KEY // empty' "$STATE_FILE")"
+				if [ -n "$OPENAI_API_KEY" ]; then
+					export OPENAI_API_KEY
+				fi
+			fi
+		fi
+	fi
+
+	if [ -z "${GEMINI_API_KEY:-}" ]; then
+		echo "Warning: GEMINI_API_KEY not set; Gemini models will fail"
 	fi
 
 	if [ -f "$CONFIG_PATH" ]; then

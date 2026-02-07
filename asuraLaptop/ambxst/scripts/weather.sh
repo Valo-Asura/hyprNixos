@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH="/run/current-system/sw/bin:/etc/profiles/per-user/${USER:-}/bin:$PATH"
+
 # Weather fetching script for Ambxst
 # Usage: weather.sh [location]
 # If no location is provided, uses GeoIP to determine location
@@ -57,7 +59,7 @@ geocode_city() {
 	encoded_city=$(echo -n "$city" | jq -sRr @uri)
 
 	local response
-	response=$(http_get "https://geocoding-api.open-meteo.com/v1/search?name=${encoded_city}")
+	response=$(http_get "https://geocoding-api.open-meteo.com/v1/search?name=${encoded_city}&count=1&language=en&format=json")
 
 	if [[ -z "$response" ]]; then
 		echo '{"error": "Geocoding request failed"}'
@@ -123,9 +125,23 @@ main() {
 		# Location is a city name, geocode it
 		coords=$(geocode_city "$LOCATION")
 		if [[ "$coords" == "{"* ]]; then
-			# It's an error JSON
-			echo "$coords"
-			exit 1
+			# Try a simpler city-only query if input contains commas
+			if [[ "$LOCATION" == *","* ]]; then
+				local city_only
+				city_only=$(echo "$LOCATION" | awk -F',' '{print $1}' | xargs)
+				if [[ -n "$city_only" ]]; then
+					coords=$(geocode_city "$city_only")
+				fi
+			fi
+		fi
+
+		if [[ "$coords" == "{"* ]]; then
+			# Fallback to GeoIP if geocoding failed
+			coords=$(get_geoip_coords)
+			if [[ "$coords" == "{"* ]]; then
+				echo "$coords"
+				exit 1
+			fi
 		fi
 	fi
 

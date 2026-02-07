@@ -22,7 +22,7 @@ PanelWindow {
     color: "transparent"
 
     property string wallpaperDir: wallpaperConfig.adapter.wallPath
-    property string fallbackDir: decodeURIComponent(Qt.resolvedUrl("../../../../assets/wallpapers_example").toString().replace("file://", ""))
+    property string fallbackDir: Quickshell.env("HOME") + "/Pictures/wallpaper"
     property var wallpaperPaths: []
     property var subfolderFilters: []
     property int currentIndex: 0
@@ -67,6 +67,27 @@ PanelWindow {
     property list<string> colorPresets: []
     onColorPresetsChanged: console.log("Color Presets Updated:", colorPresets)
     property string activeColorPreset: wallpaperConfig.adapter.activeColorPreset || ""
+
+    Process {
+        id: ensureFallbackDir
+        running: false
+        command: ["mkdir", "-p", fallbackDir]
+    }
+
+    Process {
+        id: checkWallPath
+        property string pathToCheck: ""
+        running: false
+        onExited: function (exitCode) {
+            if (exitCode !== 0) {
+                console.log("Wallpaper directory missing, switching to fallback:", fallbackDir);
+                ensureFallbackDir.running = true;
+                if (wallpaperConfig.adapter.wallPath !== fallbackDir) {
+                    wallpaperConfig.adapter.wallPath = fallbackDir;
+                }
+            }
+        }
+    }
 
     // React to light/dark mode changes
     property bool isLightMode: Config.theme.lightMode
@@ -375,6 +396,7 @@ PanelWindow {
         
         GlobalStates.wallpaperManager = wallpaper;
 
+        ensureFallbackDir.running = true;
         // Verificar si existe wallpapers.json, si no, crear con fallback
         checkWallpapersJson.running = true;
 
@@ -403,6 +425,9 @@ PanelWindow {
             if (!wallpaperConfig.adapter.wallPath) {
                 console.log("Loaded config but wallPath is empty, using fallback");
                 wallpaperConfig.adapter.wallPath = fallbackDir;
+            } else {
+                checkWallPath.command = ["test", "-d", wallpaperConfig.adapter.wallPath];
+                checkWallPath.running = true;
             }
         }
 
@@ -458,6 +483,8 @@ PanelWindow {
             onWallPathChanged: {
                 if (wallPath) {
                     console.log("Config wallPath updated:", wallPath);
+                    checkWallPath.command = ["test", "-d", wallPath];
+                    checkWallPath.running = true;
                     
                     // Initialize scanning on first valid wallPath load
                     if (!wallpaper._wallpaperDirInitialized && GlobalStates.wallpaperManager === wallpaper) {

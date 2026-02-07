@@ -17,6 +17,8 @@ QtObject {
     property bool dataAvailable: false
     property bool isLoading: false
     property bool hasFailed: false
+    property string lastLocation: ""
+    property bool cityFallbackUsed: false
 
     // 7-day forecast data
     property var forecast: []
@@ -364,6 +366,17 @@ QtObject {
 
                         // Check for error from script
                         if (data.error) {
+                            var errText = String(data.error).toLowerCase();
+                            if (!root.cityFallbackUsed && errText.includes("city not found")) {
+                                var fallback = root.getCityOnly(root.lastLocation);
+                                if (fallback.length > 0 && fallback !== root.lastLocation) {
+                                    root.cityFallbackUsed = true;
+                                    console.warn("WeatherService: City not found. Retrying with '" + fallback + "'");
+                                    weatherProcess.command = [root.scriptPath, fallback];
+                                    weatherProcess.running = true;
+                                    return;
+                                }
+                            }
                             console.warn("WeatherService:", data.error);
                             root.dataAvailable = false;
                             root.handleError();
@@ -496,6 +509,12 @@ QtObject {
         updateWeather();
     }
 
+    function getCityOnly(location) {
+        if (!location || location.indexOf(",") === -1)
+            return "";
+        return location.split(",")[0].trim();
+    }
+
     function updateWeather() {
         // Cancel existing process if running
         if (weatherProcess.running) {
@@ -514,6 +533,8 @@ QtObject {
 
         var locationStr = Config.weather.location || "";
         var location = locationStr.trim();
+        root.lastLocation = location;
+        root.cityFallbackUsed = false;
         
         console.log("WeatherService: Fetching weather for '" + location + "'");
         
