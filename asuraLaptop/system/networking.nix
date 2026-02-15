@@ -43,14 +43,16 @@
   # systemd-resolved for fast DNS with caching
   services.resolved = {
     enable = true;
-    dnssec = "allow-downgrade";
-    domains = [ "~." ];
-    fallbackDns = [
-      "1.1.1.1"       # Cloudflare
-      "8.8.8.8"       # Google
-      "1.0.0.1"
-      "8.8.4.4"
-    ];
-    dnsovertls = "opportunistic";
+    settings.Resolve = {
+      DNSSEC = "allow-downgrade";
+      Domains = [ "~." ];
+      FallbackDNS = [
+        "1.1.1.1"       # Cloudflare
+        "8.8.8.8"       # Google
+        "1.0.0.1"
+        "8.8.4.4"
+      ];
+      DNSOverTLS = "opportunistic";
+    };
   };
 }
