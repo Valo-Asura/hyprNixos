@@ -3,12 +3,15 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+<<<<<<< HEAD
     # Separate pin for ollama ≥0.20 (gemma4 support) without touching main nixpkgs
     nixpkgs-ollama.url = "github:NixOS/nixpkgs/nixos-unstable";
     lanzaboote = {
       url = "github:nix-community/lanzaboote/v1.0.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+=======
+>>>>>>> 885a97f (NixOS performance optimizations & ambxst widget fixes)
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -18,7 +21,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland = {
+<<<<<<< HEAD
       url = "github:hyprwm/Hyprland?ref=v0.55.0";
+=======
+      url = "github:hyprwm/Hyprland";
+>>>>>>> 885a97f (NixOS performance optimizations & ambxst widget fixes)
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland-plugins = {
@@ -27,8 +34,14 @@
     };
     hyprpaper.url = "github:hyprwm/hyprpaper";
     hyprpolkitagent.url = "github:hyprwm/hyprpolkitagent";
+<<<<<<< HEAD
 
     vibeshell.url = "path:/etc/nixos/asuraPc/vibeshell";
+=======
+    
+    ambxst.url = "path:/etc/nixos/asuraLaptop/ambxst";
+    zen-browser.url = "github:youwen5/zen-browser-flake";
+>>>>>>> 885a97f (NixOS performance optimizations & ambxst widget fixes)
 
     # Secrets management
     sops-nix = {
@@ -36,6 +49,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+<<<<<<< HEAD
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
   };
 
@@ -52,4 +66,21 @@
     {
       nixosConfigurations = import ./hosts { inherit inputs system; };
     };
+=======
+    # OpenClaw (AI gateway)
+    nix-openclaw = {
+      url = "github:openclaw/nix-openclaw";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+  };
+
+  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+  let
+    system = "x86_64-linux";
+  in {
+    nixosConfigurations = import ./hosts { inherit inputs system; };
+  };
+>>>>>>> 885a97f (NixOS performance optimizations & ambxst widget fixes)
 }

@@ -1,14 +1,23 @@
 # System configuration
+<<<<<<< HEAD
 { inputs, hostname, username, lib, ... }:
 
 {
   imports = [
     ../asuraPc/system/default.nix
+=======
+{ inputs, hostname, username, ... }:
+
+{
+  imports = [
+    ../asuraLaptop/system/default.nix
+>>>>>>> 885a97f (NixOS performance optimizations & ambxst widget fixes)
   ];
 
   # System-wide configuration
   networking.hostName = hostname;
   
+<<<<<<< HEAD
   # Nix daemon settings
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
@@ -22,3 +31,11 @@
   nixpkgs.config.allowInsecurePredicate = pkg:
     builtins.elem (lib.getName pkg) [ "broadcom-sta" ];
 }
+=======
+  # Enable flakes
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+}
+>>>>>>> 885a97f (NixOS performance optimizations & ambxst widget fixes)

@@ -17,6 +17,7 @@
     stateVersion = "25.11";
   };
 
+<<<<<<< HEAD
   xdg.userDirs = {
     enable = true;
     # Keep the pre-26.05 behavior explicit and silence the Home Manager warning.
@@ -31,6 +32,9 @@
     Name=NetworkManager Applet
     Hidden=true
   '';
+=======
+  xdg.userDirs.enable = true;
+>>>>>>> 885a97f (NixOS performance optimizations & ambxst widget fixes)
 
   # Let Home Manager install and manage itself
   programs.home-manager.enable = true;

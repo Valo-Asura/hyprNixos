@@ -20,10 +20,17 @@ in {
   xdg.mimeApps = {
     enable = true;
     defaultApplications = archiveDefaults // {
+<<<<<<< HEAD
       "inode/directory" = "thunar.desktop";
     };
     associations.added = archiveDefaults // {
       "inode/directory" = "thunar.desktop";
+=======
+      "inode/directory" = "nemo.desktop";
+    };
+    associations.added = archiveDefaults // {
+      "inode/directory" = "nemo.desktop";
+>>>>>>> 885a97f (NixOS performance optimizations & ambxst widget fixes)
     };
   };
 
