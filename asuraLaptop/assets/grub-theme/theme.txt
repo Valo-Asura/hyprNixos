@@ -1,0 +1,45 @@
+# Simple GRUB theme (Ambxst-inspired)
+
+# Background
++ canvas {
++  left = 0
++  top = 0
++  width = 100%
++  height = 100%
++  image = "background.png"
++}
+
+# Title
++ label {
++  left = 5%
++  top = 5%
++  text = "NixOS"
++  font = "DejaVu Sans Bold 28"
++  color = "#ebdbb2"
++}
+
+# Boot menu
++ boot_menu {
++  left = 20%
++  top = 30%
++  width = 60%
++  height = 45%
++
++  item_font = "DejaVu Sans 18"
++  item_color = "#d5c4a1"
++  item_height = 36
++  item_spacing = 8
++
++  selected_item_font = "DejaVu Sans Bold 18"
++  selected_item_color = "#1d2021"
++  selected_item_background = "#fabd2f"
++}
+
+# Footer hint
++ label {
++  left = 5%
++  top = 92%
++  text = "Use arrows to select, Enter to boot"
++  font = "DejaVu Sans 14"
++  color = "#bdae93"
++}

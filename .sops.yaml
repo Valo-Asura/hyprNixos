@@ -1,0 +1,5 @@
+creation_rules:
+  - path_regex: asuraLaptop/secrets/.*\.ya?ml$
+    key_groups:
+      - age:
+          - age1cmkjvpg80fwgxtn5q4gekpjvs9m44tgqefuus2vn04tf8vckldsq84sf09
