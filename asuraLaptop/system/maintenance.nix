@@ -4,11 +4,17 @@
 {
   # Nix Configuration
   nix = {
-    settings.experimental-features = [ "nix-command" "flakes" ];
+    settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      auto-optimise-store = true;   # hard-link identical files on every build
+      keep-outputs = false;          # don't retain build outputs after GC
+      keep-derivations = false;      # don't retain .drv files after GC
+    };
+    optimise.automatic = true;       # periodic store optimisation pass
     gc = {
       automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 7d";
+      dates = "daily";
+      options = "--delete-older-than 3d";
     };
   };
 

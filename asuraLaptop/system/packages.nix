@@ -24,7 +24,7 @@
 
     # Desktop Environment
     waybar swaybg swww wlogout xdg-utils
-    swaylock networkmanager tuigreet
+    networkmanager tuigreet  # removed swaylock (using hyprlock)
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-user-dirs
 
     # Ambxst required packages (system-level integration; core deps come from Ambxst package)
@@ -38,20 +38,18 @@
     vlc librewolf
 
     # Hyprland Panel Dependencies
-    bluez dart-sass
+    bluez
     hyprsunset hypridle
 
     # Development
     wget git eza bat fd ripgrep direnv nixfmt nil inter
     sops
 
-    # ide
-    vscode antigravity kiro lmstudio
-    
-    # Terminal enhancements and fun tools
-    btop tree dialog fzf
-    figlet speedtest-cli curl
-    yq mc ranger
+    # IDE
+    vscode antigravity kiro
+
+    # Terminal enhancements
+    btop tree dialog fzf curl yq
 
     # Python Environment
     (python311.withPackages (ps: with ps; [

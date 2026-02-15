@@ -148,8 +148,8 @@ GPU_LOW=60
   systemd.timers.fan-boost-auto = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnBootSec = "20s";
-      OnUnitActiveSec = "15s";
+      OnBootSec = "30s";
+      OnUnitActiveSec = "30s";  # was 15s — temps don't change that fast
       Unit = "fan-boost-auto.service";
     };
   };
