@@ -119,7 +119,7 @@ ShellRoot {
             Timer {
                 id: notchDelayTimer
                 property bool triggered: false
-                interval: 50
+                interval: 200  // increased from 50ms — let bar fully render first
                 running: true
                 onTriggered: triggered = true
             }
@@ -138,7 +138,8 @@ ShellRoot {
 
         Loader {
             id: overviewLoader
-            active: Config.overview?.enabled ?? true
+            // Deferred: loads on first use instead of startup
+            active: (Config.overview?.enabled ?? true) && deferredInitTimer.triggered
             required property ShellScreen modelData
             sourceComponent: OverviewPopup {
                 screen: overviewLoader.modelData
@@ -158,7 +159,7 @@ ShellRoot {
 
         Loader {
             id: presetsLoader
-            active: true
+            active: deferredInitTimer.triggered  // deferred from startup
             required property ShellScreen modelData
             sourceComponent: PresetsPopup {
                 screen: presetsLoader.modelData
@@ -233,7 +234,7 @@ ShellRoot {
 
         Loader {
             id: screenshotOverlayLoader
-            active: true
+            active: deferredInitTimer.triggered  // deferred from startup
             required property ShellScreen modelData
             sourceComponent: ScreenshotOverlay {
                 targetScreen: screenshotOverlayLoader.modelData
@@ -242,10 +243,10 @@ ShellRoot {
     }
 
 
-    // Screen Record Tool
+    // Screen Record Tool (deferred — loads on demand)
     Loader {
         id: screenRecordLoader
-        active: true
+        active: GlobalStates.screenRecordToolVisible
         source: "modules/tools/ScreenrecordTool.qml"
         
         Connections {
@@ -272,10 +273,10 @@ ShellRoot {
         }
     }
 
-    // Mirror Tool
+    // Mirror Tool (deferred — loads on demand)
     Loader {
         id: mirrorLoader
-        active: true
+        active: deferredInitTimer.triggered
         source: "modules/tools/MirrorWindow.qml"
     }
 
@@ -287,18 +288,28 @@ ShellRoot {
         }
     }
 
-    // Force initialization of control services at startup
-    QtObject {
-        id: serviceInitializer
-        
-        Component.onCompleted: {
+    // Deferred init timer — non-critical modules load after 500ms
+    Timer {
+        id: deferredInitTimer
+        property bool triggered: false
+        interval: 500
+        running: true
+        onTriggered: triggered = true
+    }
+
+    // Force initialization of control services (deferred to reduce startup load)
+    Timer {
+        id: serviceInitTimer
+        interval: 500
+        running: true
+        onTriggered: {
             // Reference the services to force their creation
             let _ = NightLightService.active
             _ = GameModeService.toggled
             _ = CaffeineService.inhibit
             _ = WeatherService.dataAvailable
             _ = SystemResources.cpuUsage
-            _ = IdleService.lockCmd // Force init
+            _ = IdleService.lockCmd
         }
     }
 }

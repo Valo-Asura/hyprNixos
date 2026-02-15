@@ -12,16 +12,17 @@
   zramSwap = {
     enable = true;
     algorithm = "zstd";
-    memoryPercent = 50;  # use up to 50% of RAM as compressed swap
+    memoryPercent = 25;  # 25% of 16GB = 4GB compressed swap (was 50% — too aggressive)
   };
 
   # ── Kernel sysctl tuning ────────────────────────────────────────
   boot.kernel.sysctl = {
     # VM / memory
-    "vm.swappiness" = 10;
+    "vm.swappiness" = 5;             # prefer RAM over zram swap
     "vm.vfs_cache_pressure" = 50;
     "vm.dirty_background_ratio" = 5;
     "vm.dirty_ratio" = 15;
+    "vm.page-cluster" = 0;                  # no readahead for zram (compressed, no seek)
     "vm.max_map_count" = 1048576;           # helps games / large apps
 
     # File descriptors & inotify (VS Code, IDE watchers)

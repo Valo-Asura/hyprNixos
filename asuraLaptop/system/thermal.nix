@@ -50,8 +50,6 @@
     lm_sensors     # Hardware monitoring (sensors command)
     acpi           # ACPI information
     powertop       # Power consumption analysis
-    htop           # Process monitoring with thermal info
-    stress         # CPU stress testing
   ];
   
   # Enable ACPI for better hardware control

@@ -49,6 +49,8 @@
       "nowatchdog"
       "nmi_watchdog=0"
       "split_lock_detect=off"
+      "tsc=reliable"            # skip TSC calibration on Intel
+      "cryptomgr.notests"       # skip crypto self-tests at boot
     ];
   };
 }
