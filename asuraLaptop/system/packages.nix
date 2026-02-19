@@ -17,10 +17,10 @@
     inputs.hyprpolkitagent.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # File Management & NTFS Support
-    nemo # Primary file manager
-    cinnamon-common # Nemo dependencies
+    thunar          # Lightweight GTK file manager (replaces nemo + cinnamon-common)
     xarchiver gvfs
-    ntfs3g exfat # Windows filesystem support
+    ntfs3g exfat    # Windows filesystem support
+
 
     # Desktop Environment
     waybar swaybg swww wlogout xdg-utils

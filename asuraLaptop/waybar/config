@@ -1,148 +1,214 @@
-{ 
+{
+  "layer": "top",
   "position": "top",
-  "exlusive": "true",
-  "passthrough": "true",
-  "gtk-layer-shell": "true",
-  "margin-top": 1,
-  "margin-left": 10,
-  "margin-right": 10,
-  "height": 41,
+  "exclusive": true,
+  "passthrough": false,
+  "gtk-layer-shell": true,
+  "margin-top": 6,
+  "margin-left": 12,
+  "margin-right": 12,
+  "height": 38,
+
   "modules-left": [
     "custom/weather",
+    "disk",
     "cpu",
-    "memory",
-    "disk"
+    "memory"
   ],
   "modules-center": [
     "hyprland/workspaces"
   ],
   "modules-right": [
-    "hyprland/language",
+    "mpris",
+    "network",
+    "bluetooth",
     "pulseaudio",
     "pulseaudio#microphone",
+    "battery",
+    "hyprland/language",
     "clock",
-    "separator",
     "tray"
   ],
 
+  // ── Left modules ────────────────────────────────────────────────────────────
 
-  "tray": {
-    "icon-size": 16,
-    "icon-theme": "Papirus",
-    "spacing": 2, 
+  "custom/weather": {
+    "exec": "~/.config/hypr/scripts/weather.sh",
+    "return-type": "json",
+    "interval": 600,
+    "format": "{text}",
+    "tooltip": true
   },
-   "custom/spacer": {
-        "format": " ", // Empty space
-        "tooltip": false
+
+  "cpu": {
+    "interval": 2,
+    "format": "<span color='#89b4fa'>󰍛</span> {usage}%",
+    "format-alt": "<span color='#89b4fa'>󰍛</span> {avg_frequency}GHz",
+    "tooltip": true,
+    "tooltip-format": "CPU: {usage}%\nFreq: {avg_frequency} GHz\nLoad: {load}"
   },
-  "separator": {
-    "format": " | "
+
+  "memory": {
+    "interval": 3,
+    "format": "<span color='#cba6f7'> </span> {used:0.1f}G",
+    "format-alt": "<span color='#cba6f7'> </span> {percentage}%",
+    "tooltip": true,
+    "tooltip-format": "RAM: {used:0.2f}G / {total:0.2f}G\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G"
   },
-  "hyprland/window": {
-    "format": "{}",
-    "max-length": 35,
-    "rewrite": {
-      "": "Harsh"
-    },
-    "separate-outputs": true
+
+  "disk": {
+    "interval": 30,
+    "path": "/home",
+    "format": "<span color='#a6e3a1'> </span> {free}",
+    "tooltip": true,
+    "tooltip-format": "/home: {used} used of {total} ({percentage_used}%)"
   },
+
+  // ── Center modules ──────────────────────────────────────────────────────────
+
   "hyprland/workspaces": {
     "format": "{icon}",
     "on-click": "activate",
     "format-icons": {
-      "1": "",
-      "2": "",
-      "3": "",
-      "4": "",
-      "5": "",
-      "6": "",
-      "7": "",
-      "8": "",
-      "9": "",
-      "active": "",
-      "urgent": "",
-      "persistent": "",
-      "focused": "",
-      "default": ""
-        },
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": "",
+      "5": "",
+      "6": "",
+      "7": "",
+      "8": "",
+      "9": "",
+      "active": "",
+      "urgent": "",
+      "persistent": "",
+      "focused": "",
+      "default": ""
+    },
     "sort-by-number": true,
     "persistent-workspaces": {
-      "*": 9,
-      "DP-1": 9
+      "*": 9
     }
   },
-  "clock": {
-    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
-    "format": "<span color='#89b4fa'>󰥔 </span><span color='#cdd6f4'>{:%H:%M | %a %d %b}</span>",
-    "format-alt": "{:%Y-%m-%d}"
+
+  // ── Right modules ───────────────────────────────────────────────────────────
+
+  "mpris": {
+    "format": "<span color='#f5c2e7'>󰎇</span> {artist} – {title}",
+    "format-paused": "<span color='#6c7086'>󰏤</span> {artist} – {title}",
+    "format-stopped": "",
+    "player-icons": {
+      "default": "▶",
+      "mpv": "🎵"
+    },
+    "status-icons": {
+      "paused": ""
+    },
+    "max-length": 32,
+    "tooltip": true,
+    "tooltip-format": "{player}: {title}\n{artist} — {album}"
   },
 
-  "cpu": {
-    "format": "<span color='#89b4fa'>󰍛</span> <span color='#cdd6f4'>{usage}%</span>",
-    "interval": 1,
-    "format-alt-click": "click",
-    "format-alt": "<span color='#00FF00'>{icon0}{icon1}{icon2}{icon3}</span> <span color='#FFFFFF'>{usage:>2}%</span> <span color='#00FF00'>󰍛</span>",
-    "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"],
-    "on-click": "gnome-system-monitor"
+  "network": {
+    "interval": 5,
+    "format-wifi": "<span color='#89dceb'>{icon}</span> {essid} {signalStrength}%",
+    "format-ethernet": "<span color='#89dceb'>󰈀</span> {ifname}",
+    "format-disconnected": "<span color='#f38ba8'>󰤭</span> offline",
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "tooltip": true,
+    "tooltip-format-wifi": "{essid}\nSignal: {signalStrength}%\nUp: {bandwidthUpBytes}  Down: {bandwidthDownBytes}",
+    "tooltip-format-ethernet": "{ifname}: {ipaddr}\nUp: {bandwidthUpBytes}  Down: {bandwidthDownBytes}",
+    "tooltip-format-disconnected": "No network connection",
+    "max-length": 30,
+    "on-click": "nm-connection-editor"
   },
-  "memory": {
-    "interval": 3,
-    "format": "<span color='#f38ba8'> </span> <span color='#cdd6f4'>{used:0.1f}G</span>"
+
+  "bluetooth": {
+    "format": "<span color='#89b4fa'>󰂯</span>",
+    "format-connected": "<span color='#89b4fa'>󰂱</span> {device_alias}",
+    "format-connected-battery": "<span color='#89b4fa'>󰂱</span> {device_alias} {device_battery_percentage}%",
+    "format-disabled": "<span color='#585b70'>󰂲</span>",
+    "tooltip": true,
+    "tooltip-format": "{controller_alias} [{status}]",
+    "tooltip-format-connected": "{controller_alias} [{status}]\n{num_connections} connected\n{device_enumerate}",
+    "tooltip-format-enumerate-connected": "  {device_alias}",
+    "tooltip-format-enumerate-connected-battery": "  {device_alias} {device_battery_percentage}%",
+    "on-click": "blueman-manager"
   },
-   
-
-"custom/weather": {
-    "exec": "~/.config/hypr/scripts/weather.sh",
-    "return-type": "json",
-    "interval": 600,
-    "format": "{text}"
-},
-
 
   "pulseaudio": {
-    "format": "<span color='#a6e3a1'>{icon} </span><span color='#cdd6f4'>{volume}%</span>",
-    "format-bluetooth": "<span color='#a6e3a1'>{icon}</span>  <span color='#cdd6f4'>{volume}%</span>",
-    "tooltip": false,
+    "format": "<span color='#a6e3a1'>{icon}</span> {volume}%",
+    "format-bluetooth": "<span color='#a6e3a1'>{icon}󰂯</span> {volume}%",
     "format-muted": "<span color='#f38ba8'>󰝟</span>",
-    "on-click": "wpctl set-mute @DEFAULT_SINK@ toggle",
-    "on-scroll-up": "wpctl set-volume @DEFAULT_SINK@ 10%+",
-    "on-scroll-down": "wpctl set-volume @DEFAULT_SINK@ 10%-",
     "format-icons": {
-      "headphone": "",
-      "hands-free": "",
-      "headset": "",
-      "phone": "",
-      "portable": "",
-      "car": "",
-      "default": [
-        "",
-        "",
-        "",
-      ]
-    }
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": ["", "", ""]
+    },
+    "tooltip": false,
+    "on-click": "wpctl set-mute @DEFAULT_SINK@ toggle",
+    "on-scroll-up": "wpctl set-volume -l 1.5 @DEFAULT_SINK@ 5%+",
+    "on-scroll-down": "wpctl set-volume @DEFAULT_SINK@ 5%-",
+    "on-click-right": "pavucontrol"
   },
+
   "pulseaudio#microphone": {
     "format": "{format_source}",
-    "format-source": "<span color='#f38ba8'> </span><span color='#cdd6f4'>{volume}%</span>",
-    "format-source-muted": "",
+    "format-source": "<span color='#f38ba8'> </span> {volume}%",
+    "format-source-muted": "<span color='#585b70'>󰍭</span>",
     "on-click": "wpctl set-mute @DEFAULT_SOURCE@ toggle",
     "on-scroll-up": "wpctl set-volume @DEFAULT_SOURCE@ 5%+",
     "on-scroll-down": "wpctl set-volume @DEFAULT_SOURCE@ 5%-",
+    "tooltip": false
   },
 
-   "hyprland/language": {
+  "battery": {
+    "interval": 10,
+    "states": {
+      "good": 90,
+      "warning": 30,
+      "critical": 15
+    },
+    "format": "{icon} {capacity}%",
+    "format-charging": "<span color='#a6e3a1'>󰂄</span> {capacity}%",
+    "format-plugged": "<span color='#a6e3a1'>󰚥</span> {capacity}%",
+    "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+    "tooltip": true,
+    "tooltip-format": "Battery: {capacity}%\n{timeTo}"
+  },
 
-  "format": "<span color='#f9e2af'>󰌌</span> <span color='#cdd6f4'>{}</span>",
+  "hyprland/language": {
+    "format": "<span color='#f9e2af'>󰌌</span> {}",
+    "format-en": "eng",
+    "format-ar": "ara"
+  },
 
-  "format-ar": "ara",
+  "clock": {
+    "format": "<span color='#89b4fa'>󰥔 </span>{:%H:%M}  {:%a %d %b}",
+    "format-alt": "{:%Y-%m-%d}",
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+    "calendar": {
+      "mode": "month",
+      "weeks-pos": "right",
+      "on-scroll": 1,
+      "format": {
+        "months":   "<span color='#f2d5cf'><b>{}</b></span>",
+        "days":     "<span color='#cdd6f4'><b>{}</b></span>",
+        "weeks":    "<span color='#94e2d5'><b>W{}</b></span>",
+        "weekdays": "<span color='#89b4fa'><b>{}</b></span>",
+        "today":    "<span color='#f38ba8'><b><u>{}</u></b></span>"
+      }
+    }
+  },
 
-  "format-en": "eng"
-
-},
-  "disk":{
-	"interval": 3,
-  "path": "/home",
-	"format": "<span color='#a6e3a1'> </span><span color='#cdd6f4'>{free}</span>",
-	"unit": "GB"
-}
+  "tray": {
+    "icon-size": 16,
+    "icon-theme": "Papirus-Dark",
+    "spacing": 4,
+    "show-passive-items": true
+  }
 }

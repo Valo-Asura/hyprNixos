@@ -6,8 +6,8 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1770456798,
-        "narHash": "sha256-LHWj8mS29BXEVlKIgAS10MAvvR59IW3N59fOk4UeVnw=",
+        "lastModified": 1771140857,
+        "narHash": "sha256-BgvosMizekwbjY0TFXhj/Tr6UKQulbtSmrjJIIFkv5E=",
         "path": "/etc/nixos/asuraLaptop/ambxst",
         "type": "path"
       },

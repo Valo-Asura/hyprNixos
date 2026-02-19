@@ -367,21 +367,13 @@ PanelWindow {
 
             console.log("Using source for matugen:", matugenSource, "(type:", fileType + ")");
 
-            // Ejecutar matugen con configuración específica
+            // Single matugen invocation with config — avoids parallel race condition and halves CPU spike
             var commandWithConfig = ["matugen", "image", matugenSource, "-c", decodeURIComponent(Qt.resolvedUrl("../../../../assets/matugen/config.toml").toString().replace("file://", "")), "-t", wallpaperConfig.adapter.matugenScheme];
             if (Config.theme.lightMode) {
                 commandWithConfig.push("-m", "light");
             }
             matugenProcessWithConfig.command = commandWithConfig;
             matugenProcessWithConfig.running = true;
-
-            // Ejecutar matugen normal en paralelo
-            var commandNormal = ["matugen", "image", matugenSource, "-t", wallpaperConfig.adapter.matugenScheme];
-            if (Config.theme.lightMode) {
-                commandNormal.push("-m", "light");
-            }
-            matugenProcessNormal.command = commandNormal;
-            matugenProcessNormal.running = true;
         }
     }
 
@@ -549,31 +541,6 @@ PanelWindow {
         }
     }
 
-    Process {
-        id: matugenProcessNormal
-        running: false
-        command: []
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.length > 0) {
-                    console.log("Matugen (normal) output:", text);
-                }
-            }
-        }
-
-        stderr: StdioCollector {
-            onStreamFinished: {
-                if (text.length > 0) {
-                    console.warn("Matugen (normal) error:", text);
-                }
-            }
-        }
-
-        onExited: {
-            console.log("Matugen normal finished");
-        }
-    }
 
     // Proceso para generar thumbnails de videos
     Process {

@@ -280,9 +280,25 @@ class SystemMonitor:
 if __name__ == "__main__":
     monitor = SystemMonitor()
 
-    # Arguments: disks to monitor (space separated)
-    # If no args, default to /
-    disks_to_monitor = sys.argv[1:] if len(sys.argv) > 1 else ["/"]
+    # Arguments: [--interval SECONDS] [disk1 disk2 ...]
+    args = sys.argv[1:]
+    interval = 3.0
+    disks_to_monitor = []
+
+    i = 0
+    while i < len(args):
+        if args[i] == "--interval" and i + 1 < len(args):
+            try:
+                interval = float(args[i + 1])
+            except ValueError:
+                pass
+            i += 2
+        else:
+            disks_to_monitor.append(args[i])
+            i += 1
+
+    if not disks_to_monitor:
+        disks_to_monitor = ["/"]
 
     # Main loop
     try:
@@ -319,7 +335,7 @@ if __name__ == "__main__":
             }
 
             print(json.dumps(data), flush=True)
-            time.sleep(2)
+            time.sleep(interval)
 
     except KeyboardInterrupt:
         sys.exit(0)

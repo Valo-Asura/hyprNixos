@@ -1,195 +1,311 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Waybar — Catppuccin Mocha  |  Pill-group layout  |  Smooth transitions
+   ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Palette variables ────────────────────────────────────────────────────── */
+@define-color base      #1e1e2e;
+@define-color mantle    #181825;
+@define-color crust     #11111b;
+@define-color surface0  #313244;
+@define-color surface1  #45475a;
+@define-color surface2  #585b70;
+@define-color overlay0  #6c7086;
+@define-color overlay1  #7f849c;
+@define-color text      #cdd6f4;
+@define-color subtext0  #a6adc8;
+
+@define-color blue      #89b4fa;
+@define-color lavender  #b4befe;
+@define-color green     #a6e3a1;
+@define-color teal      #94e2d5;
+@define-color sapphire  #74c7ec;
+@define-color sky       #89dceb;
+@define-color peach     #fab387;
+@define-color yellow    #f9e2af;
+@define-color maroon    #eba0ac;
+@define-color red       #f38ba8;
+@define-color pink      #f5c2e7;
+@define-color mauve     #cba6f7;
+
+/* ── Reset ────────────────────────────────────────────────────────────────── */
 * {
     border: none;
-    border-radius: 10px;
-    font-family: "JetBrainsMono Nerd Font";
+    border-radius: 0;
+    font-family: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
     font-weight: bold;
     font-size: 12px;
     min-height: 0;
+    transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
+/* ── Window ───────────────────────────────────────────────────────────────── */
 window#waybar {
-    background: rgba(21, 18, 27, 0);
-    color: #cdd6f4;
+    background: transparent;
+    color: @text;
 }
 
+/* ── Tooltip ──────────────────────────────────────────────────────────────── */
 tooltip {
-    background: #000000;
-    border-radius: 7px;
-    border-width: 2.5px;
-    border-style: solid;
-    border-color: #8aadf4;
-    padding-right: 5px;
-    padding-left: 5px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    background:    @base;
+    border:        1.5px solid @surface1;
+    border-radius: 10px;
+    padding:       6px 10px;
+    color:         @text;
+    font-size:     11px;
+    font-weight:   normal;
 }
 
-
-
-#workspaces button {
-    color: #313244;
-    margin-right: 5px;
-    padding-right: 0px;
-    padding-left: 0px;
+tooltip label {
+    color: @text;
 }
 
-#workspaces button.active {
-    color: #89b4fa;
+/* ═══════════════════════════════════════════════════════════════════════════
+   Pill helpers  — every module sits inside one of three groups
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* First module in a pill group — round left cap */
+.pill-left {
+    border-radius: 14px 0 0 14px;
+    padding-left:  12px;
+    margin-left:   4px;
 }
 
-#workspaces button.focused {
-    color: #a6adc8;
-    background: #eba0ac;
-    border-radius: 13px;
+/* Middle module in a pill group — no radius */
+.pill-mid {
+    border-radius: 0;
+    padding-left:  8px;
+    padding-right: 8px;
 }
 
-
-
-#workspaces button.persistent {
-    color: #f9e2af;
+/* Last module in a pill group — round right cap */
+.pill-right {
+    border-radius: 0 14px 14px 0;
+    padding-right: 12px;
+    margin-right:  4px;
 }
 
-
-#workspaces button.empty {
-    color: #313244;
+/* Standalone pill (full radius both sides) */
+.pill {
+    border-radius: 14px;
+    padding:       0 12px;
+    margin:        0 4px;
 }
 
-#workspaces button.active,
-#workspaces button.visible {
-    color: #89b4fa;
-    box-shadow: inset 0 -1px #1e1e2e;
-}
-
-#workspaces button.urgent {
-    color: #f38ba8;
-}
+/* ── Shared module background ─────────────────────────────────────────────── */
 #custom-weather,
-#language,
 #cpu,
-#window,
-#clock,
-#pulseaudio,
-#pulseaudio.microphone,
-#workspaces,
-#tray,
 #memory,
 #disk,
+#workspaces,
+#mpris,
+#network,
+#bluetooth,
+#pulseaudio,
+#pulseaudio.microphone,
+#battery,
+#language,
+#clock,
 #tray {
-    background: #1e1e2e;
-    opacity: 1.0;
-    padding: 1.5px 7px 1.5px 7px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    border-radius: 13px;
-    margin-right: 5px;
-    margin-left: 5px;
+    background:    @base;
+    color:         @text;
+    padding-top:   2px;
+    padding-bottom: 2px;
+    margin-top:    6px;
+    margin-bottom: 6px;
 }
 
-#workspaces {
-    background: #1e1e2e;
-    border-radius: 13px;
-    margin-left: 5px;
-    padding-right: 0px;
-}
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* LEFT group:  weather | disk | cpu | memory                                  */
+/* ─────────────────────────────────────────────────────────────────────────── */
 
-#window {
-    border-radius: 7px;
-    margin-left: 60px;
-    margin-right: 60px;
-}
-
-#clock {
-    color: #a6e3a1;
-    border-radius: 0px 13px 13px 0px;
-    margin-right: 0px;
-    margin-left: 0px;
-}
-
-#network {
-    color: #f9e2af;
-    border-radius: 7px 7px 7px 7px;
-    margin-right: 5px;
-}
-
-#custom-notifications {
-    color: #f9e2af;
-    border-radius: 7px 7px 7px 7px;
-    padding-left: 9px;
-    padding-right: 15px;
-    margin-left:  2px;
-    margin-right: 2px;
-
-}
-
-#custom-updates {
-    color: #89b4fa;
-    border-radius: 7px 7px 7px 7px;
-    border-left:  0px;
-    border-right: 0px;
-    margin-left:  2px;
-    margin-right: 2px;
-}
-
-#custom-player {
- color: #cba6f7;
- border-radius: 7px 7px 7px 7px;
- padding-left: 4px;
- margin-left:  5px;
- margin-right: 5px;
-}
-
-#memory {
-    color: #89b4fa;
-    border-radius: 0px 0px 0px 0px;
-    margin-left: 0px;
-    margin-right:0px;
+#custom-weather {
+    border-radius: 14px;
+    padding:       0 12px;
+    margin-left:   4px;
+    margin-right:  4px;
+    color:         @yellow;
 }
 
 #disk {
-    color: #f9e2af;
-    border-radius: 0px 13px 13px 0px;
-    margin-left: 0px;
-}
-
-
-#bluetooth {
-  color: #89b4fa;
-  border-radius: 0px 13px 13px 0px;
-  margin-left: 5px;
-  margin-right: 5px;
-} 
-
-#pulseaudio {
-  color: #89b4fa;
-  border-radius: 0px 0px 0px 0px;
-  margin-right: 0px;
-  margin-left: 0px;
-}
-
-#pulseaudio.microphone {
-    color: #cba6f7;
-    border-radius: 0px 0px 0px 0px;
-    margin-left: 0px;
-    margin-right: 0px;
-}
-
-#language {
-   border-radius: 13px 0px 0px 13px;
-   margin-right:0px;
+    border-radius: 14px 0 0 14px;
+    padding-left:  12px;
+    margin-left:   4px;
+    color:         @green;
 }
 
 #cpu {
-   border-radius: 13px 0px 0px 13px;
-   padding-left:10px;
-   margin-right:0px;
-   margin-left: 0px;
+    border-radius: 0;
+    padding:       0 10px;
+    color:         @blue;
 }
 
-#custom-weather {
-   border-radius: 13px 13px 13px 13px;
-   margin-right: 0px
-   
+#cpu:hover {
+    background: @surface0;
 }
 
+#memory {
+    border-radius: 0 14px 14px 0;
+    padding-right: 12px;
+    margin-right:  4px;
+    color:         @mauve;
+}
 
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* CENTER:  workspaces                                                          */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+#workspaces {
+    border-radius: 14px;
+    padding:       0 6px;
+    margin:        0 4px;
+}
+
+#workspaces button {
+    color:         @overlay0;
+    padding:       0 5px;
+    border-radius: 10px;
+    transition:    color 0.15s ease, background 0.15s ease;
+}
+
+#workspaces button.active {
+    color:      @blue;
+    box-shadow: inset 0 -2px @blue;
+}
+
+#workspaces button.visible {
+    color: @subtext0;
+}
+
+#workspaces button.urgent {
+    color:      @red;
+    box-shadow: inset 0 -2px @red;
+}
+
+#workspaces button.persistent {
+    color: @yellow;
+}
+
+#workspaces button.empty {
+    color: @surface2;
+}
+
+#workspaces button:hover {
+    color:      @lavender;
+    background: @surface0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* RIGHT group:  mpris | network | bluetooth | audio | mic | battery | lang | clock | tray
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+#mpris {
+    border-radius: 14px;
+    padding:       0 12px;
+    margin-right:  4px;
+    color:         @pink;
+    font-style:    italic;
+}
+
+/* Hidden when stopped (format is empty string) */
+#mpris.stopped {
+    opacity: 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+}
+
+#network {
+    border-radius: 14px 0 0 14px;
+    padding-left:  12px;
+    margin-left:   4px;
+    color:         @sky;
+}
+
+#network.disconnected {
+    color: @red;
+}
+
+#bluetooth {
+    border-radius: 0;
+    padding:       0 10px;
+    color:         @blue;
+}
+
+#bluetooth.disabled {
+    color: @overlay0;
+}
+
+#bluetooth.connected {
+    color: @sapphire;
+}
+
+#pulseaudio {
+    border-radius: 0;
+    padding:       0 10px;
+    color:         @green;
+}
+
+#pulseaudio.muted {
+    color: @red;
+}
+
+#pulseaudio.microphone {
+    border-radius: 0;
+    padding:       0 10px;
+    color:         @mauve;
+}
+
+#pulseaudio.microphone.source-muted {
+    color: @overlay0;
+}
+
+#battery {
+    border-radius: 0;
+    padding:       0 10px;
+    color:         @green;
+}
+
+#battery.warning:not(.charging) {
+    color: @peach;
+}
+
+#battery.critical:not(.charging) {
+    color:     @red;
+    animation: blink-critical 1s linear infinite;
+}
+
+@keyframes blink-critical {
+    to { opacity: 0.3; }
+}
+
+#battery.charging {
+    color: @teal;
+}
+
+#language {
+    border-radius: 0;
+    padding:       0 10px;
+    color:         @yellow;
+}
+
+#clock {
+    border-radius: 0 14px 14px 0;
+    padding-right: 12px;
+    margin-right:  4px;
+    color:         @blue;
+}
+
+#tray {
+    border-radius: 14px;
+    padding:       0 10px;
+    margin-right:  4px;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+    background:       @maroon;
+}
