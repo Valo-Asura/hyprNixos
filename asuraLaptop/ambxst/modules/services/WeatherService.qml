@@ -479,15 +479,17 @@ QtObject {
     }
 
     property Timer refreshTimer: Timer {
-        interval: 600000  // 10 minutes
+        interval: 900000  // 15 minutes — weather doesn't change faster
         running: true
         repeat: true
         onTriggered: root.updateWeather()
     }
 
+    // Sun position updates: piggyback on refreshTimer + run once on the minute boundary
+    // when weather is already available (cheap pure-JS calc, no subprocess needed).
     property Timer sunPositionTimer: Timer {
-        interval: 60000  // 1 minute
-        running: true
+        interval: 300000  // 5-minute clock update (sunrise/set bar accuracy)
+        running: root.dataAvailable
         repeat: true
         onTriggered: root.calculateSunPosition()
     }

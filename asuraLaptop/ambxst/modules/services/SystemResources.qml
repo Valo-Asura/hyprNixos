@@ -49,8 +49,8 @@ Singleton {
     // Validated disk list
     property var validDisks: []
 
-    // Update interval in milliseconds
-    property int updateInterval: 2000
+    // Update interval in milliseconds (3s is plenty for dashboards)
+    property int updateInterval: 3000
 
     // History data for charts (max 50 points)
     property var cpuHistory: []
@@ -147,7 +147,8 @@ Singleton {
             monitorProcess.running = false;
         }
         
-        let cmd = ["python3", Quickshell.shellDir + "/scripts/system_monitor.py"];
+        let cmd = ["python3", Quickshell.shellDir + "/scripts/system_monitor.py",
+                   "--interval", String(updateInterval / 1000)];
         for (let i = 0; i < validDisks.length; i++) {
             cmd.push(validDisks[i]);
         }
@@ -184,66 +185,40 @@ Singleton {
     }
 
     // Update history arrays with current values
+    // Uses in-place mutation (push/shift on same JS array) to avoid 6 array-clone allocations
+    // per tick that the old slice() pattern caused (~180 allocs/min at idle).
     function updateHistory() {
-        // Increment total data points counter
         totalDataPoints++;
-        
-        // Add CPU history
-        let newCpuHistory = cpuHistory.slice();
-        newCpuHistory.push(cpuUsage / 100);
-        if (newCpuHistory.length > maxHistoryPoints) {
-            newCpuHistory.shift();
-        }
-        cpuHistory = newCpuHistory;
 
-        // Add CPU temperature history
-        let newCpuTempHistory = cpuTempHistory.slice();
-        newCpuTempHistory.push(cpuTemp);
-        if (newCpuTempHistory.length > maxHistoryPoints) {
-            newCpuTempHistory.shift();
-        }
-        cpuTempHistory = newCpuTempHistory;
+        // CPU
+        cpuHistory.push(cpuUsage / 100);
+        if (cpuHistory.length > maxHistoryPoints) cpuHistory.shift();
+        cpuHistoryChanged();
 
-        // Add RAM history
-        let newRamHistory = ramHistory.slice();
-        newRamHistory.push(ramUsage / 100);
-        if (newRamHistory.length > maxHistoryPoints) {
-            newRamHistory.shift();
-        }
-        ramHistory = newRamHistory;
+        // CPU temp
+        cpuTempHistory.push(cpuTemp);
+        if (cpuTempHistory.length > maxHistoryPoints) cpuTempHistory.shift();
+        cpuTempHistoryChanged();
 
-        // Add GPU histories if detected
+        // RAM
+        ramHistory.push(ramUsage / 100);
+        if (ramHistory.length > maxHistoryPoints) ramHistory.shift();
+        ramHistoryChanged();
+
+        // GPU (only when present)
         if (gpuDetected && gpuCount > 0) {
-            let newGpuHistories = gpuHistories.slice();
-            let newGpuTempHistories = gpuTempHistories.slice();
-            
-            // Initialize histories array if needed
-            while (newGpuHistories.length < gpuCount) {
-                newGpuHistories.push([]);
-            }
-            while (newGpuTempHistories.length < gpuCount) {
-                newGpuTempHistories.push([]);
-            }
-            
-            // Update each GPU's history
-            for (let i = 0; i < gpuCount; i++) {
-                let gpuHist = newGpuHistories[i].slice();
-                gpuHist.push((gpuUsages[i] || 0) / 100);
-                if (gpuHist.length > maxHistoryPoints) {
-                    gpuHist.shift();
-                }
-                newGpuHistories[i] = gpuHist;
+            while (gpuHistories.length < gpuCount) gpuHistories.push([]);
+            while (gpuTempHistories.length < gpuCount) gpuTempHistories.push([]);
 
-                let gpuTempHist = newGpuTempHistories[i].slice();
-                gpuTempHist.push(gpuTemps[i] !== undefined ? gpuTemps[i] : -1);
-                if (gpuTempHist.length > maxHistoryPoints) {
-                    gpuTempHist.shift();
-                }
-                newGpuTempHistories[i] = gpuTempHist;
+            for (let i = 0; i < gpuCount; i++) {
+                gpuHistories[i].push((gpuUsages[i] || 0) / 100);
+                if (gpuHistories[i].length > maxHistoryPoints) gpuHistories[i].shift();
+
+                gpuTempHistories[i].push(gpuTemps[i] !== undefined ? gpuTemps[i] : -1);
+                if (gpuTempHistories[i].length > maxHistoryPoints) gpuTempHistories[i].shift();
             }
-            
-            gpuHistories = newGpuHistories;
-            gpuTempHistories = newGpuTempHistories;
+            gpuHistoriesChanged();
+            gpuTempHistoriesChanged();
         }
     }
 

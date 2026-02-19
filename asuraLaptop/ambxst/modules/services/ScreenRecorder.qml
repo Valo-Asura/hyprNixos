@@ -14,7 +14,8 @@ QtObject {
 
     property Process checkCapabilitiesProcess: Process {
         id: checkCapabilitiesProcess
-        command: ["bash", "-c", "if [ -f /run/current-system/sw/bin/nixos-version ]; then if [[ \"$(type -p gpu-screen-recorder)\" == *\"/run/wrappers/bin/\"* ]]; then echo true; else echo false; fi; else echo true; fi"]
+        // Check for setuid wrapper directly — reliable regardless of PATH
+        command: ["bash", "-c", "[ -u /run/wrappers/bin/gpu-screen-recorder ] && echo true || echo false"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -48,11 +49,11 @@ QtObject {
         }
     }
 
-    // Poll status
+    // Poll status — only while recording to avoid idle process churn
     property Timer statusTimer: Timer {
-        interval: 1000
+        interval: 2000
         repeat: true
-        running: true
+        running: root.isRecording
         onTriggered: {
             checkProcess.running = true
         }

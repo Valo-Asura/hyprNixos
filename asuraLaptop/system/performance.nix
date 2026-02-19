@@ -24,6 +24,7 @@
     "vm.dirty_ratio" = 15;
     "vm.page-cluster" = 0;                  # no readahead for zram (compressed, no seek)
     "vm.max_map_count" = 1048576;           # helps games / large apps
+    "vm.mglru_min_ttl_ms" = 0;             # MGLRU: aggressively reclaim idle cold pages
 
     # File descriptors & inotify (VS Code, IDE watchers)
     "fs.file-max" = 2097152;

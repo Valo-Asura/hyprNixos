@@ -20,7 +20,6 @@
     ./environment.nix
     ./theming.nix
     ./browser-theming.nix
-    ./nemo-fixes.nix
     ./maintenance.nix
     ./performance.nix
     ./filesystems.nix
