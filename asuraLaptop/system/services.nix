@@ -74,11 +74,19 @@ in {
   services = {
     blueman.enable = true;
     dbus.enable = true;
-    fwupd.enable = true;
+    fwupd.enable = false;   # firmware updater — run manually when needed
     udisks2.enable = true;
     gvfs.enable = true;
     upower.enable = true;
-    printing.enable = true;
+    printing.enable = false; # no printer — removes CUPS daemon
+
+    # Local AI — exposes OpenAI-compatible API at 127.0.0.1:11434
+    # Ambxst assistant tab auto-discovers models via /api/tags
+    ollama = {
+      enable = true;
+      host = "127.0.0.1";
+      port = 11434;
+    };
   };
 
   xdg.portal = {
@@ -123,7 +131,7 @@ in {
 
   # Auto fan boost on AC (Fn+1 via ydotool)
   programs.ydotool.enable = true;
-  environment.systemPackages = with pkgs; [ wev ];
+  # wev removed — fan-boost keycode already discovered
 
   environment.etc."fan-boost/config".text = ''
 # Fan boost automation

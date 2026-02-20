@@ -1099,6 +1099,30 @@ Singleton {
                 newModels.push(m);
         }
 
+        // Built-in local Ollama models (no API key required)
+        // These appear in the picker whenever Ollama is running; the dynamic
+        // fetch via fetchProcessOllama will also surface them, but registering
+        // them here guarantees they're present even before the first fetch.
+        let ollamaModels = [
+            { name: "Qwen3 4B  (local)", model: "qwen3:4b" },
+            { name: "Qwen3 1.7B (local)", model: "qwen3:1.7b" }
+        ];
+
+        for (let j = 0; j < ollamaModels.length; j++) {
+            let item = ollamaModels[j];
+            let m = aiModelFactory.createObject(root, {
+                name: item.name,
+                icon: Qt.resolvedUrl("../../../assets/aiproviders/openai.svg"),
+                description: "Local Ollama model — no internet or API key needed",
+                endpoint: "http://127.0.0.1:11434/v1",
+                model: item.model,
+                api_format: "OpenAI",
+                requires_key: false
+            });
+            if (m)
+                newModels.push(m);
+        }
+
         if (newModels.length > 0)
             mergeModels(newModels);
     }

@@ -3,7 +3,7 @@
 
 {
   programs = {
-    firefox.enable = true;
+    firefox.enable = false; # librewolf is primary browser
     
     # Enable direnv system-wide
     direnv.enable = true;

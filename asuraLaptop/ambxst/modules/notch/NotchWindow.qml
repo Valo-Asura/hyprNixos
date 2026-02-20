@@ -27,7 +27,7 @@ PanelWindow {
 
     color: "transparent"
 
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: screenNotchOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     // Get this screen's visibility state
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)

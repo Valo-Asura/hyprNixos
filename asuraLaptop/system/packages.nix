@@ -23,9 +23,9 @@
 
 
     # Desktop Environment
-    waybar swaybg swww wlogout xdg-utils
+    waybar swww wlogout xdg-utils
     networkmanager tuigreet  # removed swaylock (using hyprlock)
-    xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-user-dirs
+    xdg-user-dirs  # xdg-desktop-portals in services.nix
 
     # Ambxst required packages (system-level integration; core deps come from Ambxst package)
     dconf
@@ -49,7 +49,7 @@
     vscode antigravity kiro
 
     # Terminal enhancements
-    btop tree dialog fzf curl yq
+    btop tree fzf curl yq
 
     # Python Environment
     (python311.withPackages (ps: with ps; [
