@@ -1,168 +1,122 @@
-# Secure Boot Steps
+# Secure Boot Setup Steps
 
-This repo is now wired for a staged Secure Boot migration on this machine:
+Your setup:
+- NixOS is on `sda`, boot partition at `/boot` (`sda1`)
+- Windows 11 is on `nvme0n1`
+- Secure Boot is currently OFF
+- Right now your PC boots through **Limine** (we need to replace it with systemd-boot first)
 
-- NixOS disk: `sda` with ESP on `sda1` mounted at `/boot`
-- Windows 11 disk: `nvme0n1` with Windows Boot Manager on `nvme0n1p1`
-- Current firmware state before this change:
-  - UEFI: yes
-  - TPM2: yes
-  - Secure Boot: off
-  - Current loader: Limine
+---
 
-The boot module is intentionally stage-aware:
+## Step 1 — Reboot into systemd-boot ✅ rebuild done, do this now
 
-- If `/var/lib/sbctl` does not contain Secure Boot keys, the flake installs plain `systemd-boot`.
-- Once keys exist, the same flake switches to `Lanzaboote` and prepares Secure Boot auto-enrollment.
-
-## Phase 0: Preflight
-
-Run these from NixOS:
+Reboot:
 
 ```bash
-bootctl status
-sbctl status
+reboot
 ```
 
-Expected before Secure Boot is enabled:
+If your PC still boots through Limine, go into your motherboard's one-time boot menu (usually `F8`, `F11`, or `Del` on boot) and pick **Linux Boot Manager**.
 
-- `Secure Boot: disabled`
-- `TPM2 Support: yes`
-- `Vendor Keys: microsoft`
-
-Do not remove Microsoft keys. Windows 11 and device Option ROM compatibility depend on them.
-
-## Phase 1: Migrate Off Limine
-
-Apply the new flake once:
-
-```bash
-sudo nixos-rebuild boot --flake /etc/nixos#nixos
-```
-
-Reboot.
-
-If the machine still comes up through Limine, use your motherboard one-time boot menu and choose:
-
-- `Linux Boot Manager`
-
-Once back in NixOS, confirm the migration:
+Once NixOS loads, check it worked:
 
 ```bash
 bootctl status
 ```
 
-At this point the current boot loader should no longer be `Limine`.
+You should see `systemd-boot` as the current bootloader, not Limine.
 
-## Phase 2: Create Secure Boot Keys
+---
 
-Create the signing keys in the default `sbctl` location:
+## Step 2 — Create Secure Boot keys
 
 ```bash
 sudo sbctl create-keys
 ```
 
-Sanity check:
+Check the keys were created:
 
 ```bash
 sudo sbctl status
-sudo find /var/lib/sbctl -maxdepth 3 -type f | sort
 ```
 
-Rebuild again. This second rebuild is the one that turns on Lanzaboote:
+Now rebuild again (this time it switches to Lanzaboote):
 
 ```bash
-sudo nixos-rebuild boot --flake /etc/nixos#nixos
+sudo nixos-rebuild switch --flake /etc/nixos#nixos
 ```
 
-## Phase 3: Put Firmware In Setup Mode
+Reboot:
 
-Reboot into firmware setup.
+```bash
+reboot
+```
 
-Required firmware settings:
+---
 
-1. `TPM` or `AMD fTPM`: `Enabled`
-2. `UEFI boot`: `Enabled`
-3. `CSM/Legacy boot`: `Disabled`
-4. Secure Boot key mode: switch to `Custom` or `Setup Mode`
+## Step 3 — Put your motherboard in Setup Mode
 
-On many boards, `Setup Mode` is reached by clearing the current Secure Boot Platform Key (`PK`) or switching Secure Boot from `Standard` to `Custom`.
+Go into your BIOS/UEFI settings and change these:
 
-Do not delete the Windows disk or Windows boot entry.
+1. **TPM / AMD fTPM** → Enabled
+2. **UEFI boot** → Enabled
+3. **CSM / Legacy boot** → Disabled
+4. **Secure Boot** → find the key mode and set it to **Setup Mode** or **Custom**
+   - On most boards: clear the Platform Key (PK) or switch from "Standard" to "Custom"
 
-Save changes and boot back into NixOS through:
+Do NOT delete the Windows boot entry or Windows disk.
 
-- `Linux Boot Manager`
+Save and reboot into NixOS (pick **Linux Boot Manager** if needed).
 
-Because `boot.lanzaboote.autoEnrollKeys.enable = true`, this boot should prepare and perform key enrollment for your own keys while keeping Microsoft keys included.
+This boot will enroll your keys automatically (Microsoft keys are kept so Windows still works).
 
-## Phase 4: Turn Secure Boot On
+---
 
-Reboot into firmware again.
+## Step 4 — Turn Secure Boot on
 
-Now enable:
+Go back into BIOS and set:
 
-1. `Secure Boot`: `Enabled`
+1. **Secure Boot** → Enabled
 
-Save and boot NixOS again.
+Save and boot NixOS.
 
-Validate from NixOS:
+Check it worked:
 
 ```bash
 bootctl status
 sbctl status
 ```
 
-Expected:
-
+You want to see:
 - `Secure Boot: enabled`
 - `Setup Mode: Disabled`
 
-## Phase 5: Validate Windows 11 + VALORANT
+---
 
-Boot Windows from the firmware menu or from the systemd-boot menu if `Windows Boot Manager` appears there.
+## Step 5 — Check Windows still works
+
+Boot into Windows (from the boot menu or systemd-boot menu).
 
 In Windows:
+1. Press `Win + R`, type `msinfo32` — check `Secure Boot State: On` and `BIOS Mode: UEFI`
+2. Press `Win + R`, type `tpm.msc` — check TPM 2.0 is ready
 
-1. Press `Win + R`, run `msinfo32`
-2. Confirm:
-   - `BIOS Mode`: `UEFI`
-   - `Secure Boot State`: `On`
-3. Press `Win + R`, run `tpm.msc`
-4. Confirm TPM is ready and version `2.0`
+If VALORANT still complains, look up `VAN 9005` — it's a VBS/Memory Integrity setting, not a Secure Boot issue.
 
-If VALORANT still complains after Secure Boot and TPM are both on, check Riot's `VAN 9005` guidance for VBS/Memory Integrity before changing anything else.
+---
 
-## Rollback
+## If something breaks (rollback)
 
-If NixOS does not boot after enrollment:
-
-1. Enter firmware
-2. Set `Secure Boot` back to `Disabled`
-3. Boot `Linux Boot Manager`
-
-Once back in NixOS, force the flake back to plain systemd-boot by moving the signing bundle out of the way:
+1. Go into BIOS, turn **Secure Boot off**
+2. Boot into NixOS via **Linux Boot Manager**
+3. Run:
 
 ```bash
 sudo mv /var/lib/sbctl /var/lib/sbctl.disabled
-sudo nixos-rebuild boot --flake /etc/nixos#nixos
-```
-
-Reboot again.
-
-Because the flake checks for `/var/lib/sbctl` at evaluation time, removing that directory automatically drops it back to stage 1.
-
-Windows rollback is simple:
-
-- use the firmware boot picker and select `Windows Boot Manager`
-
-## Quick Command Summary
-
-```bash
-sudo nixos-rebuild boot --flake /etc/nixos#nixos
-reboot
-
-sudo sbctl create-keys
-sudo nixos-rebuild boot --flake /etc/nixos#nixos
+sudo nixos-rebuild switch --flake /etc/nixos#nixos
 reboot
 ```
+
+This drops you back to plain systemd-boot automatically.
+
+Windows is always safe — just pick **Windows Boot Manager** from the BIOS boot menu.
