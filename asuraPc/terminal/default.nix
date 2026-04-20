@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   programs.kitty = {
@@ -20,7 +25,7 @@
       # Enhanced visual settings
       draw_minimal_borders = "yes";
       window_border_width = "1pt";
-      active_border_color = "#d79921";  # Gruvbox yellow
+      active_border_color = "#d79921"; # Gruvbox yellow
       inactive_border_color = "#3c3836"; # Gruvbox dark gray
 
       # Terminal size - bigger for better productivity
@@ -66,7 +71,7 @@
       shell = "${pkgs.fish}/bin/fish";
 
       # URL handling
-      url_color = "#83a598";  # Gruvbox blue
+      url_color = "#83a598"; # Gruvbox blue
       url_style = "curly";
       open_url_with = "default";
 
@@ -108,7 +113,8 @@
       "ctrl+shift+backspace" = "change_font_size all 0";
 
       # Useful shortcuts
-      "ctrl+shift+f" = "launch --type=overlay --stdin-source=@screen_scrollback fzf --no-sort --no-mouse --exact -i";
+      "ctrl+shift+f" =
+        "launch --type=overlay --stdin-source=@screen_scrollback fzf --no-sort --no-mouse --exact -i";
 
       # Fun shortcuts
       "ctrl+shift+j" = "launch --type=tab fish -c joke";
@@ -119,43 +125,43 @@
 
   home.packages = with pkgs; [
     # Enhanced terminal tools
-    eza          # Better ls with icons and colors
-    bat          # Better cat with syntax highlighting
-    bottom       # Better htop/top with graphs
-    tree         # Directory tree visualization
-    fzf          # Fuzzy finder
-    dialog       # Terminal UI dialogs
+    eza # Better ls with icons and colors
+    bat # Better cat with syntax highlighting
+    bottom # Better htop/top with graphs
+    tree # Directory tree visualization
+    fzf # Fuzzy finder
+    dialog # Terminal UI dialogs
 
     # Fun terminal tools
-    fortune      # Random quotes and jokes
-    cowsay       # ASCII art cow
-    lolcat       # Rainbow text
-    figlet       # ASCII art text
-    cmatrix      # Matrix-style falling characters
-    pipes-rs     # Animated pipes screensaver
-    sl           # Steam locomotive (when you mistype 'ls')
-    toilet       # Another ASCII art tool
-    boxes        # Draw boxes around text
+    fortune # Random quotes and jokes
+    cowsay # ASCII art cow
+    lolcat # Rainbow text
+    figlet # ASCII art text
+    cmatrix # Matrix-style falling characters
+    pipes-rs # Animated pipes screensaver
+    sl # Steam locomotive (when you mistype 'ls')
+    toilet # Another ASCII art tool
+    boxes # Draw boxes around text
 
     # System monitoring
-    htop         # Process viewer
-    btop         # Beautiful system monitor
-    neofetch     # System info with style
+    htop # Process viewer
+    btop # Beautiful system monitor
+    fastfetch # System info with style
 
     # File management
-    ranger       # Terminal file manager
-    mc           # Midnight Commander
+    ranger # Terminal file manager
+    mc # Midnight Commander
 
     # Network tools
     speedtest-cli # Internet speed test
-    curl         # For weather and fun APIs
+    curl # For weather and fun APIs
 
     # Development tools
-    jq           # JSON processor
-    yq           # YAML processor
+    jq # JSON processor
+    yq # YAML processor
 
     # Fonts
-    inter        # For Stylix sans-serif font
+    inter # For Stylix sans-serif font
   ];
 
   # Custom shell functions for enhanced terminal experience with debug jokes
@@ -202,7 +208,7 @@
         echo "1) Bottom (btm) - Modern system monitor"
         echo "2) Htop - Classic process viewer"
         echo "3) Btop - Beautiful system monitor"
-        echo "4) Neofetch - System info with style"
+        echo "4) Fastfetch - System info with style"
 
         read -P "Enter choice (1-4): " choice
 
@@ -214,7 +220,7 @@
           case 3
             btop
           case 4
-            neofetch
+            fastfetch
           case '*'
             echo "Invalid choice, launching bottom..." | lolcat
             btm

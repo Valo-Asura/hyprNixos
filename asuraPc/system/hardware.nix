@@ -11,7 +11,7 @@
     nvidia = {
       modesetting.enable = true;
       powerManagement.enable = true;
-      nvidiaPersistenced = true;
+      nvidiaPersistenced = false;
       open = false;
       nvidiaSettings = true;
       package = config.boot.kernelPackages.nvidiaPackages.production;
@@ -36,7 +36,4 @@
     "brcmsmac"
   ];
 
-  # Avoid switch-time failure when running an older kernel/userspace combo.
-  # Start persistenced only when real NVIDIA device node exists.
-  systemd.services.nvidia-persistenced.unitConfig.ConditionPathExists = "/dev/nvidia0";
 }

@@ -6,6 +6,5 @@
     ./git
     ./terminal
     ./scripts
-    ./openclaw.nix
   ];
 }

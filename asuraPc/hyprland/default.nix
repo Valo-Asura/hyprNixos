@@ -1,5 +1,12 @@
 # good enough tiling manager
-{ pkgs, config, inputs, system, lib, ... }:
+{
+  pkgs,
+  config,
+  inputs,
+  system,
+  lib,
+  ...
+}:
 let
   border-size = 1;
   gaps-in = 2;
@@ -9,8 +16,9 @@ let
   rounding = 6;
   blur = false;
   keyboardLayout = "us";
-  border-color= "rgb(b4befe)";
-in {
+  border-color = "rgb(b4befe)";
+in
+{
 
   imports = [
     ./animations.nix
@@ -109,8 +117,6 @@ in {
         mfact = 0.5;
       };
 
-
-
       misc = {
         vfr = true;
         vrr = 1;
@@ -123,7 +129,7 @@ in {
       };
 
       render = {
-        direct_scanout = true;    # bypass compositor for fullscreen apps
+        direct_scanout = false; # disabled: causes crashes with NVIDIA on Wayland
       };
 
       windowrule = [
@@ -162,6 +168,5 @@ in {
 
   services.hyprpaper.enable = false;
 
-  systemd.user.targets.hyprland-session.Unit.Wants =
-    [ "xdg-desktop-autostart.target" ];
+  systemd.user.targets.hyprland-session.Unit.Wants = [ "xdg-desktop-autostart.target" ];
 }

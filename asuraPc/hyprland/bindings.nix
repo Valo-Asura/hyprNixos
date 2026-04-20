@@ -1,4 +1,10 @@
-{ pkgs, config, inputs,... }: {
+{
+  pkgs,
+  config,
+  inputs,
+  ...
+}:
+{
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";
     "$shiftMod" = "SUPER_SHIFT";
@@ -18,29 +24,40 @@
       "$mainMod, L, exec, ${pkgs.hyprlock}/bin/hyprlock" # Lock screen (Super+L)
 
       "$shiftMod,C, exec, clipboard" # Clipboard picker with wofi
-      
+
       # Wallpaper controls
       "$mainMod, P, exec, wallpaper-switch static" # Static wallpaper (hyprpaper)
       "$shiftMod, P, exec, wallpaper-switch animated" # Animated wallpaper (swww)
       "$mainMod ALT, P, exec, sync-lock-wallpaper" # Sync current wallpaper to lock screen
-      
+
       # Screenshot controls
       ", Print, exec, grim -g \"$(slurp)\" - | wl-copy" # Screenshot selection to clipboard
       "$mainMod, Print, exec, grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png" # Full screenshot
       "$shiftMod, Print, exec, grim -g \"$(slurp)\" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png" # Selection screenshot
       "$shiftMod,E, exec, ${pkgs.wofi-emoji}/bin/wofi-emoji" # Emoji picker with wofi
       "$mod,F2, exec, night-shift" # Toggle night shift
-    ] ++ (builtins.concatLists (builtins.genList (i:
-      let ws = i + 1;
-      in [
-        "$mod,code:1${toString i}, workspace, ${toString ws}"
-        "$mod SHIFT,code:1${toString i}, movetoworkspace, ${toString ws}"
-      ]) 9));
+    ]
+    ++ (builtins.concatLists (
+      builtins.genList (
+        i:
+        let
+          ws = i + 1;
+        in
+        [
+          "$mod,code:1${toString i}, workspace, ${toString ws}"
+          "$mod SHIFT,code:1${toString i}, movetoworkspace, ${toString ws}"
+        ]
+      ) 9
+    ));
 
     bindm = [
       "$mod,mouse:272, movewindow" # Move Window (mouse)
       "$mod,mouse:273, resizewindow" # Resize Window (mouse)
       "$mod,TAB, resizewindow" # Resize Window (mouse)
+    ];
+
+    bindr = [
+      "$mod, mouse:272, exec, ambxst run dashboard-widgets" # Open app search on Super+click release
     ];
 
     bindl = [

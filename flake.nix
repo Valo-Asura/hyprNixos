@@ -36,12 +36,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # OpenClaw (AI gateway)
-    nix-openclaw = {
-      url = "github:openclaw/nix-openclaw";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
   };
 
