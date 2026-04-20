@@ -14,6 +14,11 @@
       XDG_CURRENT_DESKTOP = "Hyprland";
       XDG_SESSION_TYPE = "wayland";
       XDG_SESSION_DESKTOP = "Hyprland";
+      # NVIDIA EGL — must be set before Hyprland starts
+      LIBVA_DRIVER_NAME = "nvidia";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+      __EGL_VENDOR_LIBRARY_FILENAMES = "/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json";
+      NVD_BACKEND = "direct";
       # Accessibility support for keyboard input
       GTK_MODULES = "gail:atk-bridge";
       NO_AT_BRIDGE = "0";
