@@ -50,6 +50,7 @@
   programs.yazi = {
     enable = true;
     enableFishIntegration = true;
+    shellWrapperName = "yy";
   };
 
   # ── Fish shell ────────────────────────────────────────────────────────────────

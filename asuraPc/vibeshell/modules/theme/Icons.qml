@@ -233,7 +233,6 @@ QtObject {
     readonly property string ethernet: ""
     readonly property string router: ""
     readonly property string signalNone: ""
-    readonly property string vpn: ""
 
     readonly property string shieldCheck: ""
     readonly property string shield: ""
