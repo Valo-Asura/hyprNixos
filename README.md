@@ -1,8 +1,37 @@
-# 🚀 Asura's NixOS Laptop Configuration
+# 🚀 Asura's NixOS PC Configuration
 
 *"Because life's too short for broken configs and ugly desktops"* 😎
 
 A meticulously crafted NixOS configuration that actually works™️. Built with love, caffeine, and an unhealthy obsession with dotfiles.
+
+## ✅ 2026-02-28 Update (Performance + Wi-Fi + Rename)
+
+- Renamed config root from `asuraLaptop/` to `asuraPc/`.
+- Hardware-aligned defaults applied:
+  - AMD host profile (`common-pc` + `common-cpu-amd`)
+  - NVIDIA proprietary driver path kept for GTX 1070 (Pascal)
+  - Intel PRIME config removed (non-hybrid desktop)
+- Kernel/perf tuning adjusted:
+  - Removed `mitigations=off` and Intel-only `tsc=reliable`
+  - Kept `irqbalance`, `zramSwap`, low `vm.swappiness`
+  - Stopped forcing NVMe scheduler away from kernel default
+- Wi-Fi fix for BCM4360 (`14e4:43a0`):
+  - Switched NetworkManager backend to `wpa_supplicant`
+  - Enabled `wl` (`broadcom_sta`) and blacklisted `b43/bcma/ssb` stack
+  - Added a narrow insecure allowlist for `broadcom-sta` only (required upstream)
+- Dual-boot (Windows on NVMe + NixOS on SATA) aligned in Limine:
+  - Primary Windows entry: `guid(80db9e1e-b7fd-4e42-84c7-f1b5fd475279):/EFI/Microsoft/Boot/bootmgfw.efi`
+  - Fallbacks: `guid(32EC-CB64):/EFI/Microsoft/Boot/bootmgfw.efi`, then `hdd(2:1):/EFI/Microsoft/Boot/bootmgfw.efi`
+- Hyprland stack pinned to stable release tag `v0.54.0` via flake input.
+  - Home Manager + greetd launch command now use the same pinned Hyprland package.
+  - 0.54 keybind compatibility fix applied: `togglesplit` now routed via `layoutmsg`.
+- IDE/editor packages refreshed with updated `nixpkgs` lock (current eval):
+  - `kiro 0.10.0`, `vscode 1.109.4`, `antigravity 1.18.4`, `neovim 0.11.6`, `helix 25.07.1`.
+
+**Path notes**
+- Fastfetch logo/profile image: no repo-managed fastfetch image/logo path is configured.
+- Wallpaper directory used by scripts: `$HOME/.config/background`.
+- Lock wallpaper target: `/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png`.
 
 ## 📸 Screenshots
 
@@ -12,8 +41,8 @@ A meticulously crafted NixOS configuration that actually works™️. Built with
 ## 🏗️ System Architecture
 
 ```
-nixos-laptop/
-├── 📁 asuraLaptop/          # Main system configuration
+nixos-pc/
+├── 📁 asuraPc/          # Main system configuration
 │   ├── 🎨 hyprland/         # Wayland compositor setup
 │   ├── 🖥️  system/          # Core system modules
 │   ├── 📜 scripts/          # Custom automation scripts
@@ -52,8 +81,8 @@ sudo chown -R $USER:$USER ~/.config/Ambxst
 **Local AI (LM Studio)**
 - Guide: `/home/asura/Downloads/AMBXST_LMSTUDIO_GUIDE.md`
 - Config files:
-  - `/etc/nixos/asuraLaptop/ambxst/modules/services/ai/litellm_config.yaml`
-  - `/etc/nixos/asuraLaptop/ambxst/ai.json` (repo defaults)
+  - `/etc/nixos/asuraPc/ambxst/modules/services/ai/litellm_config.yaml`
+  - `/etc/nixos/asuraPc/ambxst/ai.json` (repo defaults)
   - `~/.config/Ambxst/config/ai.json` (user overrides)
 
 ## 🖼️ Ambxst Wallpapers
@@ -104,7 +133,7 @@ cd /etc/nixos
 
 ### 3) Replace Hardware Config
 ```bash
-sudo nixos-generate-config --show-hardware-config > asuraLaptop/system/hardware-configuration.nix
+sudo nixos-generate-config --show-hardware-config > asuraPc/system/hardware-configuration.nix
 ```
 
 ### 4) Update Host/User (if needed)
@@ -126,7 +155,7 @@ sudo reboot
 1. **Fork this repo** (because copying is caring)
 2. **Update hardware-configuration.nix** with your hardware
 3. **Modify hosts/default.nix** with your hostname/username
-4. **Adjust asuraLaptop/** folder name to match your setup
+4. **Adjust `asuraPc/`** folder name only if you intentionally rename module roots
 5. **Tweak theming.nix** if you hate Gruvbox (but why would you?)
 6. **Run `rebuild`** and pray to the Nix gods
 
@@ -315,8 +344,6 @@ acpi-diagnostics     # Diagnose ACPI/EC issues
 quote                # Random developer quote
 qotd                 # Quote of the day
 motivate <mood>      # Motivational quotes (debug/frustrated/tired/confident)
-fix-nemo-thumbnails  # Fix file manager thumbnail permissions
-restart-nemo         # Restart Nemo file manager
 ```
 
 ## 🎯 Features That Actually Matter
@@ -328,8 +355,8 @@ restart-nemo         # Restart Nemo file manager
 - **🌡️ Thermal Management**: Because laptops shouldn't be space heaters
 - **🔋 Power Optimization**: Battery life that doesn't suck
 - **🎨 Hyprland**: Wayland compositor that actually works
-- **📁 File Management**: Nemo with working thumbnails (no more permission errors!)
-- **🌐 Browser Theming**: Dark theme for Zen browser and Firefox
+- **📁 File Management**: Thunar with working thumbnails
+- **🌐 Browser Theming**: Brave as the primary Chromium browser with dark defaults
 - **💭 Fun Quotes**: Random developer wisdom to brighten your terminal
 
 ## 🤝 Contributing

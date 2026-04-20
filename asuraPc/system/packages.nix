@@ -1,0 +1,59 @@
+# System Packages Configuration
+{ pkgs, inputs, ... }:
+
+{
+  environment.systemPackages = with pkgs; [
+    # System Info & Terminal
+    microfetch zsh fish
+
+    # System Tools
+    polkit udisks2 udiskie
+
+    # Screenshot and Screen Recording
+    grimblast hyprshot
+    swappy # Screenshot editor
+
+    # Polkit Agent
+    inputs.hyprpolkitagent.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+    # File Management & NTFS Support
+    thunar          # Lightweight GTK file manager (replaces nemo + cinnamon-common)
+    xarchiver gvfs
+    ntfs3g exfat    # Windows filesystem support
+
+
+    # Desktop Environment
+    waybar swww wlogout xdg-utils
+    networkmanager tuigreet  # removed swaylock (using hyprlock)
+    xdg-user-dirs  # xdg-desktop-portals in services.nix
+
+    # Ambxst required packages (system-level integration; core deps come from Ambxst package)
+    dconf
+    gtk3 gtk4 adwaita-icon-theme
+    gsettings-desktop-schemas
+    at-spi2-atk at-spi2-core
+    libgtop
+
+    # Multimedia
+    vlc
+
+    # Hyprland Panel Dependencies
+    bluez
+    hyprsunset hypridle
+
+    # Development
+    wget git eza bat fd ripgrep direnv nixfmt nil inter
+    sops
+
+    # IDE
+    vscode antigravity
+
+    # Terminal enhancements
+    btop tree fzf curl yq
+
+    # Python Environment
+    (python3.withPackages (ps: with ps; [
+      pip requests
+    ]))
+  ];
+}

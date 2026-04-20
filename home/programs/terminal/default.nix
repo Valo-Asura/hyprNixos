@@ -3,6 +3,6 @@
 
 {
   imports = [
-    ../../../asuraLaptop/terminal/default.nix
+    ../../../asuraPc/terminal/default.nix
   ];
 }

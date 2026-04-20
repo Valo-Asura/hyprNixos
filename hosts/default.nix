@@ -2,18 +2,24 @@
 { inputs, system, ... }:
 
 {
-  # Main laptop configuration
+  # Main PC configuration
   nixos = inputs.nixpkgs.lib.nixosSystem {
     inherit system;
     specialArgs = {
       inherit inputs system;
       hostname = "nixos";
       username = "asura";
+      pkgsOllama = import inputs.nixpkgs-ollama {
+        inherit system;
+        config.allowUnfree = true;
+        config.cudaSupport = true;
+      };
     };
     modules = [
+      inputs.lanzaboote.nixosModules.lanzaboote
       inputs.stylix.nixosModules.stylix
-      inputs.nixos-hardware.nixosModules.common-pc-laptop
-      inputs.nixos-hardware.nixosModules.common-cpu-intel
+      inputs.nixos-hardware.nixosModules.common-pc
+      inputs.nixos-hardware.nixosModules.common-cpu-amd
       inputs.nixos-hardware.nixosModules.common-gpu-nvidia
       inputs.sops-nix.nixosModules.sops
       ../system

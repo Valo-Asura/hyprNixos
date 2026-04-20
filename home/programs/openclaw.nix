@@ -20,24 +20,27 @@ in {
   ];
 
   # OpenClaw config (OpenAI chat completions enabled)
-  home.file.".openclaw/openclaw.json".text = ''
-    {
-      "gateway": {
-        "mode": "local",
-        "port": 18789,
-        "auth": {
-          "mode": "token"
-        },
-        "http": {
-          "endpoints": {
-            "chatCompletions": {
-              "enabled": true
+  home.file.".openclaw/openclaw.json" = {
+    force = true;
+    text = ''
+      {
+        "gateway": {
+          "mode": "local",
+          "port": 18789,
+          "auth": {
+            "mode": "token"
+          },
+          "http": {
+            "endpoints": {
+              "chatCompletions": {
+                "enabled": true
+              }
             }
           }
         }
       }
-    }
-  '';
+    '';
+  };
 
   systemd.user.services.openclaw-gateway = {
     Unit = {

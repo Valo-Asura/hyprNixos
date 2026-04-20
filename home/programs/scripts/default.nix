@@ -3,7 +3,7 @@
 
 {
   imports = [
-    ../../../asuraLaptop/scripts/screenshot.nix
-    ../../../asuraLaptop/scripts/nightShift.nix
+    ../../../asuraPc/scripts/screenshot.nix
+    ../../../asuraPc/scripts/nightShift.nix
   ];
 }

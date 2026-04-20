@@ -20,10 +20,10 @@ in {
   xdg.mimeApps = {
     enable = true;
     defaultApplications = archiveDefaults // {
-      "inode/directory" = "nemo.desktop";
+      "inode/directory" = "thunar.desktop";
     };
     associations.added = archiveDefaults // {
-      "inode/directory" = "nemo.desktop";
+      "inode/directory" = "thunar.desktop";
     };
   };
 

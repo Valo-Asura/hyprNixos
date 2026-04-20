@@ -1,5 +1,5 @@
 # Theming configuration
-# Stylix owns the base theme. We add Cinnamon/Nemo-specific keys.
+# Stylix owns the base theme. We add a few desktop-specific keys on top.
 { ... }:
 
 {

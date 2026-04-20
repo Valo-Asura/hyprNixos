@@ -3,6 +3,6 @@
 
 {
   imports = [
-    ../../../asuraLaptop/hyprland/default.nix
+    ../../../asuraPc/hyprland/default.nix
   ];
 }

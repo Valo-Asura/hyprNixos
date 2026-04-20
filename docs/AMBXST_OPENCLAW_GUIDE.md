@@ -2,6 +2,8 @@
 
 This guide shows how Ambxst AI works in this repo, how to configure keys, and how to connect it to OpenClaw via LiteLLM.
 
+> Path update: the system root directory in this repo is now `asuraPc/` (previously `asuraLaptop/`).
+
 **What you get**
 - Ambxst dashboard AI chat.
 - LiteLLM proxy in the middle so multiple providers work the same way.
@@ -23,7 +25,7 @@ flowchart LR
 1. Edit the encrypted secrets file.
 
 ```bash
-nix shell nixpkgs#sops -c sops /etc/nixos/asuraLaptop/secrets/ambxst-ai.yaml
+nix shell nixpkgs#sops -c sops /etc/nixos/asuraPc/secrets/ambxst-ai.yaml
 ```
 
 2. Put real keys in these fields:
@@ -54,22 +56,22 @@ curl -s http://127.0.0.1:4000/v1/models | rg openclaw
 
 ## Key Files You Can Edit
 
-- Ambxst AI defaults: `/etc/nixos/asuraLaptop/ambxst/config/defaults/ai.js`
-- Ambxst AI config used at runtime: `/etc/nixos/asuraLaptop/ambxst/ai.json`
-- LiteLLM models list: `/etc/nixos/asuraLaptop/ambxst/modules/services/ai/litellm_config.yaml`
+- Ambxst AI defaults: `/etc/nixos/asuraPc/ambxst/config/defaults/ai.js`
+- Ambxst AI config used at runtime: `/etc/nixos/asuraPc/ambxst/ai.json`
+- LiteLLM models list: `/etc/nixos/asuraPc/ambxst/modules/services/ai/litellm_config.yaml`
 - OpenClaw config: `~/.openclaw/openclaw.json`
 
 ## Common Tasks
 
 ### Change the default model
 
-1. Edit `/etc/nixos/asuraLaptop/ambxst/ai.json`.
+1. Edit `/etc/nixos/asuraPc/ambxst/ai.json`.
 2. Change `defaultModel`.
 3. Rebuild.
 
 ### Add a new provider to LiteLLM
 
-1. Edit `/etc/nixos/asuraLaptop/ambxst/modules/services/ai/litellm_config.yaml`.
+1. Edit `/etc/nixos/asuraPc/ambxst/modules/services/ai/litellm_config.yaml`.
 2. Add a new `model_name` entry.
 3. Rebuild.
 
