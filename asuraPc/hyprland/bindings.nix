@@ -57,7 +57,7 @@
     ];
 
     bindr = [
-      "$mod, mouse:272, exec, ambxst run dashboard-widgets" # Open app search on Super+click release
+      "SUPER, SUPER_L, exec, ambxst run dashboard-widgets" # Open app search on Super key release
     ];
 
     bindl = [
