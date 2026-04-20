@@ -73,7 +73,7 @@ in
         "__GL_VRR_ALLOWED,0"
         "LIBVA_DRIVER_NAME,nvidia"
         "__GLX_VENDOR_LIBRARY_NAME,nvidia"
-        "GBM_BACKEND,nvidia-drm"
+        "NVD_BACKEND,direct"
         "SDL_VIDEODRIVER,wayland"
         "CLUTTER_BACKEND,wayland"
         "XCURSOR_SIZE,24"

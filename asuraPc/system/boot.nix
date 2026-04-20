@@ -67,6 +67,8 @@ in
       "rd.udev.log_level=3"
       "udev.log_level=3"
       "vt.global_cursor_default=0"
+      "nvidia-drm.modeset=1"
+      "nvidia-drm.fbdev=1"
       # Performance
       "nowatchdog"
       "nmi_watchdog=0"

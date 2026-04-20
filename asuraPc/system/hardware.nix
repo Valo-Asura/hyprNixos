@@ -25,7 +25,13 @@
 
   # Broadcom BCM4360 requires proprietary wl (broadcom_sta), not b43/bcma.
   boot.extraModulePackages = [ config.boot.kernelPackages.broadcom_sta ];
-  boot.kernelModules = [ "wl" ];
+  boot.kernelModules = [
+    "wl"
+    "nvidia"
+    "nvidia_modeset"
+    "nvidia_uvm"
+    "nvidia_drm"
+  ];
   boot.blacklistedKernelModules = [
     "b43"
     "b43legacy"
