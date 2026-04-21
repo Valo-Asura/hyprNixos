@@ -148,6 +148,30 @@
     };
 
     functions = {
+      start-hyprland = {
+        description = "Start Hyprland from a TTY, with a guard against relaunching inside Wayland";
+        body = ''
+          if test "$FORCE_START_HYPRLAND" = "1"
+            command start-hyprland $argv
+            return $status
+          end
+
+          if set -q HYPRLAND_INSTANCE_SIGNATURE; or test "$XDG_SESSION_TYPE" = "wayland"; or set -q WAYLAND_DISPLAY
+            set -l current_display "unknown"
+            if set -q WAYLAND_DISPLAY
+              set current_display $WAYLAND_DISPLAY
+            end
+
+            echo "Hyprland is already running in this shell on $current_display."
+            echo "Switch to a text TTY or log out before starting a new compositor session."
+            echo "If you really need to bypass this guard, run: FORCE_START_HYPRLAND=1 start-hyprland"
+            return 1
+          end
+
+          command start-hyprland $argv
+        '';
+      };
+
       # Directory tree using eza (not system tree)
       ltree = {
         description = "Show directory tree (depth 3, no .git/node_modules)";
