@@ -46,7 +46,9 @@
     sops
 
     # IDE
-    vscode antigravity
+    # IDE
+    # Prefer `pkgs.windsurf` when available, otherwise fall back to `vscode`.
+    (if builtins.hasAttr "windsurf" pkgs then pkgs.windsurf else vscode) antigravity
 
     # Terminal enhancements
     btop tree fzf curl yq

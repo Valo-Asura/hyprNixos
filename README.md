@@ -27,6 +27,7 @@ A meticulously crafted NixOS configuration that actually works™️. Built with
   - 0.54 keybind compatibility fix applied: `togglesplit` now routed via `layoutmsg`.
 - IDE/editor packages refreshed with updated `nixpkgs` lock (current eval):
   - `kiro 0.10.0`, `vscode 1.109.4`, `antigravity 1.18.4`, `neovim 0.11.6`, `helix 25.07.1`.
+  - `Windsurf` (conditionally installed system-wide if `pkgs.windsurf` is available; falls back to `vscode`).
 
 **Path notes**
 - Fastfetch logo/profile image: no repo-managed fastfetch image/logo path is configured.
@@ -148,6 +149,49 @@ sudo nixos-rebuild switch --flake /etc/nixos#nixos
 ```bash
 sudo reboot
 ```
+
+## 🔐 Secure Boot & Dual-Boot (Windows 11)
+
+This repo supports a staged Secure Boot rollout using `sbctl` and `lanzaboote`.
+
+- Default: systemd-boot is installed while the key bundle at `/var/lib/sbctl` is absent.
+- When keys exist, `lanzaboote` is enabled and will attempt to preserve Microsoft keys for
+  Windows 11 compatibility.
+
+Recommended manual workflow:
+
+1. Install `sbctl` (it's included in `environment.systemPackages`).
+2. Create keys:
+
+```bash
+sudo /etc/nixos/asuraPc/scripts/sbctl-create-keys.sh
+```
+
+3. Enroll keys into firmware (this requires physical access and confirmation prompts):
+
+```bash
+sudo sbctl enroll-keys
+```
+
+4. Rebuild configuration and reboot:
+
+```bash
+sudo nixos-rebuild switch --flake /etc/nixos#nixos
+sudo reboot
+```
+
+If you prefer automation, create an empty trigger file to run `sbctl create-keys` during
+activation (use with caution):
+
+```bash
+sudo touch /etc/nixos/enable-sbctl-auto-create
+sudo nixos-rebuild switch --flake /etc/nixos#nixos
+```
+
+Notes:
+- The activation script will only run if `/etc/nixos/enable-sbctl-auto-create` exists.
+- Always back up your current ESP and have Windows recovery media available before
+  enrolling keys or changing bootloaders.
 
 ## 🎭 Replicating This Setup
 

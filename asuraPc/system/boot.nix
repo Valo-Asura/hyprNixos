@@ -52,22 +52,49 @@ in
           sort-key o_windows
         '';
         extraInstallCommands = ''
-          if [ -e /dev/disk/by-uuid/${windowsEspUuid} ]; then
+          # Robust Windows EFI sync:
+          # Try configured UUID first, then scan common disk symlinks (/dev/disk/by-uuid, by-label, by-partuuid).
+          # Backup any existing copy to /var/lib/esp-backups before replacing.
+          try_mount_and_copy() {
+            dev="$1"
             ${pkgs.coreutils}/bin/mkdir -p ${windowsEspMountPoint}
-            if ${pkgs.util-linux}/bin/mount -o ro /dev/disk/by-uuid/${windowsEspUuid} ${windowsEspMountPoint}; then
+            if ${pkgs.util-linux}/bin/mount -o ro "$dev" ${windowsEspMountPoint}; then
               if [ -d ${windowsEspMountPoint}/EFI/Microsoft ]; then
                 ${pkgs.coreutils}/bin/mkdir -p /boot/EFI
-                ${pkgs.coreutils}/bin/rm -rf /boot/EFI/Microsoft
-                ${pkgs.coreutils}/bin/cp -r ${windowsEspMountPoint}/EFI/Microsoft /boot/EFI/
-              else
-                echo "warning: Windows ESP mounted but /EFI/Microsoft was not found" >&2
+                if [ -d /boot/EFI/Microsoft ]; then
+                  ts=$(${pkgs.coreutils}/bin/date +%Y%m%d%H%M%S)
+                  ${pkgs.coreutils}/bin/mkdir -p /var/lib/esp-backups
+                  ${pkgs.coreutils}/bin/mv /boot/EFI/Microsoft /var/lib/esp-backups/Microsoft.$ts || true
+                fi
+                ${pkgs.coreutils}/bin/cp -a ${windowsEspMountPoint}/EFI/Microsoft /boot/EFI/
+                ${pkgs.util-linux}/bin/umount ${windowsEspMountPoint}
+                return 0
               fi
               ${pkgs.util-linux}/bin/umount ${windowsEspMountPoint}
+            fi
+            return 1
+          }
+
+          if [ -e /dev/disk/by-uuid/${windowsEspUuid} ]; then
+            if try_mount_and_copy "/dev/disk/by-uuid/${windowsEspUuid}"; then
+              echo "Windows EFI copied from UUID ${windowsEspUuid}"
             else
-              echo "warning: failed to mount Windows ESP ${windowsEspUuid}" >&2
+              echo "warning: failed to copy from /dev/disk/by-uuid/${windowsEspUuid}" >&2
             fi
           else
-            echo "warning: Windows ESP ${windowsEspUuid} not found; skipping Windows boot entry sync" >&2
+            found=0
+            for dev in /dev/disk/by-uuid/* /dev/disk/by-label/* /dev/disk/by-partuuid/*; do
+              [ -e "$dev" ] || continue
+              realdev=$(${pkgs.coreutils}/bin/readlink -f "$dev")
+              if try_mount_and_copy "$realdev"; then
+                echo "Windows EFI copied from $dev ($realdev)"
+                found=1
+                break
+              fi
+            done
+            if [ "$found" -eq 0 ]; then
+              echo "warning: No Windows EFI found in scanned disks; skipping Windows boot entry sync" >&2
+            fi
           fi
         '';
       };
@@ -83,6 +110,22 @@ in
         enable = true;
       };
     };
+
+  # Optional activation-script: create sbctl keys automatically
+  # Trigger file: /etc/nixos/enable-sbctl-auto-create (must be created manually)
+  system.activationScripts.createSbctlKeys = {
+    text = ''
+      # Only run when the trigger file exists — this avoids accidental key creation
+      if [ -f /etc/nixos/enable-sbctl-auto-create ]; then
+        if [ ! -d ${pkiBundle} ]; then
+          echo "Auto-creating Secure Boot keys (sbctl)..."
+          ${pkgs.sbctl}/bin/sbctl create-keys || true
+        else
+          echo "sbctl key bundle already exists at ${pkiBundle}; skipping creation."
+        fi
+      fi
+    '';
+  };
 
     kernelPackages = pkgs.linuxPackages_zen;
     kernelParams = [
