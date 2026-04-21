@@ -1,20 +1,25 @@
 # Hardware Configuration
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   hardware = {
     enableRedistributableFirmware = true;
     cpu.amd.updateMicrocode = true;
     i2c.enable = true;
-    graphics.enable = true;
+    graphics = {
+      enable = true;
+      extraPackages = [ pkgs.nvidia-vaapi-driver ];
+    };
     bluetooth.enable = true;
     nvidia = {
-      modesetting.enable = true;
-      powerManagement.enable = true;
+      modesetting.enable = lib.mkForce true;
+      powerManagement.enable = false;
       nvidiaPersistenced = false;
-      open = false;
+      open = lib.mkForce false;
       nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.production;
+      # Pin the older 580 branch explicitly for stability instead of following
+      # the moving production/stable aliases, which currently resolve to 595.
+      package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
       prime = {
         offload.enable = lib.mkForce false;
         sync.enable = lib.mkForce false;

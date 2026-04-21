@@ -4,7 +4,6 @@
 {
   environment = {
     sessionVariables = {
-      WLR_NO_HARDWARE_CURSORS = "1";
       NIXOS_OZONE_WL = "1";
       MOZ_ENABLE_WAYLAND = "1";
       QT_QPA_PLATFORM = "wayland;xcb";
@@ -16,6 +15,7 @@
       XDG_SESSION_DESKTOP = "Hyprland";
       # NVIDIA EGL — must be set before Hyprland starts
       LIBVA_DRIVER_NAME = "nvidia";
+      GBM_BACKEND = "nvidia-drm";
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       __EGL_VENDOR_LIBRARY_FILENAMES = "/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json";
       NVD_BACKEND = "direct";

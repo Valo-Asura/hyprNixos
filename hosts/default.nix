@@ -20,7 +20,6 @@
       inputs.stylix.nixosModules.stylix
       inputs.nixos-hardware.nixosModules.common-pc
       inputs.nixos-hardware.nixosModules.common-cpu-amd
-      inputs.nixos-hardware.nixosModules.common-gpu-nvidia
       inputs.sops-nix.nixosModules.sops
       ../system
       inputs.home-manager.nixosModules.home-manager

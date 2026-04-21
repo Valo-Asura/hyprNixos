@@ -3,6 +3,8 @@
 
 let
   pkiBundle = "/var/lib/sbctl";
+  windowsEspUuid = "32EC-CB64";
+  windowsEspMountPoint = "/run/systemd-boot-windows-esp";
   secureBootFiles = [
     "${pkiBundle}/GUID"
     "${pkiBundle}/keys/db/db.key"
@@ -44,6 +46,30 @@ in
         editor = false;
         consoleMode = "max";
         configurationLimit = 8;
+        extraEntries."windows.conf" = ''
+          title Windows 11
+          efi /EFI/Microsoft/Boot/Bootmgfw.efi
+          sort-key o_windows
+        '';
+        extraInstallCommands = ''
+          if [ -e /dev/disk/by-uuid/${windowsEspUuid} ]; then
+            ${pkgs.coreutils}/bin/mkdir -p ${windowsEspMountPoint}
+            if ${pkgs.util-linux}/bin/mount -o ro /dev/disk/by-uuid/${windowsEspUuid} ${windowsEspMountPoint}; then
+              if [ -d ${windowsEspMountPoint}/EFI/Microsoft ]; then
+                ${pkgs.coreutils}/bin/mkdir -p /boot/EFI
+                ${pkgs.coreutils}/bin/rm -rf /boot/EFI/Microsoft
+                ${pkgs.coreutils}/bin/cp -r ${windowsEspMountPoint}/EFI/Microsoft /boot/EFI/
+              else
+                echo "warning: Windows ESP mounted but /EFI/Microsoft was not found" >&2
+              fi
+              ${pkgs.util-linux}/bin/umount ${windowsEspMountPoint}
+            else
+              echo "warning: failed to mount Windows ESP ${windowsEspUuid}" >&2
+            fi
+          else
+            echo "warning: Windows ESP ${windowsEspUuid} not found; skipping Windows boot entry sync" >&2
+          fi
+        '';
       };
 
       grub.enable = false;

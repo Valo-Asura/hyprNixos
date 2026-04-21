@@ -40,8 +40,9 @@ in
 
   wayland.windowManager.hyprland = {
     enable = true;
-    package = inputs.hyprland.packages.${system}.hyprland;
-    portalPackage = inputs.hyprland.packages.${system}.xdg-desktop-portal-hyprland;
+    # Reuse the package pair from the NixOS module so Hyprland and XDPH stay in sync.
+    package = null;
+    portalPackage = null;
     plugins = [
       inputs.hyprland-plugins.packages.${system}.hyprexpo
     ];
@@ -72,6 +73,7 @@ in
         "__GL_GSYNC_ALLOWED,0"
         "__GL_VRR_ALLOWED,0"
         "LIBVA_DRIVER_NAME,nvidia"
+        "GBM_BACKEND,nvidia-drm"
         "__GLX_VENDOR_LIBRARY_NAME,nvidia"
         "__EGL_VENDOR_LIBRARY_FILENAMES,/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json"
         "NVD_BACKEND,direct"
@@ -83,6 +85,7 @@ in
 
       cursor = {
         default_monitor = "DP-1";
+        no_hardware_cursors = true;
       };
 
       general = {
