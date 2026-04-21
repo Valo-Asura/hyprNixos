@@ -110,23 +110,6 @@ in
         enable = true;
       };
     };
-
-  # Optional activation-script: create sbctl keys automatically
-  # Trigger file: /etc/nixos/enable-sbctl-auto-create (must be created manually)
-  system.activationScripts.createSbctlKeys = {
-    text = ''
-      # Only run when the trigger file exists — this avoids accidental key creation
-      if [ -f /etc/nixos/enable-sbctl-auto-create ]; then
-        if [ ! -d ${pkiBundle} ]; then
-          echo "Auto-creating Secure Boot keys (sbctl)..."
-          ${pkgs.sbctl}/bin/sbctl create-keys || true
-        else
-          echo "sbctl key bundle already exists at ${pkiBundle}; skipping creation."
-        fi
-      fi
-    '';
-  };
-
     kernelPackages = pkgs.linuxPackages_zen;
     kernelParams = [
       "quiet"
@@ -144,5 +127,21 @@ in
       "split_lock_detect=off"
       "cryptomgr.notests"
     ];
+  };
+
+  # Optional activation-script: create sbctl keys automatically
+  # Trigger file: /etc/nixos/enable-sbctl-auto-create (must be created manually)
+  system.activationScripts.createSbctlKeys = {
+    text = ''
+      # Only run when the trigger file exists — this avoids accidental key creation
+      if [ -f /etc/nixos/enable-sbctl-auto-create ]; then
+        if [ ! -d ${pkiBundle} ]; then
+          echo "Auto-creating Secure Boot keys (sbctl)..."
+          ${pkgs.sbctl}/bin/sbctl create-keys || true
+        else
+          echo "sbctl key bundle already exists at ${pkiBundle}; skipping creation."
+        fi
+      fi
+    '';
   };
 }
