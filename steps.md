@@ -1,122 +1,60 @@
-# Secure Boot Setup Steps
+# NixOS Setup Notes
 
-Your setup:
-- NixOS is on `sda`, boot partition at `/boot` (`sda1`)
-- Windows 11 is on `nvme0n1`
-- Secure Boot is currently OFF
-- Right now your PC boots through **Limine** (we need to replace it with systemd-boot first)
+## Secure Boot — DONE ✅
 
----
+Setup: NixOS on `sda`, Windows 11 on `nvme0n1`, GTX 1070, Zen kernel.
 
-## Step 1 — Reboot into systemd-boot ✅ rebuild done, do this now
+### What was done
+1. `sudo sbctl create-keys` — generated PK/KEK/db keys at `/var/lib/sbctl`
+2. `sudo sbctl enroll-keys --microsoft` — enrolled keys + Microsoft KEK into EFI vars
+3. Removed the `secureBootReady` path-check conditional (Nix sandbox can't see `/var/lib`) — Lanzaboote now always enabled
+4. `sudo nixos-rebuild switch` — Lanzaboote installed, signed BOOTX64.EFI + systemd-bootx64.efi
+5. `sudo sbctl sign` — manually signed the zen kernel EFI
+6. **Reboot → UEFI → Enable Secure Boot → done**
 
-Reboot:
-
-```bash
-reboot
-```
-
-If your PC still boots through Limine, go into your motherboard's one-time boot menu (usually `F8`, `F11`, or `Del` on boot) and pick **Linux Boot Manager**.
-
-Once NixOS loads, check it worked:
-
-```bash
-bootctl status
-```
-
-You should see `systemd-boot` as the current bootloader, not Limine.
-
----
-
-## Step 2 — Create Secure Boot keys
-
-```bash
-sudo sbctl create-keys
-```
-
-Check the keys were created:
-
+### Verify after reboot
 ```bash
 sudo sbctl status
+# Secure Boot: ✓ Enabled
+# Setup Mode:  ✗ Disabled
 ```
 
-Now rebuild again (this time it switches to Lanzaboote):
-
+### Rollback if broken
 ```bash
-sudo nixos-rebuild switch --flake /etc/nixos#nixos
-```
-
-Reboot:
-
-```bash
-reboot
-```
-
----
-
-## Step 3 — Put your motherboard in Setup Mode
-
-Go into your BIOS/UEFI settings and change these:
-
-1. **TPM / AMD fTPM** → Enabled
-2. **UEFI boot** → Enabled
-3. **CSM / Legacy boot** → Disabled
-4. **Secure Boot** → find the key mode and set it to **Setup Mode** or **Custom**
-   - On most boards: clear the Platform Key (PK) or switch from "Standard" to "Custom"
-
-Do NOT delete the Windows boot entry or Windows disk.
-
-Save and reboot into NixOS (pick **Linux Boot Manager** if needed).
-
-This boot will enroll your keys automatically (Microsoft keys are kept so Windows still works).
-
----
-
-## Step 4 — Turn Secure Boot on
-
-Go back into BIOS and set:
-
-1. **Secure Boot** → Enabled
-
-Save and boot NixOS.
-
-Check it worked:
-
-```bash
-bootctl status
-sbctl status
-```
-
-You want to see:
-- `Secure Boot: enabled`
-- `Setup Mode: Disabled`
-
----
-
-## Step 5 — Check Windows still works
-
-Boot into Windows (from the boot menu or systemd-boot menu).
-
-In Windows:
-1. Press `Win + R`, type `msinfo32` — check `Secure Boot State: On` and `BIOS Mode: UEFI`
-2. Press `Win + R`, type `tpm.msc` — check TPM 2.0 is ready
-
-If VALORANT still complains, look up `VAN 9005` — it's a VBS/Memory Integrity setting, not a Secure Boot issue.
-
----
-
-## If something breaks (rollback)
-
-1. Go into BIOS, turn **Secure Boot off**
-2. Boot into NixOS via **Linux Boot Manager**
-3. Run:
-
-```bash
+# In UEFI: disable Secure Boot first, then:
 sudo mv /var/lib/sbctl /var/lib/sbctl.disabled
 sudo nixos-rebuild switch --flake /etc/nixos#nixos
-reboot
 ```
 
-This drops you back to plain systemd-boot automatically.
+### Fresh Windows install note
+After reinstalling Windows, run `sudo nixos-rebuild switch` — it will re-copy the Windows EFI files to the NixOS ESP automatically.
 
-Windows is always safe — just pick **Windows Boot Manager** from the BIOS boot menu.
+---
+
+## Ollama / Local AI — DONE ✅
+
+### Problem
+nixpkgs-pinned ollama `0.17.0` didn't support Gemma 4. GTX 1070 (Pascal, sm_61) was excluded from the nixpkgs CUDA build (only sm_75+).
+
+### What was done
+1. Added `nixpkgs-ollama` flake input pinned to nixos-unstable HEAD (ollama `0.20.2`)
+2. Passed `pkgsOllama` via `specialArgs` in `hosts/default.nix`
+3. Overrode `ollama-cuda` with `cudaArches = ["61" "75" "80" "86" "90"]` to include Pascal
+4. Set `MemoryDenyWriteExecute = lib.mkForce false` and `PrivateUsers = lib.mkForce false` — required for CUDA runtime
+5. Set `OLLAMA_GPU_OVERHEAD = "0"` and `OLLAMA_MAX_VRAM = "8000000000"`
+
+### Result
+- `qwen3:4b` → `100% GPU`, ~42 tok/s generation, ~310 tok/s prompt
+- `gemma4:e2b` → `73%/27% CPU/GPU` (7.9GB model, 7.4GB free VRAM — display eats ~600MB)
+- Best model for this GPU: `qwen3:4b` (2.5GB, fully GPU-bound, fast)
+
+### Models loaded
+- `gemma4:e2b` — multimodal, partial GPU
+- `qwen3:4b` — recommended, full GPU
+- `qwen3:1.7b` — fastest, minimal VRAM
+
+---
+
+## VS Code + Windsurf — DONE ✅
+
+Both installed via `packages.nix`. Windsurf is the primary IDE (`windsurf` command), VS Code available as `code`.

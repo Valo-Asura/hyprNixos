@@ -4,34 +4,47 @@
 {
   environment.systemPackages = with pkgs; [
     # System Info & Terminal
-    microfetch zsh fish
+    microfetch
+    zsh
+    fish
 
     # System Tools
-    polkit udisks2 udiskie
+    polkit
+    udisks2
+    udiskie
 
     # Screenshot and Screen Recording
-    grimblast hyprshot
+    grimblast
+    hyprshot
     swappy # Screenshot editor
 
     # Polkit Agent
     inputs.hyprpolkitagent.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # File Management & NTFS Support
-    thunar          # Lightweight GTK file manager (replaces nemo + cinnamon-common)
-    xarchiver gvfs
-    ntfs3g exfat    # Windows filesystem support
-
+    thunar # Lightweight GTK file manager (replaces nemo + cinnamon-common)
+    xarchiver
+    gvfs
+    ntfs3g
+    exfat # Windows filesystem support
 
     # Desktop Environment
-    waybar swww wlogout xdg-utils
-    networkmanager tuigreet  # removed swaylock (using hyprlock)
-    xdg-user-dirs  # xdg-desktop-portals in services.nix
+    waybar
+    swww
+    wlogout
+    xdg-utils
+    networkmanager
+    tuigreet # removed swaylock (using hyprlock)
+    xdg-user-dirs # xdg-desktop-portals in services.nix
 
     # Ambxst required packages (system-level integration; core deps come from Ambxst package)
     dconf
-    gtk3 gtk4 adwaita-icon-theme
+    gtk3
+    gtk4
+    adwaita-icon-theme
     gsettings-desktop-schemas
-    at-spi2-atk at-spi2-core
+    at-spi2-atk
+    at-spi2-core
     libgtop
 
     # Multimedia
@@ -39,23 +52,41 @@
 
     # Hyprland Panel Dependencies
     bluez
-    hyprsunset hypridle
+    hyprsunset
+    hypridle
 
     # Development
-    wget git eza bat fd ripgrep direnv nixfmt nil inter
+    wget
+    git
+    eza
+    bat
+    fd
+    ripgrep
+    direnv
+    nixfmt
+    nil
+    inter
     sops
 
     # IDE
     # IDE
-    # Prefer `pkgs.windsurf` when available, otherwise fall back to `vscode`.
-    (if builtins.hasAttr "windsurf" pkgs then pkgs.windsurf else vscode) antigravity
+    (if builtins.hasAttr "windsurf" pkgs then pkgs.windsurf else vscode)
+    antigravity
+    vscode
 
     # Terminal enhancements
-    btop tree fzf curl yq
+    btop
+    tree
+    fzf
+    curl
+    yq
 
     # Python Environment
-    (python3.withPackages (ps: with ps; [
-      pip requests
-    ]))
+    (python3.withPackages (
+      ps: with ps; [
+        pip
+        requests
+      ]
+    ))
   ];
 }
