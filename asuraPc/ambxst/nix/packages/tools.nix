@@ -1,7 +1,8 @@
 # System tools and utilities
 { pkgs }:
 
-with pkgs; [
+with pkgs;
+[
   brightnessctl
   ddcutil
   fontconfig
@@ -22,5 +23,6 @@ with pkgs; [
   zbar
   zenity
   inetutils
+  litellm
   adw-gtk3
 ]

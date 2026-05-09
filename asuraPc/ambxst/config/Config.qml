@@ -1193,9 +1193,9 @@ Singleton {
 
         adapter: JsonAdapter {
             property string systemPrompt: "You are a helpful assistant running on a Linux system. You have access to some tools to control the system."
-            property string tool: "none"
+            property string tool: "auto"
             property list<var> extraModels: []
-            property string defaultModel: "gpt-4o-mini"
+            property string defaultModel: "qwen3:4b"
             property var apiKeys: ({})
         }
     }

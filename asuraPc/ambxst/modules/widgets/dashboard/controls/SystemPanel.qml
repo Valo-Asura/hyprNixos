@@ -237,7 +237,7 @@ Item {
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
                                         visible: !defaultModelInput.text && !defaultModelInput.activeFocus
-                                        text: "e.g. gpt-4o-mini"
+                                        text: "e.g. qwen3:4b"
                                         font: defaultModelInput.font
                                         color: Colors.overSurfaceVariant
                                     }

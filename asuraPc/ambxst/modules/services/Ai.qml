@@ -35,7 +35,7 @@ Singleton {
     function getDefaultModelId() {
         if (Config.ai && Config.ai.defaultModel && Config.ai.defaultModel.length > 0)
             return Config.ai.defaultModel;
-        return "gpt-4o-mini";
+        return "qwen3:4b";
     }
 
     function restoreModel() {
@@ -276,6 +276,56 @@ Singleton {
         return null;
     }
 
+    function displayNameForOllamaModel(modelId) {
+        let id = modelId || "qwen3:4b";
+        if (id.startsWith("ollama/"))
+            id = id.slice("ollama/".length);
+
+        switch (id) {
+        case "qwen3:8b":
+            return "Qwen 3 8B (local)";
+        case "qwen3:4b":
+            return "Qwen 3 4B (local)";
+        case "qwen3:1.7b":
+            return "Qwen 3 1.7B (local)";
+        case "gemma4:e2b":
+            return "Gemma 4 E2B (local)";
+        }
+
+        let parts = id.split(":");
+        let family = parts[0]
+            .replace(/([a-zA-Z])([0-9])/g, "$1 $2")
+            .replace(/[-_]/g, " ");
+        family = family.charAt(0).toUpperCase() + family.slice(1);
+        let size = parts.length > 1 ? " " + parts.slice(1).join(":").toUpperCase() : "";
+        return family + size + " (local)";
+    }
+
+    function ensureOllamaModel(modelId, name) {
+        let id = modelId || "qwen3:4b";
+        if (id.startsWith("ollama/"))
+            id = id.slice("ollama/".length);
+        for (let i = 0; i < models.length; i++) {
+            if (models[i].model === id)
+                return models[i];
+        }
+
+        let m = aiModelFactory.createObject(root, {
+            name: name || displayNameForOllamaModel(id),
+            icon: Qt.resolvedUrl("../../../assets/aiproviders/ollama.svg"),
+            description: "Local Ollama model - no internet or API key needed",
+            endpoint: "http://127.0.0.1:11434/v1",
+            model: id,
+            api_format: "Ollama",
+            requires_key: false
+        });
+        if (m) {
+            mergeModels([m]);
+            return m;
+        }
+        return null;
+    }
+
     function normalizeKeyId(input) {
         if (!input)
             return "";
@@ -366,10 +416,12 @@ Singleton {
                 let foundModel = findModelByQuery(target);
                 if (!foundModel) {
                     let lower = target.toLowerCase();
-                    if (lower.startsWith("gpt") || lower.startsWith("o") || lower.includes("openai")) {
+                    if (lower.startsWith("gpt") || lower.startsWith("o1") || lower.startsWith("o3") || lower.startsWith("o4") || lower.includes("openai")) {
                         foundModel = ensureOpenAiModel(target, target);
                     } else if (lower.includes("gemini") || lower.includes("flash") || lower.includes("pro")) {
                         foundModel = ensureGeminiModel(target, target);
+                    } else if (lower.includes("ollama") || lower.includes(":") || lower.startsWith("qwen") || lower.startsWith("gemma") || lower.startsWith("llama")) {
+                        foundModel = ensureOllamaModel(target);
                     }
                 }
 
@@ -518,7 +570,9 @@ Singleton {
         }
 
         if (!currentModel) {
-            let fallback = findOpenAiFallbackModel();
+            let fallback = findLocalFallbackModel();
+            if (!fallback)
+                fallback = findOpenAiFallbackModel();
             if (!fallback)
                 fallback = findGeminiFallbackModel();
             if (fallback) {
@@ -665,6 +719,24 @@ Singleton {
         let provider = (model.api_format || "").toLowerCase();
         let id = (model.model || "").toLowerCase();
         return provider.includes("google") || id.includes("gemini");
+    }
+
+    function isOllamaModel(model) {
+        if (!model)
+            return false;
+        let provider = (model.api_format || "").toLowerCase();
+        let endpoint = (model.endpoint || "").toLowerCase();
+        let id = (model.model || "").toLowerCase();
+        return provider.includes("ollama") || endpoint.includes("11434") || id.startsWith("ollama/");
+    }
+
+    function findLocalFallbackModel() {
+        for (let i = 0; i < models.length; i++) {
+            let m = models[i];
+            if (isOllamaModel(m))
+                return m;
+        }
+        return ensureOllamaModel("qwen3:4b");
     }
 
     function findGeminiFallbackModel() {
@@ -826,7 +898,9 @@ Singleton {
                 let reply = root.currentStrategy.parseResponse(responseText);
 
                 if (root.isModelNotFound(reply) && !root.fallbackUsed) {
-                    let fallback = root.findOpenAiFallbackModel();
+                    let fallback = root.findLocalFallbackModel();
+                    if (!fallback)
+                        fallback = root.findOpenAiFallbackModel();
                     if (!fallback)
                         fallback = root.findGeminiFallbackModel();
                     if (fallback && root.currentModel && fallback.model !== root.currentModel.model) {
@@ -843,7 +917,9 @@ Singleton {
 
                 if (root.shouldRetry(reply)) {
                     if (!root.fallbackUsed && root.isOpenAiModel(root.currentModel)) {
-                        let fallback = root.findGeminiFallbackModel();
+                        let fallback = root.findLocalFallbackModel();
+                        if (!fallback)
+                            fallback = root.findGeminiFallbackModel();
                         if (fallback && fallback.model !== root.currentModel.model) {
                             root.fallbackUsed = true;
                             root.suppressModelPersist = true;
@@ -856,7 +932,9 @@ Singleton {
                         }
                     }
                     if (!root.fallbackUsed && root.isGeminiModel(root.currentModel)) {
-                        let fallback = root.findOpenAiFallbackModel();
+                        let fallback = root.findLocalFallbackModel();
+                        if (!fallback)
+                            fallback = root.findOpenAiFallbackModel();
                         if (fallback && fallback.model !== root.currentModel.model) {
                             root.fallbackUsed = true;
                             root.suppressModelPersist = true;
@@ -1070,6 +1148,30 @@ Singleton {
 
     function addBuiltInModels() {
         let newModels = [];
+        // Built-in local Ollama models (no API key required). Keep these first
+        // so a fresh install starts with a local model instead of a cloud key prompt.
+        let ollamaModels = [
+            { model: "qwen3:4b" },
+            { model: "qwen3:1.7b" },
+            { model: "qwen3:8b" },
+            { model: "gemma4:e2b" }
+        ];
+
+        for (let j = 0; j < ollamaModels.length; j++) {
+            let item = ollamaModels[j];
+            let m = aiModelFactory.createObject(root, {
+                name: displayNameForOllamaModel(item.model),
+                icon: Qt.resolvedUrl("../../../assets/aiproviders/ollama.svg"),
+                description: "Local Ollama model - no internet or API key needed",
+                endpoint: "http://127.0.0.1:11434/v1",
+                model: item.model,
+                api_format: "Ollama",
+                requires_key: false
+            });
+            if (m)
+                newModels.push(m);
+        }
+
         let openAiModels = [
             {
                 name: "GPT-4o Mini",
@@ -1094,31 +1196,6 @@ Singleton {
                 key_id: "OPENAI_API_KEY",
                 key_get_link: "https://platform.openai.com/api-keys",
                 key_get_description: "Create an OpenAI API key"
-            });
-            if (m)
-                newModels.push(m);
-        }
-
-        // Built-in local Ollama models (no API key required)
-        // These appear in the picker whenever Ollama is running; the dynamic
-        // fetch via fetchProcessOllama will also surface them, but registering
-        // them here guarantees they're present even before the first fetch.
-        let ollamaModels = [
-            { name: "Gemma4 E2B (local)", model: "gemma4:e2b" },
-            { name: "Qwen3 4B  (local)", model: "qwen3:4b" },
-            { name: "Qwen3 1.7B (local)", model: "qwen3:1.7b" }
-        ];
-
-        for (let j = 0; j < ollamaModels.length; j++) {
-            let item = ollamaModels[j];
-            let m = aiModelFactory.createObject(root, {
-                name: item.name,
-                icon: Qt.resolvedUrl("../../../assets/aiproviders/openai.svg"),
-                description: "Local Ollama model — no internet or API key needed",
-                endpoint: "http://127.0.0.1:11434/v1",
-                model: item.model,
-                api_format: "OpenAI",
-                requires_key: false
             });
             if (m)
                 newModels.push(m);
@@ -1476,13 +1553,11 @@ Singleton {
                         for (let i = 0; i < data.models.length; i++) {
                             let item = data.models[i];
                             let m = aiModelFactory.createObject(root, {
-                                name: item.name,
+                                name: displayNameForOllamaModel(item.name),
                                 icon: Qt.resolvedUrl("../../../assets/aiproviders/ollama.svg"),
                                 description: "Local Ollama Model",
-                                endpoint: "http://127.0.0.1:4000/v1" // Point to LiteLLM
-                                ,
-                                model: "ollama/" + item.name // Prefix for LiteLLM
-                                ,
+                                endpoint: "http://127.0.0.1:11434/v1",
+                                model: item.name,
                                 api_format: "Ollama",
                                 requires_key: false
                             });
