@@ -385,6 +385,13 @@ QtObject {
 
                         var current = data.current || data.current_weather;
                         if (current && data.daily) {
+                            var resolvedLocation = "";
+                            if (data.ambxst && data.ambxst.location)
+                                resolvedLocation = String(data.ambxst.location);
+                            if (resolvedLocation.length === 0)
+                                resolvedLocation = root.lastLocation;
+                            root.lastLocation = resolvedLocation;
+
                             var weather = current;
                             var daily = data.daily;
 

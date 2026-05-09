@@ -1,8 +1,20 @@
 # Main Ambxst package
-{ pkgs, lib, self, system, quickshell, ambxstLib }:
+{
+  pkgs,
+  lib,
+  self,
+  system,
+  quickshell,
+  ambxstLib,
+}:
 
 let
-  quickshellPkg = quickshell.packages.${system}.default;
+  quickshellPkg = pkgs.callPackage "${quickshell}/default.nix" {
+    gitRev = quickshell.rev or "unknown";
+    xorg = pkgs.xorg // {
+      libxcb = pkgs.libxcb;
+    };
+  };
 
   # Import sub-packages
   ttf-phosphor-icons = import ./phosphor-icons.nix { inherit pkgs; };
@@ -16,12 +28,7 @@ let
   tesseractPkgs = import ./tesseract.nix { inherit pkgs; };
 
   # Combine all packages (NixOS-specific deps handled by the module)
-  baseEnv = corePkgs
-    ++ toolsPkgs
-    ++ mediaPkgs
-    ++ appsPkgs
-    ++ fontsPkgs
-    ++ tesseractPkgs;
+  baseEnv = corePkgs ++ toolsPkgs ++ mediaPkgs ++ appsPkgs ++ fontsPkgs ++ tesseractPkgs;
 
   envAmbxst = pkgs.buildEnv {
     name = "Ambxst-env";
@@ -73,8 +80,12 @@ let
     exec ${shellSrc}/cli.sh "$@"
   '';
 
-in pkgs.buildEnv {
+in
+pkgs.buildEnv {
   name = "Ambxst";
-  paths = [ envAmbxst launcher ];
+  paths = [
+    envAmbxst
+    launcher
+  ];
   meta.mainProgram = "ambxst";
 }

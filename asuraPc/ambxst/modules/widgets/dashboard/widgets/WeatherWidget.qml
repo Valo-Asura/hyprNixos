@@ -931,17 +931,20 @@ ClippingRectangle {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 12
-        width: cityText.width
+        width: Math.min(cityText.implicitWidth, parent.width - 24)
         height: cityText.height
         visible: WeatherService.dataAvailable && WeatherService.lastLocation !== ""
 
         Text {
             id: cityText
+            width: parent.width
             text: WeatherService.lastLocation
             color: Qt.rgba(1, 1, 1, 0.75)
             font.family: "Noto Sans"
             font.pixelSize: Config.theme.fontSize - 3
             font.weight: Font.Medium
+            elide: Text.ElideRight
+            horizontalAlignment: Text.AlignRight
         }
 
         layer.enabled: true

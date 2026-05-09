@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 export PATH="/run/current-system/sw/bin:/etc/profiles/per-user/${USER:-}/bin:$PATH"
 
@@ -31,7 +31,7 @@ http_get() {
 }
 
 # Function to get coordinates from GeoIP
-get_geoip_coords() {
+resolve_geoip() {
 	local response
 	response=$(http_get "https://ipapi.co/json/")
 
@@ -40,20 +40,26 @@ get_geoip_coords() {
 		return 1
 	fi
 
-	local lat lon
+	local lat lon location
 	lat=$(echo "$response" | jq -r '.latitude // empty')
 	lon=$(echo "$response" | jq -r '.longitude // empty')
+	location=$(echo "$response" | jq -r '[.city, .region, .country_name] | map(select(. != null and . != "")) | join(", ")')
 
 	if [[ -z "$lat" || -z "$lon" ]]; then
 		echo '{"error": "Could not determine location from GeoIP"}'
 		return 1
 	fi
 
-	echo "$lat,$lon"
+	if [[ -z "$location" ]]; then
+		location="$lat,$lon"
+	fi
+
+	jq -cn --argjson lat "$lat" --argjson lon "$lon" --arg location "$location" \
+		'{lat: $lat, lon: $lon, location: $location}'
 }
 
 # Function to geocode a city name
-geocode_city() {
+resolve_city() {
 	local city="$1"
 	local encoded_city
 	encoded_city=$(echo -n "$city" | jq -sRr @uri)
@@ -66,22 +72,29 @@ geocode_city() {
 		return 1
 	fi
 
-	local lat lon
+	local lat lon location
 	lat=$(echo "$response" | jq -r '.results[0].latitude // empty')
 	lon=$(echo "$response" | jq -r '.results[0].longitude // empty')
+	location=$(echo "$response" | jq -r '.results[0] as $r | [$r.name, $r.admin1, $r.country] | map(select(. != null and . != "")) | join(", ")')
 
 	if [[ -z "$lat" || -z "$lon" ]]; then
 		echo '{"error": "City not found"}'
 		return 1
 	fi
 
-	echo "$lat,$lon"
+	if [[ -z "$location" ]]; then
+		location="$city"
+	fi
+
+	jq -cn --argjson lat "$lat" --argjson lon "$lon" --arg location "$location" \
+		'{lat: $lat, lon: $lon, location: $location}'
 }
 
 # Function to fetch weather data
 fetch_weather() {
 	local lat="$1"
 	local lon="$2"
+	local location="$3"
 
 	local url="https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code&timezone=auto&forecast_days=7"
 
@@ -103,54 +116,66 @@ fetch_weather() {
 		return 1
 	fi
 
-	echo "$response"
+	echo "$response" | jq --arg location "$location" --argjson latitude "$lat" --argjson longitude "$lon" \
+		'. + {ambxst: {location: $location, latitude: $latitude, longitude: $longitude}}'
 }
 
 # Main logic
 main() {
-	local coords lat lon
+	local resolution lat lon resolved_location
 
 	if [[ -z "$LOCATION" ]]; then
 		# No location provided, use GeoIP
-		coords=$(get_geoip_coords)
-		if [[ "$coords" == "{"* ]]; then
+		resolution=$(resolve_geoip || true)
+		if [[ "$resolution" == "{"*error* ]]; then
 			# It's an error JSON
-			echo "$coords"
+			echo "$resolution"
 			exit 1
 		fi
 	elif [[ "$LOCATION" =~ ^-?[0-9]+\.?[0-9]*,-?[0-9]+\.?[0-9]*$ ]]; then
 		# Location is coordinates (lat,lon)
-		coords="$LOCATION"
+		lat="${LOCATION%,*}"
+		lon="${LOCATION#*,}"
+		resolution=$(jq -cn --argjson lat "$lat" --argjson lon "$lon" --arg location "$LOCATION" \
+			'{lat: $lat, lon: $lon, location: $location}')
 	else
 		# Location is a city name, geocode it
-		coords=$(geocode_city "$LOCATION")
-		if [[ "$coords" == "{"* ]]; then
+		resolution=$(resolve_city "$LOCATION" || true)
+		if [[ "$resolution" == "{"*error* ]]; then
 			# Try a simpler city-only query if input contains commas
 			if [[ "$LOCATION" == *","* ]]; then
 				local city_only
 				city_only=$(echo "$LOCATION" | awk -F',' '{print $1}' | xargs)
 				if [[ -n "$city_only" ]]; then
-					coords=$(geocode_city "$city_only")
+					resolution=$(resolve_city "$city_only" || true)
 				fi
 			fi
 		fi
 
-		if [[ "$coords" == "{"* ]]; then
+		if [[ "$resolution" == "{"*error* ]]; then
 			# Fallback to GeoIP if geocoding failed
-			coords=$(get_geoip_coords)
-			if [[ "$coords" == "{"* ]]; then
-				echo "$coords"
+			resolution=$(resolve_geoip || true)
+			if [[ "$resolution" == "{"*error* ]]; then
+				echo "$resolution"
 				exit 1
 			fi
 		fi
 	fi
 
-	# Split coordinates
-	lat="${coords%,*}"
-	lon="${coords#*,}"
+	lat=$(echo "$resolution" | jq -r '.lat // empty')
+	lon=$(echo "$resolution" | jq -r '.lon // empty')
+	resolved_location=$(echo "$resolution" | jq -r '.location // empty')
+
+	if [[ -z "$lat" || -z "$lon" ]]; then
+		echo '{"error": "Could not resolve weather coordinates"}'
+		exit 1
+	fi
+	if [[ -z "$resolved_location" ]]; then
+		resolved_location="$lat,$lon"
+	fi
 
 	# Fetch and output weather
-	fetch_weather "$lat" "$lon"
+	fetch_weather "$lat" "$lon" "$resolved_location"
 }
 
 main
