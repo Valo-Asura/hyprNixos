@@ -30,6 +30,9 @@ Commands:
     (none)                            Launch Ambxst
     update                            Update Ambxst
     refresh                           Refresh local/dev profile (for developers)
+    run <command>                     Run an Ambxst IPC command
+    reload                            Restart Ambxst
+    quit                              Stop Ambxst
     lock                              Activate lockscreen
     brightness <percent> [monitor]    Set brightness (0-100)
     brightness +/-<delta> [monitor]   Adjust brightness relatively
@@ -51,33 +54,14 @@ EOF
 }
 
 find_ambxst_pid() {
-	# Try to find QuickShell process running shell.qml
-	# QuickShell binary can be named 'qs' or 'quickshell'
-	local pid
-
-	# First try with full path (production/flake mode)
-	pid=$(pgrep -f "qs.*${SCRIPT_DIR}/shell.qml" 2>/dev/null | head -1)
-	if [ -z "$pid" ]; then
-		pid=$(pgrep -f "quickshell.*${SCRIPT_DIR}/shell.qml" 2>/dev/null | head -1)
-	fi
-
-	# If not found, try with relative path (development mode)
-	if [ -z "$pid" ]; then
-		pid=$(pgrep -f "qs.*shell.qml" 2>/dev/null | head -1)
-	fi
-	if [ -z "$pid" ]; then
-		pid=$(pgrep -f "quickshell.*shell.qml" 2>/dev/null | head -1)
-	fi
-
-	# Last resort: find any qs/quickshell process in this directory
-	if [ -z "$pid" ]; then
-		pid=$(pgrep -a "qs" 2>/dev/null | grep -F "$SCRIPT_DIR" | awk '{print $1}' | head -1)
-	fi
-	if [ -z "$pid" ]; then
-		pid=$(pgrep -a quickshell 2>/dev/null | grep -F "$SCRIPT_DIR" | awk '{print $1}' | head -1)
-	fi
-
-	echo "$pid"
+	# Find a real QuickShell process running Ambxst's shell.qml. Use ps/awk
+	# instead of broad pgrep patterns so reload does not match its own shell.
+	ps -eo pid=,args= | awk '
+		/\/(qs|quickshell)( |$)/ && /shell\.qml/ {
+			print $1
+			exit
+		}
+	'
 }
 
 cleanup_ambxst_helpers() {
@@ -125,7 +109,7 @@ run)
 		exit 1
 	fi
 
-	qs ipc --pid "$PID" call ambxst run "$CMD" 2>/dev/null || {
+	"$QS_BIN" ipc --pid "$PID" call ambxst run "$CMD" 2>/dev/null || {
 		echo "Error: Could not run command '$CMD'"
 		exit 1
 	}
@@ -137,7 +121,7 @@ lock)
 		echo "Error: Ambxst is not running"
 		exit 1
 	fi
-	qs ipc --pid "$PID" call ambxst run lockscreen 2>/dev/null || {
+	"$QS_BIN" ipc --pid "$PID" call ambxst run lockscreen 2>/dev/null || {
 		echo "Error: Could not activate lockscreen"
 		exit 1
 	}
@@ -146,16 +130,30 @@ reload)
 	PID=$(find_ambxst_pid)
 	if [ -n "$PID" ]; then
 		echo "Stopping Ambxst (PID $PID)..."
-		kill "$PID"
-		# Wait for process to exit
-		while kill -0 "$PID" 2>/dev/null; do
+		kill -TERM "$PID" 2>/dev/null || true
+		for _ in $(seq 1 50); do
+			if ! kill -0 "$PID" 2>/dev/null; then
+				break
+			fi
 			sleep 0.1
 		done
+		if kill -0 "$PID" 2>/dev/null; then
+			echo "Ambxst did not stop cleanly; forcing stop..."
+			kill -KILL "$PID" 2>/dev/null || true
+		fi
 	fi
 	cleanup_ambxst_helpers
 	echo "Starting Ambxst..."
-	# Relaunch the script in background
-	nohup "$0" >/dev/null 2>&1 &
+	launcher="$0"
+	if [ ! -x "$launcher" ]; then
+		launcher="$(command -v ambxst 2>/dev/null || true)"
+	fi
+	if [ -z "$launcher" ]; then
+		launcher="$0"
+	fi
+	state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/Ambxst"
+	mkdir -p "$state_dir"
+	nohup "$launcher" >>"$state_dir/quickshell-launch.log" 2>&1 &
 	;;
 quit)
 	PID=$(find_ambxst_pid)
@@ -239,7 +237,7 @@ brightness)
 			while IFS=: read -r name value; do
 				if [ -n "$name" ] && [ -n "$value" ]; then
 					NORMALIZED=$(awk "BEGIN {printf \"%.2f\", $value / 100}")
-					qs ipc --pid "$PID" call brightness set "$NORMALIZED" "$name" 2>/dev/null || {
+					"$QS_BIN" ipc --pid "$PID" call brightness set "$NORMALIZED" "$name" 2>/dev/null || {
 						echo "Warning: Could not restore brightness for $name"
 					}
 				fi
@@ -253,7 +251,7 @@ brightness)
 				exit 1
 			fi
 			NORMALIZED=$(awk "BEGIN {printf \"%.2f\", $VALUE / 100}")
-			qs ipc --pid "$PID" call brightness set "$NORMALIZED" "$MONITOR" 2>/dev/null || {
+			"$QS_BIN" ipc --pid "$PID" call brightness set "$NORMALIZED" "$MONITOR" 2>/dev/null || {
 				echo "Error: Could not restore brightness for $MONITOR"
 				exit 1
 			}
@@ -338,13 +336,13 @@ brightness)
 		NORMALIZED_DELTA=$(awk "BEGIN {printf \"%.2f\", $RELATIVE_DELTA / 100}")
 
 		if [ -z "$MONITOR" ]; then
-			qs ipc --pid "$PID" call brightness adjust "$NORMALIZED_DELTA" "" 2>/dev/null || {
+			"$QS_BIN" ipc --pid "$PID" call brightness adjust "$NORMALIZED_DELTA" "" 2>/dev/null || {
 				echo "Error: Could not adjust brightness"
 				exit 1
 			}
 			echo "Adjusted brightness by ${RELATIVE_DELTA}% for all monitors"
 		else
-			qs ipc --pid "$PID" call brightness adjust "$NORMALIZED_DELTA" "$MONITOR" 2>/dev/null || {
+			"$QS_BIN" ipc --pid "$PID" call brightness adjust "$NORMALIZED_DELTA" "$MONITOR" 2>/dev/null || {
 				echo "Error: Could not adjust brightness for $MONITOR"
 				exit 1
 			}
@@ -402,14 +400,14 @@ brightness)
 
 	if [ -z "$MONITOR" ]; then
 		# Set all monitors
-		qs ipc --pid "$PID" call brightness set "$NORMALIZED" "" 2>/dev/null || {
+		"$QS_BIN" ipc --pid "$PID" call brightness set "$NORMALIZED" "" 2>/dev/null || {
 			echo "Error: Could not set brightness"
 			exit 1
 		}
 		echo "Set brightness to ${VALUE}% for all monitors"
 	else
 		# Set specific monitor
-		qs ipc --pid "$PID" call brightness set "$NORMALIZED" "$MONITOR" 2>/dev/null || {
+		"$QS_BIN" ipc --pid "$PID" call brightness set "$NORMALIZED" "$MONITOR" 2>/dev/null || {
 			echo "Error: Could not set brightness for $MONITOR"
 			exit 1
 		}

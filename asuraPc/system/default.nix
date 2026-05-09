@@ -7,6 +7,7 @@
     # System Modules
     ./boot.nix
     ./networking.nix
+    ./vpn.nix
     ./users.nix
     ./locale.nix
     ./display.nix

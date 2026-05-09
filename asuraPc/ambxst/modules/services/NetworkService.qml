@@ -28,6 +28,11 @@ Singleton {
 
     property string networkName: ""
     property int networkStrength: 0
+    property bool vpnConfigured: false
+    property bool vpnActive: false
+    readonly property bool vpnProtected: vpnConfigured && vpnActive
+    property string vpnName: ""
+    property string vpnStatus: "unconfigured"
 
     // Control functions
     function enableWifi(enabled = true): void {
@@ -68,6 +73,20 @@ Singleton {
 
     function openPublicWifiPortal() {
         Quickshell.execDetached(["xdg-open", "https://nmcheck.gnome.org/"]);
+    }
+
+    function openVpnSettings() {
+        Quickshell.execDetached(["nm-connection-editor"]);
+    }
+
+    function toggleVpn(): void {
+        if (!vpnConfigured || vpnName.length === 0) {
+            openVpnSettings();
+            return;
+        }
+
+        vpnToggleProc.command = ["nmcli", "connection", vpnActive ? "down" : "up", vpnName];
+        vpnToggleProc.running = true;
     }
 
     // Helper function for wifi icon based on strength
@@ -151,6 +170,7 @@ Singleton {
         wifiStatusProcess.running = true;
         updateNetworkName.running = true;
         updateNetworkStrength.running = true;
+        updateVpnStatus.startCheck();
     }
 
     Process {
@@ -228,6 +248,37 @@ Singleton {
                 root.networkStrength = parseInt(data) || 0;
             }
         }
+    }
+
+    Process {
+        id: updateVpnStatus
+        property string buffer: ""
+        command: ["bash", "-lc", "configured=$(nmcli -t -f NAME,TYPE c show | awk -F: '$2==\"wireguard\" || $2==\"vpn\"{print $1; exit}'); active=$(nmcli -t -f NAME,TYPE c show --active | awk -F: '$2==\"wireguard\" || $2==\"vpn\"{print $1; exit}'); printf '%s\\n%s\\n' \"$configured\" \"$active\""]
+        running: true
+        function startCheck() {
+            buffer = "";
+            updateVpnStatus.running = true;
+        }
+        stdout: SplitParser {
+            onRead: line => {
+                updateVpnStatus.buffer += line + "\n";
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            const lines = updateVpnStatus.buffer.split("\n");
+            const configured = (lines[0] || "").trim();
+            const active = (lines[1] || "").trim();
+            root.vpnConfigured = configured.length > 0;
+            root.vpnActive = active.length > 0;
+            root.vpnName = active.length > 0 ? active : configured;
+            root.vpnStatus = !root.vpnConfigured ? "unconfigured" : (root.vpnActive ? "active" : "inactive");
+        }
+    }
+
+    Process {
+        id: vpnToggleProc
+        running: false
+        onExited: root.update()
     }
 
     Process {

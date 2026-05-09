@@ -35,11 +35,6 @@ ActionGrid {
             command: "/run/current-system/sw/bin/systemctl suspend"
         },
         {
-            icon: Icons.hibernate,
-            tooltip: "Hibernate",
-            command: "/run/current-system/sw/bin/systemctl hibernate"
-        },
-        {
             icon: Icons.logout,
             tooltip: "Exit Hyprland",
             command: "/run/current-system/sw/bin/hyprctl dispatch exit"
@@ -48,6 +43,11 @@ ActionGrid {
             icon: Icons.reboot,
             tooltip: "Reboot",
             command: "/run/current-system/sw/bin/systemctl reboot"
+        },
+        {
+            icon: Icons.firmware,
+            tooltip: "UEFI Firmware",
+            command: "/run/current-system/sw/bin/systemctl reboot --firmware-setup"
         },
         {
             icon: Icons.shutdown,

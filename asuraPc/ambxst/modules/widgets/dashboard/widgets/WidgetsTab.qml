@@ -1245,6 +1245,25 @@ Rectangle {
                                     Layout.preferredWidth: 48
                                     Layout.preferredHeight: 48
                                     iconName: {
+                                        if (!NetworkService.vpnConfigured)
+                                            return Icons.shield;
+                                        if (NetworkService.vpnProtected)
+                                            return Icons.shieldCheck;
+                                        return Icons.vpn;
+                                    }
+                                    isActive: NetworkService.vpnProtected
+                                    tooltipText: {
+                                        if (!NetworkService.vpnConfigured)
+                                            return "VPN: Not configured";
+                                        return NetworkService.vpnProtected ? ("VPN: Protected (" + NetworkService.vpnName + ")") : ("VPN: Off (" + NetworkService.vpnName + ")");
+                                    }
+                                    onClicked: NetworkService.toggleVpn()
+                                }
+
+                                ControlButton {
+                                    Layout.preferredWidth: 48
+                                    Layout.preferredHeight: 48
+                                    iconName: {
                                         if (!BluetoothService.enabled)
                                             return Icons.bluetoothOff;
                                         if (BluetoothService.connected)

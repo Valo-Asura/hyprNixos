@@ -31,7 +31,7 @@ Item {
 
         header: Item {
             width: networkList.width
-            height: titlebar.height + 8
+            height: titlebar.height + vpnCard.height + 16
 
             PanelTitlebar {
                 id: titlebar
@@ -74,6 +74,81 @@ Item {
                     NetworkService.enableWifi(checked);
                     if (checked) {
                         NetworkService.rescanWifi();
+                    }
+                }
+            }
+
+            StyledRect {
+                id: vpnCard
+                width: root.contentWidth
+                height: 64
+                anchors.top: titlebar.bottom
+                anchors.topMargin: 8
+                anchors.horizontalCenter: parent.horizontalCenter
+                variant: NetworkService.vpnProtected ? "primary" : (NetworkService.vpnConfigured ? "common" : "pane")
+                radius: Styling.radius(0)
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 12
+
+                    Text {
+                        text: NetworkService.vpnProtected ? Icons.shieldCheck : (NetworkService.vpnConfigured ? Icons.vpn : Icons.shield)
+                        font.family: Icons.font
+                        font.pixelSize: 22
+                        color: vpnCard.item
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        Text {
+                            text: NetworkService.vpnConfigured ? NetworkService.vpnName : "WireGuard not configured"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(0)
+                            font.bold: true
+                            color: vpnCard.item
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: !NetworkService.vpnConfigured ? "Open settings or enable the Nix scaffold after adding peer details" : (NetworkService.vpnProtected ? "Protected" : "Unprotected")
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-2)
+                            color: vpnCard.item
+                            opacity: 0.75
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    StyledRect {
+                        id: vpnToggle
+                        variant: vpnToggleArea.containsMouse ? "focus" : "internalbg"
+                        Layout.preferredWidth: 88
+                        Layout.preferredHeight: 36
+                        radius: Styling.radius(-2)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: !NetworkService.vpnConfigured ? "Settings" : (NetworkService.vpnActive ? "Disconnect" : "Connect")
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            font.bold: true
+                            color: vpnToggle.item
+                        }
+
+                        MouseArea {
+                            id: vpnToggleArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: NetworkService.toggleVpn()
+                        }
                     }
                 }
             }
