@@ -11,6 +11,9 @@ QtObject {
     property string duration: ""
     property string lastError: ""
     property bool canRecordDirectly: true // Default optimistic
+    property string lastRecordingFile: ""
+    property string currentOutputDir: ""
+    readonly property string pidFile: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/ambxst-gpu-screen-recorder.pid"
 
     property Process checkCapabilitiesProcess: Process {
         id: checkCapabilitiesProcess
@@ -61,7 +64,7 @@ QtObject {
 
     property Process checkProcess: Process {
         id: checkProcess
-        command: ["bash", "-c", "pgrep -f 'gpu-screen-recorder' | grep -v $$ > /dev/null"]
+        command: ["bash", "-c", "pid_file=\"" + root.pidFile + "\"; [ -s \"$pid_file\" ] && pid=$(cat \"$pid_file\") && kill -0 \"$pid\" 2>/dev/null"]
         onExited: exitCode => {
             var wasRecording = root.isRecording;
             root.isRecording = (exitCode === 0);
@@ -80,7 +83,7 @@ QtObject {
 
     property Process timeProcess: Process {
         id: timeProcess
-        command: ["bash", "-c", "pid=$(pgrep -f 'gpu-screen-recorder' | head -n 1); if [ -n \"$pid\" ]; then ps -o etime= -p \"$pid\"; fi"]
+        command: ["bash", "-c", "pid_file=\"" + root.pidFile + "\"; if [ -s \"$pid_file\" ]; then pid=$(cat \"$pid_file\"); ps -o etime= -p \"$pid\" 2>/dev/null || true; fi"]
         stdout: StdioCollector {
             onTextChanged: {
                 root.duration = text.trim();
@@ -97,21 +100,51 @@ QtObject {
         }
     }
 
+    function shellQuote(value) {
+        return "'" + String(value).replace(/'/g, "'\"'\"'") + "'";
+    }
+
+    function normalizeRegion(regionStr) {
+        if (!regionStr)
+            return "";
+        const match = String(regionStr).match(/^(\d+)x(\d+)\+(-?\d+)\+(-?\d+)$/);
+        if (!match)
+            return regionStr;
+        let w = parseInt(match[1]);
+        let h = parseInt(match[2]);
+        const x = match[3];
+        const y = match[4];
+        if (w % 2 !== 0)
+            w -= 1;
+        if (h % 2 !== 0)
+            h -= 1;
+        if (w < 2 || h < 2)
+            return regionStr;
+        return w + "x" + h + "+" + x + "+" + y;
+    }
+
     function startRecording(recordAudioOutput, recordAudioInput, mode, regionStr) {
         if (isRecording) return;
         
-        var outputFile = root.videosDir + "/" + new Date().toISOString().replace(/[:.]/g, "-") + ".mp4";
-        var cmd = "gpu-screen-recorder -f 60 -q ultra -ac opus -cr full";
+        var outputDir = root.videosDir && root.videosDir.length > 0 ? root.videosDir : Quickshell.env("HOME") + "/Videos/Recordings";
+        var outputFile = outputDir + "/" + new Date().toISOString().replace(/[:.]/g, "-") + ".mkv";
+        root.currentOutputDir = outputDir;
+        root.lastRecordingFile = outputFile;
+        root.lastError = "";
+
+        var cmd = "pid_file=" + shellQuote(root.pidFile) + "; rm -f \"$pid_file\"; ";
+        cmd += "gpu-screen-recorder -f 60 -q high -k h264 -c mkv -ac opus -cr full -fm cfr -keyint 2";
         
         // Window mode: -w based on mode
         if (mode === "portal") {
-            cmd += " -w portal";
+            cmd += " -w portal -restore-portal-session yes";
         } else if (mode === "screen") {
             cmd += " -w screen";
         } else if (mode === "region") {
             cmd += " -w region";
-            if (regionStr) {
-                cmd += " -region " + regionStr;
+            const normalizedRegion = normalizeRegion(regionStr);
+            if (normalizedRegion) {
+                cmd += " -region " + shellQuote(normalizedRegion);
             }
         }
         
@@ -126,7 +159,8 @@ QtObject {
             cmd += " -a \"" + audioSources.join("|") + "\"";
         }
         
-        cmd += " -o \"" + outputFile + "\"";
+        cmd += " -o " + shellQuote(outputFile);
+        cmd += " & rec_pid=$!; printf '%s\\n' \"$rec_pid\" > \"$pid_file\"; wait \"$rec_pid\"; rc=$?; rm -f \"$pid_file\"; exit \"$rc\"";
         
         console.log("[ScreenRecorder] Starting with command: " + cmd);
         startProcess.command = ["bash", "-c", cmd];
@@ -137,8 +171,14 @@ QtObject {
     // 1. Ensure directory exists
     property Process prepareProcess: Process {
         id: prepareProcess
-        command: ["mkdir", "-p", root.videosDir]
+        command: ["mkdir", "-p", root.currentOutputDir]
         onExited: exitCode => {
+            if (exitCode !== 0) {
+                root.lastError = "Could not create recording directory";
+                notifyErrorProcess.running = true;
+                return;
+            }
+            root.isRecording = true;
             notifyStartProcess.running = true;
             startProcess.running = true;
         }
@@ -168,8 +208,9 @@ QtObject {
         
         onExited: exitCode => {
             console.log("[ScreenRecorder] Exited with code: " + exitCode)
+            root.isRecording = false
+            root.duration = ""
             if (exitCode !== 0 && exitCode !== 130 && exitCode !== 2) { // 2 is SIGINT sometimes
-                root.isRecording = false
                 notifyErrorProcess.running = true
             } else {
                 notifySavedProcess.running = true
@@ -184,7 +225,7 @@ QtObject {
 
     property Process notifySavedProcess: Process {
         id: notifySavedProcess
-        command: ["notify-send", "Screen Recorder", "Recording saved to " + root.videosDir]
+        command: ["notify-send", "Screen Recorder", root.lastRecordingFile ? ("Recording saved to " + root.lastRecordingFile) : ("Recording saved to " + root.currentOutputDir)]
     }
     
     property Process openVideosProcess: Process {
@@ -198,6 +239,6 @@ QtObject {
 
     property Process stopProcess: Process {
         id: stopProcess
-        command: ["pkill", "-SIGINT", "-f", "gpu-screen-recorder"]
+        command: ["bash", "-c", "pid_file=\"" + root.pidFile + "\"; if [ -s \"$pid_file\" ]; then pid=$(cat \"$pid_file\"); kill -INT \"$pid\" 2>/dev/null || true; fi"]
     }
 }
