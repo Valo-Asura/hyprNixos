@@ -1,12 +1,12 @@
 # Ambxst + OpenClaw AI Guide (Noob Friendly)
 
-This guide shows how Ambxst AI works in this repo, how to configure keys, and how to connect it to OpenClaw via LiteLLM.
+This guide shows how Ambxst AI works in this repo, how to configure keys, and how to connect it to OpenClaw via LiteLLM when you explicitly enable the proxy.
 
 > Path update: the system root directory in this repo is now `asuraPc/` (previously `asuraLaptop/`).
 
 **What you get**
 - Ambxst dashboard AI chat.
-- LiteLLM proxy in the middle so multiple providers work the same way.
+- Optional LiteLLM proxy in the middle so multiple providers work the same way.
 - OpenClaw gateway for an OpenAI‑compatible endpoint.
 
 ## Big Picture
@@ -14,7 +14,7 @@ This guide shows how Ambxst AI works in this repo, how to configure keys, and ho
 ```mermaid
 flowchart LR
   A[You type in Ambxst] --> B[Ambxst AI]
-  B --> C[LiteLLM :4000]
+  B --> C[Optional LiteLLM :4000]
   C --> D[OpenClaw Gateway :18789]
   D --> E[OpenClaw model]
   C --> F[Other providers<br/>OpenAI / OpenRouter / Gemini / Mistral]
@@ -46,7 +46,11 @@ sudo nixos-rebuild switch --flake /etc/nixos
 systemctl --user status openclaw-gateway
 ```
 
-6. Check LiteLLM is running (Ambxst starts it when Ambxst launches).
+6. Enable LiteLLM only when you need the proxy, then restart Ambxst from that environment.
+
+```bash
+AMBXST_ENABLE_LITELLM=1 ambxst reload
+```
 
 7. Test the model list.
 
@@ -103,11 +107,10 @@ ls -l /run/secrets/OPENCLAW_GATEWAY_TOKEN
 
 ### LiteLLM not running
 
-1. Restart Ambxst.
+LiteLLM is disabled by default to keep boot and Quickshell startup fast. Start Ambxst with the opt-in flag when you need the proxy.
 
 ```bash
-ambxst quit
-ambxst
+AMBXST_ENABLE_LITELLM=1 ambxst reload
 ```
 
 2. Check the log.
