@@ -31,7 +31,7 @@ ActionGrid {
             icon: Icons.lock,
             text: "Lock",
             tooltip: "Lock Session",
-            command: "/run/current-system/sw/bin/hyprlock"
+            command: "/run/current-system/sw/bin/ambxst-safe-lock"
         },
         {
             icon: Icons.suspend,

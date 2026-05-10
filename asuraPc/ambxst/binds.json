@@ -82,7 +82,7 @@
         ],
         "key": "L",
         "dispatcher": "exec",
-        "argument": "hyprlock",
+        "argument": "ambxst-safe-lock",
         "flags": ""
       },
       "overview": {
@@ -1135,7 +1135,7 @@
       "actions": [
         {
           "dispatcher": "exec",
-          "argument": "hyprlock",
+          "argument": "ambxst-safe-lock",
           "flags": "l",
           "compositor": {
             "type": "hyprland",

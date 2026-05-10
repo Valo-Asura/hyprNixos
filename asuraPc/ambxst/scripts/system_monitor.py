@@ -5,6 +5,18 @@ import os
 import json
 import subprocess
 import re
+import fcntl
+
+
+def acquire_single_instance(name):
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
+    lock_path = os.path.join(runtime_dir, f"ambxst-{name}.lock")
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        sys.exit(0)
+    return fd
 
 
 class SystemMonitor:
@@ -278,6 +290,7 @@ class SystemMonitor:
 
 
 if __name__ == "__main__":
+    lock_fd = acquire_single_instance("system-monitor")
     monitor = SystemMonitor()
 
     # Arguments: [--interval SECONDS] [disk1 disk2 ...]

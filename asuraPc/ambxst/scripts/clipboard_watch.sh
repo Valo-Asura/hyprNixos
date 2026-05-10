@@ -7,6 +7,10 @@ DB_PATH="$2"
 INSERT_SCRIPT="$3"
 DATA_DIR="$4"
 
+LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/ambxst-clipboard-watch.lock"
+exec 9>"$LOCK_FILE"
+flock -n 9 || exit 0
+
 # Function to check clipboard
 check_clipboard() {
     if "$CHECK_SCRIPT" "$DB_PATH" "$INSERT_SCRIPT" "$DATA_DIR" 2>&1; then

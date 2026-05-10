@@ -949,6 +949,7 @@ Singleton {
 
         adapter: JsonAdapter {
             property string position: "bottom"
+            property string imagePath: "/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png"
         }
     }
 
@@ -1029,8 +1030,8 @@ Singleton {
             property list<string> disks: ["/"]
             property JsonObject idle: JsonObject {
                 property JsonObject general: JsonObject {
-                    property string lock_cmd: "ambxst lock"
-                    property string before_sleep_cmd: "hyprlock"
+                    property string lock_cmd: "ambxst-safe-lock"
+                    property string before_sleep_cmd: "ambxst-safe-lock"
                     property string after_sleep_cmd: "ambxst screen on"
                 }
                 property list<var> listeners: [
@@ -1041,7 +1042,7 @@ Singleton {
                     },
                     {
                         "timeout": 300,
-                        "onTimeout": "hyprlock"
+                        "onTimeout": "ambxst-safe-lock"
                     },
                     {
                         "timeout": 330,
@@ -1463,7 +1464,7 @@ Singleton {
                         property list<string> modifiers: ["SUPER"]
                         property string key: "L"
                         property string dispatcher: "exec"
-                        property string argument: "hyprlock"
+                        property string argument: "ambxst-safe-lock"
                         property string flags: ""
                     }
                     property JsonObject overview: JsonObject {
@@ -1537,7 +1538,7 @@ Singleton {
                 },
                 "system": {
                     "config": { "modifiers": ["SUPER", "SHIFT"], "key": "C", "dispatcher": "exec", "argument": "ambxst run config", "flags": "" },
-                    "lockscreen": { "modifiers": ["SUPER"], "key": "L", "dispatcher": "exec", "argument": "hyprlock", "flags": "" },
+                    "lockscreen": { "modifiers": ["SUPER"], "key": "L", "dispatcher": "exec", "argument": "ambxst-safe-lock", "flags": "" },
                     "overview": { "modifiers": ["SUPER"], "key": "TAB", "dispatcher": "exec", "argument": "ambxst run overview", "flags": "" },
                     "powermenu": { "modifiers": ["SUPER"], "key": "ESCAPE", "dispatcher": "exec", "argument": "ambxst run powermenu", "flags": "" },
                     "tools": { "modifiers": ["SUPER"], "key": "S", "dispatcher": "exec", "argument": "ambxst run tools", "flags": "" },
@@ -2478,7 +2479,7 @@ Singleton {
                     "actions": [
                         {
                             "dispatcher": "exec",
-                            "argument": "hyprlock",
+                            "argument": "ambxst-safe-lock",
                             "flags": "l",
                             "compositor": {
                                 "type": "hyprland",

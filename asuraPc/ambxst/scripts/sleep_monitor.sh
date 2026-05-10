@@ -3,17 +3,21 @@
 # Sleep Monitor - Executes commands before and after sleep
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/Ambxst/config/system.json"
 
+LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/ambxst-sleep-monitor.lock"
+exec 9>"$LOCK_FILE"
+flock -n 9 || exit 0
+
 get_cmd() {
     local type=$1
     if [ -f "$CONFIG_FILE" ]; then
         if [ "$type" == "before" ]; then
-            jq -r '.idle.general.before_sleep_cmd // "hyprlock"' "$CONFIG_FILE"
+            jq -r '.idle.general.before_sleep_cmd // "ambxst-safe-lock"' "$CONFIG_FILE"
         else
             jq -r '.idle.general.after_sleep_cmd // "ambxst screen on"' "$CONFIG_FILE"
         fi
     else
         if [ "$type" == "before" ]; then
-            echo "hyprlock"
+            echo "ambxst-safe-lock"
         else
             echo "ambxst screen on"
         fi

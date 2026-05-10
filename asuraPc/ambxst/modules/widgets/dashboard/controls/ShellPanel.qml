@@ -855,6 +855,7 @@ Item {
                                 }
                             }
                         }
+
                     }
 
                     Separator {
@@ -1339,6 +1340,18 @@ Item {
                                 if (newValue !== Config.lockscreen.position) {
                                     GlobalStates.markShellChanged();
                                     Config.lockscreen.position = newValue;
+                                }
+                            }
+                        }
+
+                        TextInputRow {
+                            label: "Image"
+                            value: Config.lockscreen.imagePath ?? ""
+                            placeholder: "/path/to/lockscreen.png"
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.lockscreen.imagePath) {
+                                    GlobalStates.markShellChanged();
+                                    Config.lockscreen.imagePath = newValue;
                                 }
                             }
                         }

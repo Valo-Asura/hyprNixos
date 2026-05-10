@@ -1,5 +1,6 @@
 .pragma library
 
 var data = {
-    "position": "bottom"
+    "position": "bottom",
+    "imagePath": "/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png"
 }

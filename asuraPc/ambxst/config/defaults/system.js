@@ -4,8 +4,8 @@ var data = {
     "disks": ["/"],
     "idle": {
         "general": {
-            "lock_cmd": "ambxst lock",
-            "before_sleep_cmd": "hyprlock",
+            "lock_cmd": "ambxst-safe-lock",
+            "before_sleep_cmd": "ambxst-safe-lock",
             "after_sleep_cmd": "ambxst screen on"
         },
         "listeners": [
@@ -16,7 +16,7 @@ var data = {
             },
             {
                 "timeout": 300,
-                "onTimeout": "hyprlock"
+                "onTimeout": "ambxst-safe-lock"
             },
             {
                 "timeout": 330,

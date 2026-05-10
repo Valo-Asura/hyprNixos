@@ -22,6 +22,20 @@ WlSessionLockSurface {
     property bool authenticating: false
     property string errorMessage: ""
     property int failLockSecondsLeft: 0
+    readonly property string fallbackLockscreenImagePath: "/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png"
+    readonly property string configuredLockscreenImagePath: Config.lockscreen?.imagePath ?? ""
+    readonly property string generatedLockscreenFramePath: {
+        if (!GlobalStates.wallpaperManager)
+            return "";
+        return GlobalStates.wallpaperManager.getLockscreenFramePath(GlobalStates.wallpaperManager.currentWallpaper);
+    }
+    readonly property string activeLockscreenImagePath: configuredLockscreenImagePath.length > 0 ? configuredLockscreenImagePath : (fallbackLockscreenImagePath.length > 0 ? fallbackLockscreenImagePath : generatedLockscreenFramePath)
+
+    function fileUrl(path) {
+        if (!path || path.length === 0)
+            return "";
+        return path.indexOf("file://") === 0 ? path : "file://" + path;
+    }
 
     // Always transparent - blur background handles the visuals
     color: "transparent"
@@ -54,29 +68,42 @@ WlSessionLockSurface {
         }
     }
 
-    // Wallpaper background (oculto - solo usado como source del MultiEffect)
+    // Wallpaper background source for the visible and blurred layers
     Image {
         id: wallpaperBackground
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         smooth: true
-        visible: false  // Nunca visible directamente, solo a través del MultiEffect
+        visible: false
         z: 1
 
-        property string lockscreenFramePath: {
-            if (!GlobalStates.wallpaperManager)
-                return "";
-            return GlobalStates.wallpaperManager.getLockscreenFramePath(GlobalStates.wallpaperManager.currentWallpaper);
-        }
-
-        source: lockscreenFramePath ? "file://" + lockscreenFramePath : ""
+        source: root.fileUrl(root.activeLockscreenImagePath)
 
         onStatusChanged: {
             if (status === Image.Ready) {
-                console.log("Lockscreen using wallpaper:", lockscreenFramePath);
+                console.log("Lockscreen using wallpaper:", root.activeLockscreenImagePath);
             } else if (status === Image.Error) {
-                console.warn("Failed to load lockscreen wallpaper:", lockscreenFramePath);
+                console.warn("Failed to load lockscreen wallpaper:", root.activeLockscreenImagePath);
+            }
+        }
+    }
+
+    Image {
+        id: visibleWallpaper
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        smooth: true
+        source: wallpaperBackground.source
+        opacity: startAnim ? 0.58 : 0
+        z: 1
+
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration * 2
+                easing.type: Easing.OutQuint
             }
         }
     }
@@ -88,10 +115,10 @@ WlSessionLockSurface {
         source: wallpaperBackground
         autoPaddingEnabled: false
         blurEnabled: true
-        blur: startAnim ? 1 : 0
-        blurMax: 64
+        blur: startAnim ? 0.42 : 0
+        blurMax: 48
         visible: true
-        opacity: startAnim ? 1 : 0
+        opacity: startAnim ? 0.86 : 0
         z: 2
 
         property real zoomScale: startAnim ? 1.25 : 1.0
@@ -133,7 +160,7 @@ WlSessionLockSurface {
         id: dimOverlay
         anchors.fill: parent
         color: "black"
-        opacity: startAnim ? 0.25 : 0
+        opacity: startAnim ? 0.34 : 0
         z: 3
 
         property real zoomScale: startAnim ? 1.1 : 1.0
@@ -185,8 +212,8 @@ WlSessionLockSurface {
                 id: hoursText
                 text: clockContainer.formatHour12(new Date())
                 font.family: "League Gothic"
-                font.pixelSize: 240
-                color: Colors.primaryFixed
+                font.pixelSize: Math.min(Math.max(root.width * 0.12, 128), 220)
+                color: Colors.overBackground
                 antialiasing: true
                 opacity: startAnim ? 1 : 0
 
@@ -220,7 +247,7 @@ WlSessionLockSurface {
                 id: minutesText
                 text: Qt.formatTime(new Date(), "mm")
                 font.family: "League Gothic"
-                font.pixelSize: 240
+                font.pixelSize: Math.min(Math.max(root.width * 0.12, 128), 220)
                 color: Colors.primaryFixedDim
                 antialiasing: true
                 anchors.verticalCenter: undefined
@@ -281,7 +308,7 @@ WlSessionLockSurface {
             bottom: !isTopPosition ? parent.bottom : undefined
             bottomMargin: !isTopPosition ? 32 : 0
         }
-        width: 350
+        width: 390
         height: playerContent.height
 
         opacity: startAnim ? 1 : 0
@@ -364,7 +391,9 @@ WlSessionLockSurface {
         // Password input with avatar
         StyledRect {
             id: passwordInputBox
-            variant: "bg"
+            variant: "popup"
+            backgroundOpacity: 0.86
+            enableShadow: true
             anchors.centerIn: parent
             width: parent.width
             height: 96

@@ -11,8 +11,8 @@ Singleton {
     id: root
 
     // General Idle Settings
-    property string lockCmd: Config.system.idle.general.lock_cmd ?? "ambxst lock"
-    property string beforeSleepCmd: Config.system.idle.general.before_sleep_cmd ?? "hyprlock"
+    property string lockCmd: Config.system.idle.general.lock_cmd ?? "ambxst-safe-lock"
+    property string beforeSleepCmd: Config.system.idle.general.before_sleep_cmd ?? "ambxst-safe-lock"
     property string afterSleepCmd: Config.system.idle.general.after_sleep_cmd ?? "ambxst screen on"
 
     // Login Lock Daemon
