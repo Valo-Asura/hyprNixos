@@ -119,9 +119,9 @@ Singleton {
     }
 
     property var substitutions: ({
-        "code": "visual-studio-code",
-        "code-url-handler": "visual-studio-code",
-        "Code": "visual-studio-code",
+        "code": "vscode",
+        "code-url-handler": "vscode",
+        "Code": "vscode",
         "gnome-tweaks": "org.gnome.tweaks",
         "pavucontrol-qt": "pavucontrol",
         "wps": "wps-office2019-kprometheus",
