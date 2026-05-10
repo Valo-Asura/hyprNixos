@@ -12,6 +12,7 @@ with pkgs;
   jq
   libnotify
   matugen
+  power-profiles-daemon
   python3
   slurp
   sqlite

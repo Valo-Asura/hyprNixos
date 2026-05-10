@@ -870,7 +870,7 @@ Singleton {
         }
 
         adapter: JsonAdapter {
-            property string location: ""
+            property string location: "auto"
             property string unit: "C"
         }
     }
@@ -1192,7 +1192,7 @@ Singleton {
         }
 
         adapter: JsonAdapter {
-            property string systemPrompt: "You are a helpful assistant running on a Linux system. You have access to some tools to control the system."
+            property string systemPrompt: "You are Ambxst, a concise local-first desktop assistant on Asura's NixOS Hyprland system. Prefer local Ollama models unless the user explicitly selects a cloud model. Be direct, privacy-aware, and practical. Before using tools, state the command's intent briefly; avoid destructive actions unless the user clearly asks; summarize results with useful paths and commands."
             property string tool: "auto"
             property list<var> extraModels: []
             property string defaultModel: "qwen3:4b"

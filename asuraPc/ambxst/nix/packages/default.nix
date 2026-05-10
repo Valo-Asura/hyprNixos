@@ -60,6 +60,7 @@ let
     export AMBXST_QS="${quickshellPkg}/bin/qs"
     # /run/wrappers/bin first so setuid wrappers (e.g. gpu-screen-recorder) take priority
     export PATH="/run/wrappers/bin:${envAmbxst}/bin:$PATH"
+    export XDG_DATA_DIRS="${envAmbxst}/share:''${XDG_DATA_DIRS:-/run/current-system/sw/share}"
 
     # Load AI secrets if provided via sops-nix
     for var in OPENCLAW_GATEWAY_TOKEN OPENAI_API_KEY OPENROUTER_API_KEY GEMINI_API_KEY MISTRAL_API_KEY GITHUB_TOKEN; do

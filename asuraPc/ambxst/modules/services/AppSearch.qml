@@ -24,10 +24,24 @@ Singleton {
             && !iconName.includes("image-missing");
     }
 
+    function fallbackIcon() {
+        if (iconExists("application-x-executable"))
+            return "application-x-executable";
+        if (iconExists("text-x-script"))
+            return "text-x-script";
+        if (iconExists("image-missing"))
+            return "image-missing";
+        return "";
+    }
+
     // Validate icon and return fallback if needed
     function validateIcon(iconName) {
         if (!iconName || iconName.length === 0) {
-            return "image-missing";
+            return fallbackIcon();
+        }
+
+        if (substitutions[iconName]) {
+            iconName = substitutions[iconName];
         }
         
         // If it's an absolute path, check if file exists
@@ -35,7 +49,7 @@ Singleton {
             // Use Quickshell.iconPath to check if the path is valid
             const resolvedPath = Quickshell.iconPath(iconName, true);
             if (resolvedPath.length === 0) {
-                return "image-missing";
+                return fallbackIcon();
             }
             return iconName;
         }
@@ -45,7 +59,7 @@ Singleton {
             return iconName;
         }
         
-        return "image-missing";
+        return fallbackIcon();
     }
 
     function getIconFromDesktopEntry(className) {
@@ -58,16 +72,16 @@ Singleton {
             if (app.command && app.command.length > 0) {
                 const executableLower = app.command[0].toLowerCase();
                 if (executableLower === normalizedClassName) {
-                    return app.icon || "application-x-executable";
+                    return validateIcon(app.icon);
                 }
             }
             if (app.name && app.name.toLowerCase() === normalizedClassName) {
-                return app.icon || "application-x-executable";
+                return validateIcon(app.icon);
             }
             if (app.keywords && app.keywords.length > 0) {
                 for (let j = 0; j < app.keywords.length; j++) {
                     if (app.keywords[j].toLowerCase() === normalizedClassName) {
-                        return app.icon || "application-x-executable";
+                        return validateIcon(app.icon);
                     }
                 }
             }
@@ -105,6 +119,7 @@ Singleton {
     }
 
     property var substitutions: ({
+        "code": "visual-studio-code",
         "code-url-handler": "visual-studio-code",
         "Code": "visual-studio-code",
         "gnome-tweaks": "org.gnome.tweaks",

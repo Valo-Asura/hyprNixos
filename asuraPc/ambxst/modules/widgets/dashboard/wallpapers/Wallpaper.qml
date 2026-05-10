@@ -243,9 +243,40 @@ PanelWindow {
         return "";
     }
 
+    function normalizedDirectory(path) {
+        return (path || "").trim();
+    }
+
+    function wallpaperFindCommand(path) {
+        var dir = normalizedDirectory(path);
+        if (!dir) {
+            return [];
+        }
+
+        return ["find", dir, "-type", "f", "(", "-name", "*.jpg", "-o", "-name", "*.jpeg", "-o", "-name", "*.png", "-o", "-name", "*.webp", "-o", "-name", "*.tif", "-o", "-name", "*.tiff", "-o", "-name", "*.gif", "-o", "-name", "*.mp4", "-o", "-name", "*.webm", "-o", "-name", "*.mov", "-o", "-name", "*.avi", "-o", "-name", "*.mkv", ")"];
+    }
+
+    function startWallpaperScan(path) {
+        var cmd = wallpaperFindCommand(path);
+        if (cmd.length === 0) {
+            console.log("Skipping wallpaper scan because wallPath is empty");
+            return false;
+        }
+
+        scanWallpapers.command = cmd;
+        scanWallpapers.running = true;
+        return true;
+    }
+
     function scanSubfolders() {
+        var dir = normalizedDirectory(wallpaperDir);
+        if (!dir) {
+            console.log("Skipping subfolder scan because wallPath is empty");
+            return;
+        }
+
         // Explicitly update command with current wallpaperDir
-        var cmd = ["find", wallpaperDir, "-type", "d", "-mindepth", "1", "-maxdepth", "1"];
+        var cmd = ["find", dir, "-type", "d", "-mindepth", "1", "-maxdepth", "1"];
         scanSubfoldersProcess.command = cmd;
         scanSubfoldersProcess.running = true;
     }
@@ -268,9 +299,7 @@ PanelWindow {
         directoryWatcher.path = wallpaperDir;
         
         // Force update scan command
-        var cmd = ["find", wallpaperDir, "-type", "f", "(", "-name", "*.jpg", "-o", "-name", "*.jpeg", "-o", "-name", "*.png", "-o", "-name", "*.webp", "-o", "-name", "*.tif", "-o", "-name", "*.tiff", "-o", "-name", "*.gif", "-o", "-name", "*.mp4", "-o", "-name", "*.webm", "-o", "-name", "*.mov", "-o", "-name", "*.avi", "-o", "-name", "*.mkv", ")"];
-        scanWallpapers.command = cmd;
-        scanWallpapers.running = true;
+        startWallpaperScan(wallpaperDir);
         
         scanSubfolders();
         
@@ -487,13 +516,11 @@ PanelWindow {
                         wallpaper._wallpaperDirInitialized = true;
                         
                         // Set up directory watcher
-                        directoryWatcher.path = wallpaper.wallpaperDir;
+                        directoryWatcher.path = wallPath;
                         directoryWatcher.reload();
                         
                         // Perform initial wallpaper scan
-                        var cmd = ["find", wallpaper.wallpaperDir, "-type", "f", "(", "-name", "*.jpg", "-o", "-name", "*.jpeg", "-o", "-name", "*.png", "-o", "-name", "*.webp", "-o", "-name", "*.tif", "-o", "-name", "*.tiff", "-o", "-name", "*.gif", "-o", "-name", "*.mp4", "-o", "-name", "*.webm", "-o", "-name", "*.mov", "-o", "-name", "*.avi", "-o", "-name", "*.mkv", ")"];
-                        scanWallpapers.command = cmd;
-                        scanWallpapers.running = true;
+                        wallpaper.startWallpaperScan(wallPath);
                         wallpaper.scanSubfolders();
                         
                         // Start thumbnail generation
@@ -664,7 +691,7 @@ PanelWindow {
         onFileChanged: {
             if (wallpaperDir === "") return;
             console.log("Wallpaper directory changed, rescanning...");
-            scanWallpapers.running = true;
+            startWallpaperScan(wallpaperDir);
             // Regenerar thumbnails si hay nuevos videos (delayed)
             if (delayedThumbnailGen.running) delayedThumbnailGen.restart();
             else delayedThumbnailGen.start();
@@ -702,7 +729,7 @@ PanelWindow {
     Process {
         id: scanWallpapers
         running: false
-        command: wallpaperDir ? ["find", wallpaperDir, "-type", "f", "(", "-name", "*.jpg", "-o", "-name", "*.jpeg", "-o", "-name", "*.png", "-o", "-name", "*.webp", "-o", "-name", "*.tif", "-o", "-name", "*.tiff", "-o", "-name", "*.gif", "-o", "-name", "*.mp4", "-o", "-name", "*.webm", "-o", "-name", "*.mov", "-o", "-name", "*.avi", "-o", "-name", "*.mkv", ")"] : []
+        command: wallpaperFindCommand(wallpaperDir)
 
         onRunningChanged: {
             if (running && wallpaperDir === "") {

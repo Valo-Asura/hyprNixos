@@ -76,7 +76,13 @@ ApiStrategy {
             let json = JSON.parse(response);
             
             if (json.error) {
-                return { content: "API Error (" + json.error.code + "): " + json.error.message };
+                return {
+                    content: "API Error (" + json.error.code + "): " + json.error.message,
+                    error: true,
+                    errorCode: json.error.code,
+                    errorStatus: json.error.status,
+                    errorMessage: json.error.message
+                };
             }
             
             if (json.candidates && json.candidates.length > 0) {

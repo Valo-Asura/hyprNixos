@@ -65,8 +65,9 @@
       # Direnv hook
       direnv hook fish | source
 
-      # Show system info + quote once per interactive session
-      if not set -q __MICROFETCH_RAN
+      # Optional shell banner. Leave it off by default so terminals open fast.
+      if test "$ASURA_SHOW_SHELL_BANNER" = "1"
+        and not set -q __MICROFETCH_RAN
         and not set -q __microfetch_in_subshell
         and status is-interactive
         set -gx __MICROFETCH_RAN 1
@@ -126,6 +127,7 @@
       rebuild = "sudo nixos-rebuild switch --flake .";
       update  = "nix flake update";
       clean   = "sudo nix-collect-garbage -d";
+      clean-store = "nix-storage-clean";
 
       # ── Terminal / misc ────────────────────────────────────────────────────
       ff      = "fastfetch";

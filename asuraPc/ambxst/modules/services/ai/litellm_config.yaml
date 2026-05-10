@@ -15,7 +15,3 @@ model_list:
     litellm_params:
       model: ollama/gemma4:e2b
       api_base: http://127.0.0.1:11434
-  - model_name: gemini-2.5-flash
-    litellm_params:
-      model: gemini/gemini-2.5-flash
-      api_key: os.environ/GEMINI_API_KEY

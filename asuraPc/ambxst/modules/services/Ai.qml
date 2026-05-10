@@ -33,14 +33,23 @@ Singleton {
     }
 
     function getDefaultModelId() {
-        if (Config.ai && Config.ai.defaultModel && Config.ai.defaultModel.length > 0)
+        if (Config.ai && Config.ai.defaultModel && Config.ai.defaultModel.length > 0 && isLocalModelId(Config.ai.defaultModel))
             return Config.ai.defaultModel;
         return "qwen3:4b";
     }
 
+    function isLocalModelId(modelId) {
+        if (!modelId)
+            return false;
+        let id = String(modelId).toLowerCase();
+        if (id.startsWith("ollama/"))
+            return true;
+        return id.includes(":") || id.startsWith("qwen") || id.startsWith("gemma") || id.startsWith("llama") || id.startsWith("mistral:");
+    }
+
     function restoreModel() {
         const lastModelId = StateService.get("lastAiModel", getDefaultModelId());
-        savedModelId = lastModelId;
+        savedModelId = isLocalModelId(lastModelId) ? lastModelId : getDefaultModelId();
 
         // Attempt immediate restoration if models are already loaded
         tryRestore();
@@ -114,19 +123,22 @@ Singleton {
     }
 
     // Strategies
-    // We only need OpenAI strategy now since LiteLLM standardizes everything to it
     property OpenAiApiStrategy openaiStrategy: OpenAiApiStrategy {}
 
-    // Kept for compatibility if strategy switching logic is still used elsewhere, but they are unused now
     property GeminiApiStrategy geminiStrategy: GeminiApiStrategy {}
     property MistralApiStrategy mistralStrategy: MistralApiStrategy {}
 
-    // Always use OpenAI strategy
+    // Use native strategies for direct cloud calls; local Ollama uses OpenAI-compatible API.
     property ApiStrategy currentStrategy: openaiStrategy
 
     function updateStrategy() {
-        // No-op: LiteLLM handles the differences
-        currentStrategy = openaiStrategy;
+        if (currentModel && isGeminiModel(currentModel)) {
+            currentStrategy = geminiStrategy;
+        } else if (currentModel && (currentModel.api_format || "").toLowerCase().includes("mistral")) {
+            currentStrategy = mistralStrategy;
+        } else {
+            currentStrategy = openaiStrategy;
+        }
     }
 
     // State
@@ -254,9 +266,8 @@ Singleton {
         let id = modelId || "gemini-2.5-flash";
         if (id.startsWith("gemini/"))
             id = id.slice("gemini/".length);
-        let liteId = "gemini/" + id;
         for (let i = 0; i < models.length; i++) {
-            if (models[i].model === liteId)
+            if (models[i].model === id)
                 return models[i];
         }
 
@@ -264,10 +275,13 @@ Singleton {
             name: name || id,
             icon: Qt.resolvedUrl("../../../assets/aiproviders/google.svg"),
             description: "Google Gemini Model",
-            endpoint: "http://127.0.0.1:4000/v1",
-            model: liteId,
+            endpoint: "https://generativelanguage.googleapis.com/v1beta/models/",
+            model: id,
             api_format: "Google",
-            requires_key: false
+            requires_key: true,
+            key_id: "GEMINI_API_KEY",
+            key_get_link: "https://aistudio.google.com/app/apikey",
+            key_get_description: "Create a Google AI Studio API key"
         });
         if (m) {
             mergeModels([m]);
@@ -677,6 +691,26 @@ Singleton {
         return false;
     }
 
+    function isAuthError(reply) {
+        if (!reply || !reply.error)
+            return false;
+
+        if (reply.errorCode !== undefined && reply.errorCode !== null) {
+            let code = String(reply.errorCode).toLowerCase();
+            if (code === "401" || code === "403" || code.includes("auth") || code.includes("api_key"))
+                return true;
+        }
+
+        if (reply.errorStatus) {
+            let status = String(reply.errorStatus).toLowerCase();
+            if (status.includes("unauth") || status.includes("permission") || status.includes("invalid_argument"))
+                return true;
+        }
+
+        let msg = (reply.errorMessage || reply.content || "").toLowerCase();
+        return /api key not valid|invalid api key|api_key_invalid|authentication|unauthorized|permission denied/.test(msg);
+    }
+
     function scheduleRetry(delayMs) {
         let safeDelay = delayMs;
         if (!safeDelay || safeDelay < 1000)
@@ -910,6 +944,20 @@ Singleton {
                         root.suppressModelPersist = false;
                         root.updateStrategy();
                         root.pushSystemMessage("Model not found. Switching to **" + fallback.name + "** and retrying...");
+                        root.makeRequest(true);
+                        return;
+                    }
+                }
+
+                if (root.isAuthError(reply) && !root.fallbackUsed && !root.isOllamaModel(root.currentModel)) {
+                    let fallback = root.findLocalFallbackModel();
+                    if (fallback && root.currentModel && fallback.model !== root.currentModel.model) {
+                        root.fallbackUsed = true;
+                        root.suppressModelPersist = true;
+                        root.currentModel = fallback;
+                        root.suppressModelPersist = false;
+                        root.updateStrategy();
+                        root.pushSystemMessage("Cloud model authentication failed. Switching to **" + fallback.name + "** and retrying locally...");
                         root.makeRequest(true);
                         return;
                     }
@@ -1301,10 +1349,12 @@ Singleton {
         fetchProcessOllama.command = ["bash", "-c", "curl -s --max-time 1 http://127.0.0.1:11434/api/tags"];
         fetchProcessOllama.running = true;
 
-        // Check LiteLLM for locally configured models
-        pendingFetches++;
-        fetchProcessLiteLLM.command = ["bash", "-c", "curl -s --max-time 1 http://127.0.0.1:4000/v1/models"];
-        fetchProcessLiteLLM.running = true;
+        // LiteLLM is opt-in for faster boot and local-first defaults.
+        if (Quickshell.env("AMBXST_ENABLE_LITELLM") === "1") {
+            pendingFetches++;
+            fetchProcessLiteLLM.command = ["bash", "-c", "curl -s --max-time 1 http://127.0.0.1:4000/v1/models"];
+            fetchProcessLiteLLM.running = true;
+        }
 
         if (pendingFetches === 0) {
             fetchingModels = false;
@@ -1397,12 +1447,13 @@ Singleton {
                                     name: item.displayName || id,
                                     icon: Qt.resolvedUrl("../../../assets/aiproviders/google.svg"),
                                     description: item.description || "Google Gemini Model",
-                                    endpoint: "http://127.0.0.1:4000/v1" // Point to LiteLLM
-                                    ,
-                                    model: "gemini/" + id // Prefix for LiteLLM
-                                    ,
+                                    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/",
+                                    model: id,
                                     api_format: "Google",
-                                    requires_key: false // Auth handled by LiteLLM environment
+                                    requires_key: true,
+                                    key_id: "GEMINI_API_KEY",
+                                    key_get_link: "https://aistudio.google.com/app/apikey",
+                                    key_get_description: "Create a Google AI Studio API key"
                                 });
                                 if (m)
                                     newModels.push(m);

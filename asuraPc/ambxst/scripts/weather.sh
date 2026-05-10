@@ -11,6 +11,10 @@ LOCATION="${1:-}"
 MAX_RETRIES=3
 RETRY_DELAY=2
 
+if [[ "${LOCATION,,}" == "auto" ]]; then
+	LOCATION=""
+fi
+
 # Function to make HTTP request with retries
 http_get() {
 	local url="$1"

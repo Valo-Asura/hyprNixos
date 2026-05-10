@@ -8,6 +8,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Use environment variables if set by flake, otherwise fall back to PATH
 QS_BIN="${AMBXST_QS:-qs}"
 NIXGL_BIN="${AMBXST_NIXGL:-}"
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
+LOCK_FILE="$RUNTIME_DIR/ambxst-launch.lock"
 
 if [ -z "${QML2_IMPORT_PATH:-}" ]; then
 	if command -v qs >/dev/null 2>&1; then
@@ -70,8 +72,17 @@ cleanup_ambxst_helpers() {
 		"${SCRIPT_DIR}/scripts/sleep_monitor.sh"
 		"${SCRIPT_DIR}/scripts/loginlock.sh"
 		"${SCRIPT_DIR}/scripts/system_monitor.py"
-		"tail -f /tmp/ambxst_ipc.pipe"
-	)
+		"${SCRIPT_DIR}/scripts/weather.sh"
+		"ambxst-shell.*scripts/clipboard_watch.sh"
+		"ambxst-shell.*scripts/sleep_monitor.sh"
+			"ambxst-shell.*scripts/loginlock.sh"
+			"ambxst-shell.*scripts/system_monitor.py"
+			"ambxst-shell.*scripts/weather.sh"
+			"dbus-monitor --system.*PrepareForSleep"
+			"dbus-monitor --system.*member=.*Lock"
+			"wl-paste --watch.*CLIPBOARD_CHANGE"
+			"tail -f /tmp/ambxst_ipc.pipe"
+		)
 
 	for pattern in "${patterns[@]}"; do
 		pkill -f "$pattern" 2>/dev/null || true
@@ -98,8 +109,9 @@ run)
 
 	# Fast path: Write directly to pipe if it exists (Zero latency)
 	if [ -p "$PIPE" ]; then
-		echo "$CMD" >"$PIPE" &
-		exit 0
+		if command -v timeout >/dev/null 2>&1 && timeout 0.2 bash -c 'printf "%s\n" "$1" > "$2"' _ "$CMD" "$PIPE" 2>/dev/null; then
+			exit 0
+		fi
 	fi
 
 	# Fallback path: Use QS IPC (Slow, requires finding PID)
@@ -153,7 +165,11 @@ reload)
 	fi
 	state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/Ambxst"
 	mkdir -p "$state_dir"
-	nohup "$launcher" >>"$state_dir/quickshell-launch.log" 2>&1 &
+	if command -v setsid >/dev/null 2>&1; then
+		setsid -f "$launcher" >>"$state_dir/quickshell-launch.log" 2>&1
+	else
+		nohup "$launcher" >>"$state_dir/quickshell-launch.log" 2>&1 &
+	fi
 	;;
 quit)
 	PID=$(find_ambxst_pid)
@@ -417,9 +433,33 @@ brightness)
 help | --help | -h)
 	show_help
 	;;
-"")
-	# Run daemon priority script and wait briefly for LiteLLM to be ready
-	AMBXST_WAIT_LITELLM=1 bash "${SCRIPT_DIR}/scripts/daemon_priority.sh"
+	"")
+		LOCK_HELD=0
+		if command -v flock >/dev/null 2>&1; then
+			exec 9>"$LOCK_FILE"
+			if ! flock -n 9; then
+				echo "Ambxst launch already in progress"
+				exit 0
+			fi
+			LOCK_HELD=1
+		fi
+
+		if PID=$(find_ambxst_pid) && [ -n "$PID" ]; then
+			echo "Ambxst already running (PID $PID)"
+			exit 0
+		fi
+
+		if [ "$LOCK_HELD" -eq 1 ]; then
+			flock -u 9 || true
+			exec 9>&-
+			LOCK_HELD=0
+		fi
+
+		cleanup_ambxst_helpers
+
+		# Start optional helper daemons in the background. The shell should draw
+	# immediately; AI backends can become ready after the UI is already up.
+	bash "${SCRIPT_DIR}/scripts/daemon_priority.sh" &
 
 	# Set QS_ICON_THEME environment variable
 	if command -v gsettings >/dev/null 2>&1; then
@@ -431,11 +471,11 @@ help | --help | -h)
 	# Force Qt6CT
 	export QT_QPA_PLATFORMTHEME=qt6ct
 
-	# Launch QuickShell with the main shell.qml
-	# If NIXGL_BIN is set (NixOS/Nix setup), use it. Otherwise, just run qs directly.
-	if [ -n "$NIXGL_BIN" ]; then
-		exec "$NIXGL_BIN" "$QS_BIN" -p "${SCRIPT_DIR}/shell.qml"
-	else
+		# Launch QuickShell with the main shell.qml
+		# If NIXGL_BIN is set (NixOS/Nix setup), use it. Otherwise, just run qs directly.
+		if [ -n "$NIXGL_BIN" ]; then
+			exec "$NIXGL_BIN" "$QS_BIN" -p "${SCRIPT_DIR}/shell.qml"
+		else
 		exec "$QS_BIN" -p "${SCRIPT_DIR}/shell.qml"
 	fi
 	;;

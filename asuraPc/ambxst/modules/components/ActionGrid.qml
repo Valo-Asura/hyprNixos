@@ -16,6 +16,7 @@ FocusScope {
     property int spacing: 4
     property int columns: 3 // para layout grid
     property int textSpacing: 8
+    property bool hoverTextOnly: false
 
     signal actionTriggered(var action)
 
@@ -211,6 +212,14 @@ FocusScope {
                         if (!modelData)
                             return false;
                         if (typeof modelData.text === "string")
+                            return !root.hoverTextOnly && modelData.text.length > 0;
+                        return false;
+                    }
+
+                    readonly property bool hasHoverText: {
+                        if (!modelData || !root.hoverTextOnly)
+                            return false;
+                        if (typeof modelData.text === "string")
                             return modelData.text.length > 0;
                         return false;
                     }
@@ -300,6 +309,22 @@ FocusScope {
                                         easing.type: Easing.OutQuart
                                     }
                                 }
+                            }
+
+                            Text {
+                                visible: delegateWrapper.hasHoverText && actionButton.hovered
+                                text: visible ? modelData.text : ""
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 5
+
+                                font.family: Config.defaultFont
+                                font.pixelSize: Math.max(8, root.iconSize * 0.45)
+                                font.weight: Font.DemiBold
+                                color: actionButton.pressed ? Styling.srItem("overprimary") : (index === root.currentIndex ? (highlight.targetItem ? highlight.item : Styling.srItem("primary")) : Colors.overBackground)
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
                             }
                         }
 

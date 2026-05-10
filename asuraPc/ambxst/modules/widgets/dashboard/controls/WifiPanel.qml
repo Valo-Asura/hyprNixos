@@ -31,7 +31,7 @@ Item {
 
         header: Item {
             width: networkList.width
-            height: titlebar.height + vpnCard.height + 16
+            height: titlebar.height + vpnCard.height + wireguardImportCard.height + 24
 
             PanelTitlebar {
                 id: titlebar
@@ -149,6 +149,112 @@ Item {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: NetworkService.toggleVpn()
                         }
+                    }
+                }
+            }
+
+            StyledRect {
+                id: wireguardImportCard
+                width: root.contentWidth
+                height: 154
+                anchors.top: vpnCard.bottom
+                anchors.topMargin: 8
+                anchors.horizontalCenter: parent.horizontalCenter
+                variant: "pane"
+                radius: Styling.radius(0)
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 8
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            text: Icons.vpn
+                            font.family: Icons.font
+                            font.pixelSize: 18
+                            color: wireguardImportCard.item
+                        }
+
+                        Text {
+                            text: "WireGuard setup"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(0)
+                            font.bold: true
+                            color: wireguardImportCard.item
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Text {
+                        text: "Copy a WireGuard .conf file, choose a profile name, then import it into NetworkManager."
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-2)
+                        color: wireguardImportCard.item
+                        opacity: 0.75
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        TextField {
+                            id: wireguardNameInput
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 34
+                            text: NetworkService.vpnName.length > 0 ? NetworkService.vpnName : "asura-wg0"
+                            selectByMouse: true
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: Colors.overBackground
+                            placeholderText: "Profile name"
+
+                            background: StyledRect {
+                                variant: wireguardNameInput.activeFocus ? "focus" : "internalbg"
+                                radius: Styling.radius(-2)
+                            }
+                        }
+
+                        StyledRect {
+                            id: wireguardImportButton
+                            Layout.preferredWidth: 132
+                            Layout.preferredHeight: 34
+                            variant: wireguardImportArea.containsMouse ? "focus" : "internalbg"
+                            radius: Styling.radius(-2)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: NetworkService.vpnImporting ? "Importing" : "Import"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-1)
+                                font.bold: true
+                                color: wireguardImportButton.item
+                            }
+
+                            MouseArea {
+                                id: wireguardImportArea
+                                anchors.fill: parent
+                                enabled: !NetworkService.vpnImporting
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: NetworkService.importWireguardFromClipboard(wireguardNameInput.text)
+                            }
+                        }
+                    }
+
+                    Text {
+                        visible: NetworkService.vpnImportMessage.length > 0
+                        text: NetworkService.vpnImportMessage
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-2)
+                        color: NetworkService.vpnImportMessage.includes("failed") || NetworkService.vpnImportMessage.includes("does not contain") ? Colors.error : wireguardImportCard.item
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
                     }
                 }
             }

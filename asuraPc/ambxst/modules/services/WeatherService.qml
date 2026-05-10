@@ -540,14 +540,17 @@ QtObject {
         root.isLoading = true;
         root.hasFailed = false;
 
-        var locationStr = Config.weather.location || "";
+        var locationStr = Config.weather.location || "auto";
         var location = locationStr.trim();
+        if (location.length === 0)
+            location = "auto";
+        var scriptLocation = location.toLowerCase() === "auto" ? "" : location;
         root.lastLocation = location;
         root.cityFallbackUsed = false;
         
         console.log("WeatherService: Fetching weather for '" + location + "'");
         
-        weatherProcess.command = [scriptPath, location];
+        weatherProcess.command = [scriptPath, scriptLocation];
         weatherProcess.running = true;
     }
 

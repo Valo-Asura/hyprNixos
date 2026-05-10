@@ -24,10 +24,11 @@ Singleton {
 
     property Process readProcess: Process {
         running: false
-        stdout: SplitParser {
-            onRead: data => {
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
                 try {
-                    const content = data ? data.trim() : "";
+                    const content = text ? text.trim() : "";
                     if (content) {
                         root.state = JSON.parse(content);
                     } else {
@@ -89,7 +90,28 @@ Singleton {
 
         try {
             const json = JSON.stringify(root.state);
-            writeProcess.command = ["sh", "-c", `printf '%s' '${json}' > "${root.stateFile}"`];
+            writeProcess.command = ["python3", "-c",
+                "import os, sys, tempfile\n" +
+                "path = sys.argv[1]\n" +
+                "data = sys.argv[2]\n" +
+                "directory = os.path.dirname(path)\n" +
+                "os.makedirs(directory, exist_ok=True)\n" +
+                "fd, tmp = tempfile.mkstemp(prefix='.states.', dir=directory, text=True)\n" +
+                "try:\n" +
+                "    with os.fdopen(fd, 'w') as f:\n" +
+                "        f.write(data)\n" +
+                "        f.flush()\n" +
+                "        os.fsync(f.fileno())\n" +
+                "    os.replace(tmp, path)\n" +
+                "except Exception:\n" +
+                "    try:\n" +
+                "        os.unlink(tmp)\n" +
+                "    except FileNotFoundError:\n" +
+                "        pass\n" +
+                "    raise\n",
+                root.stateFile,
+                json
+            ];
             writeProcess.running = true;
         } catch (e) {
             console.warn("StateService: Failed to save state:", e);

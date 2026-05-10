@@ -17,8 +17,8 @@ FloatingWindow {
     title: "Ambxst Settings"
     color: "transparent"
 
-    minimumSize: Qt.size(750, 750)
-    maximumSize: Qt.size(750, 750)
+    minimumSize: Qt.size(860, 760)
+    maximumSize: Qt.size(860, 760)
 
     Rectangle {
         id: background
@@ -38,7 +38,7 @@ FloatingWindow {
                 color: Colors.surfaceContainer
                 radius: Styling.radius(-1)
 
-                readonly property bool hasAnyChanges: GlobalStates.themeHasChanges || GlobalStates.shellHasChanges
+                readonly property bool hasAnyChanges: GlobalStates.themeHasChanges || GlobalStates.shellHasChanges || GlobalStates.compositorHasChanges
 
                 RowLayout {
                     anchors.fill: parent
@@ -108,6 +108,8 @@ FloatingWindow {
                                 GlobalStates.discardThemeChanges();
                             if (GlobalStates.shellHasChanges)
                                 GlobalStates.discardShellChanges();
+                            if (GlobalStates.compositorHasChanges)
+                                GlobalStates.discardCompositorChanges();
                         }
 
                         ToolTip.visible: hovered
@@ -156,6 +158,8 @@ FloatingWindow {
                                 GlobalStates.applyThemeChanges();
                             if (GlobalStates.shellHasChanges)
                                 GlobalStates.applyShellChanges();
+                            if (GlobalStates.compositorHasChanges)
+                                GlobalStates.applyCompositorChanges();
                         }
 
                         ToolTip.visible: hovered
@@ -188,6 +192,8 @@ FloatingWindow {
                                 GlobalStates.discardThemeChanges();
                             if (GlobalStates.shellHasChanges)
                                 GlobalStates.discardShellChanges();
+                            if (GlobalStates.compositorHasChanges)
+                                GlobalStates.discardCompositorChanges();
                             GlobalStates.settingsVisible = false;
                         }
                     }
@@ -232,6 +238,10 @@ FloatingWindow {
                                 {
                                     name: "Shell",
                                     icon: Icons.gear
+                                },
+                                {
+                                    name: "Keybinds",
+                                    icon: Icons.shortcut
                                 },
                                 {
                                     name: "Hyprland",
@@ -309,18 +319,14 @@ FloatingWindow {
                         id: shellTab
                     }
 
-                    // Hyprland tab (placeholder)
-                    Rectangle {
-                        color: Colors.surfaceContainer
-                        radius: Styling.radius(-1)
+                    // Keybinds tab
+                    BindsPanel {
+                        id: keybindsTab
+                    }
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: "Hyprland Settings (Coming Soon)"
-                            font.family: Styling.defaultFont
-                            font.pixelSize: Styling.fontSize(0)
-                            color: Colors.overBackground
-                        }
+                    // Hyprland compositor tab
+                    CompositorPanel {
+                        id: hyprlandTab
                     }
                 }
             }

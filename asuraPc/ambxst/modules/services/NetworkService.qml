@@ -33,6 +33,8 @@ Singleton {
     readonly property bool vpnProtected: vpnConfigured && vpnActive
     property string vpnName: ""
     property string vpnStatus: "unconfigured"
+    property bool vpnImporting: vpnImportProc.running
+    property string vpnImportMessage: ""
 
     // Control functions
     function enableWifi(enabled = true): void {
@@ -77,6 +79,38 @@ Singleton {
 
     function openVpnSettings() {
         Quickshell.execDetached(["nm-connection-editor"]);
+    }
+
+    function importWireguardFromClipboard(profileName: string): void {
+        const name = profileName && profileName.trim().length > 0 ? profileName.trim() : "asura-wg0";
+        vpnImportMessage = "Importing WireGuard profile...";
+        vpnImportProc.environment = ({ VPN_NAME: name });
+        vpnImportProc.command = ["bash", "-lc",
+            "set -euo pipefail\n" +
+            "name=\"${VPN_NAME:-asura-wg0}\"\n" +
+            "tmp=\"${XDG_RUNTIME_DIR:-/tmp}/ambxst-wireguard-import.conf\"\n" +
+            "umask 077\n" +
+            "if command -v wl-paste >/dev/null 2>&1; then\n" +
+            "  wl-paste --type text/plain > \"$tmp\" 2>/dev/null || wl-paste > \"$tmp\"\n" +
+            "else\n" +
+            "  echo 'wl-paste is not installed' >&2\n" +
+            "  exit 2\n" +
+            "fi\n" +
+            "if ! grep -q '^\\[Interface\\]' \"$tmp\" || ! grep -q '^\\[Peer\\]' \"$tmp\"; then\n" +
+            "  rm -f \"$tmp\"\n" +
+            "  echo 'Clipboard does not contain a WireGuard .conf file' >&2\n" +
+            "  exit 3\n" +
+            "fi\n" +
+            "existing=$(nmcli -t -f NAME,TYPE c show | awk -F: -v name=\"$name\" '$1==name && ($2==\"wireguard\" || $2==\"vpn\"){print $1; exit}')\n" +
+            "[ -n \"$existing\" ] && nmcli connection delete \"$existing\" >/dev/null 2>&1 || true\n" +
+            "nmcli connection import type wireguard file \"$tmp\" >/dev/null\n" +
+            "imported=$(nmcli -t -f NAME,TYPE c show | awk -F: '$2==\"wireguard\"{name=$1} END{print name}')\n" +
+            "rm -f \"$tmp\"\n" +
+            "[ -n \"$imported\" ] || { echo 'NetworkManager did not create a WireGuard profile' >&2; exit 4; }\n" +
+            "nmcli connection modify \"$imported\" connection.id \"$name\" connection.autoconnect no >/dev/null\n" +
+            "printf 'Imported %s\\n' \"$name\"\n"
+        ];
+        vpnImportProc.running = true;
     }
 
     function toggleVpn(): void {
@@ -279,6 +313,25 @@ Singleton {
         id: vpnToggleProc
         running: false
         onExited: root.update()
+    }
+
+    Process {
+        id: vpnImportProc
+        running: false
+        stdout: StdioCollector {
+            id: vpnImportStdout
+        }
+        stderr: StdioCollector {
+            id: vpnImportStderr
+        }
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                root.vpnImportMessage = vpnImportStdout.text.trim() || "WireGuard profile imported";
+            } else {
+                root.vpnImportMessage = vpnImportStderr.text.trim() || "WireGuard import failed";
+            }
+            root.update();
+        }
     }
 
     Process {

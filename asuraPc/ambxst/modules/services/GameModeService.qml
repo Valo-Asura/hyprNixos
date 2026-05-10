@@ -12,6 +12,32 @@ Singleton {
     
     property string stateFile: Quickshell.statePath("states.json")
 
+    function writeStates(states) {
+        writeStateProcess.command = ["python3", "-c",
+            "import os, sys, tempfile\n" +
+            "path = sys.argv[1]\n" +
+            "data = sys.argv[2]\n" +
+            "directory = os.path.dirname(path)\n" +
+            "os.makedirs(directory, exist_ok=True)\n" +
+            "fd, tmp = tempfile.mkstemp(prefix='.states.', dir=directory, text=True)\n" +
+            "try:\n" +
+            "    with os.fdopen(fd, 'w') as f:\n" +
+            "        f.write(data)\n" +
+            "        f.flush()\n" +
+            "        os.fsync(f.fileno())\n" +
+            "    os.replace(tmp, path)\n" +
+            "except Exception:\n" +
+            "    try:\n" +
+            "        os.unlink(tmp)\n" +
+            "    except FileNotFoundError:\n" +
+            "        pass\n" +
+            "    raise\n",
+            root.stateFile,
+            JSON.stringify(states)
+        ]
+        writeStateProcess.running = true
+    }
+
     property Process enableProcess: Process {
         running: false
         stdout: SplitParser {}
@@ -41,10 +67,11 @@ Singleton {
     
     property Process readCurrentStateProcess: Process {
         running: false
-        stdout: SplitParser {
-            onRead: (data) => {
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
                 try {
-                    const content = data ? data.trim() : ""
+                    const content = text ? text.trim() : ""
                     let states = {}
                     if (content) {
                         states = JSON.parse(content)
@@ -53,9 +80,7 @@ Singleton {
                     states.gameMode = root.toggled
                     
                     // Write back
-                    writeStateProcess.command = ["sh", "-c", 
-                        `printf '%s' '${JSON.stringify(states)}' > "${root.stateFile}"`]
-                    writeStateProcess.running = true
+                    root.writeStates(states)
                 } catch (e) {
                     console.warn("GameModeService: Failed to update state:", e)
                 }
@@ -65,19 +90,18 @@ Singleton {
             // If file doesn't exist, create new with our state
             if (code !== 0) {
                 const states = { gameMode: root.toggled }
-                writeStateProcess.command = ["sh", "-c", 
-                    `printf '%s' '${JSON.stringify(states)}' > "${root.stateFile}"`]
-                writeStateProcess.running = true
+                root.writeStates(states)
             }
         }
     }
     
     property Process readStateProcess: Process {
         running: false
-        stdout: SplitParser {
-            onRead: (data) => {
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
                 try {
-                    const content = data ? data.trim() : ""
+                    const content = text ? text.trim() : ""
                     if (content) {
                         const states = JSON.parse(content)
                         if (states.gameMode !== undefined) {

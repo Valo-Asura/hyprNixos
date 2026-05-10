@@ -305,6 +305,13 @@ Item {
     }
 
     function saveEdit() {
+        if (!Config.keybindsLoader.loaded) {
+            console.warn("BindsPanel: Cannot save keybinds before binds.json is loaded");
+            return;
+        }
+
+        let changed = false;
+
         if (root.isEditingAmbxst) {
             // Save ambxst bind (still uses old format internally)
             const path = root.editingBind.path.split(".");
@@ -327,6 +334,7 @@ Item {
                 bindObj.dispatcher = root.editActions[0].dispatcher || "";
                 bindObj.argument = root.editActions[0].argument || "";
                 bindObj.flags = root.editActions[0].flags || "";
+                changed = true;
             }
         } else if (root.isCreatingNew) {
             // Create new custom bind with new format
@@ -340,6 +348,7 @@ Item {
             };
             newBinds.push(newBind);
             Config.keybindsLoader.adapter.custom = newBinds;
+            changed = true;
         } else {
             // Update existing custom bind with new format
             const customBinds = Config.keybindsLoader.adapter.custom;
@@ -359,13 +368,16 @@ Item {
                     }
                 }
                 Config.keybindsLoader.adapter.custom = newBinds;
+                changed = true;
             }
         }
 
-        root.editMode = false;
-        root.isCreatingNew = false;
-        root.currentKeyPage = 0;
-        root.currentActionPage = 0;
+        if (changed) {
+            Config.keybindsLoader.writeAdapter();
+            Config.keybindsLoader.reload();
+        }
+
+        root.closeEditDialog();
     }
 
     readonly property var categories: [
@@ -1023,6 +1035,11 @@ Item {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: root.saveEdit()
+                            }
+
+                            StyledToolTip {
+                                visible: saveButtonArea.containsMouse
+                                tooltipText: "Save keybinds"
                             }
                         }
                     }

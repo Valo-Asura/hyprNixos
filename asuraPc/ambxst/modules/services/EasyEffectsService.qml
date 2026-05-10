@@ -9,6 +9,7 @@ Singleton {
 
     // Whether EasyEffects is available on the system
     property bool available: false
+    readonly property var utf8Environment: ({ LANG: "C.UTF-8", LC_ALL: "C.UTF-8" })
     
     // Bypass state: false = effects active, true = bypassed
     property bool bypassed: false
@@ -58,7 +59,7 @@ Singleton {
 
     // Open EasyEffects app
     function openApp() {
-        Quickshell.execDetached(["easyeffects"]);
+        Quickshell.execDetached(["env", "LANG=C.UTF-8", "LC_ALL=C.UTF-8", "easyeffects"]);
     }
 
     // Check if easyeffects is available
@@ -82,7 +83,7 @@ Singleton {
         id: bypassStateProcess
         command: ["easyeffects", "-b", "3"]
         running: false
-        environment: ({ LANG: "C", LC_ALL: "C" })
+        environment: root.utf8Environment
         stdout: SplitParser {
             onRead: data => {
                 const val = data.trim();
@@ -95,6 +96,7 @@ Singleton {
     Process {
         id: bypassToggleProcess
         running: false
+        environment: root.utf8Environment
         onExited: {
             bypassStateProcess.running = true;
         }
@@ -104,6 +106,7 @@ Singleton {
     Process {
         id: loadPresetProcess
         running: false
+        environment: root.utf8Environment
         onExited: {
             // Small delay to let EasyEffects apply the preset
             refreshDelayTimer.restart();
@@ -127,7 +130,7 @@ Singleton {
         command: ["easyeffects", "-p"]
         running: false
         property string buffer: ""
-        environment: ({ LANG: "C", LC_ALL: "C" })
+        environment: root.utf8Environment
         stdout: SplitParser {
             onRead: data => {
                 presetsProcess.buffer += data + "\n";
@@ -178,7 +181,7 @@ Singleton {
         command: ["easyeffects", "-a"]
         running: false
         property string buffer: ""
-        environment: ({ LANG: "C", LC_ALL: "C" })
+        environment: root.utf8Environment
         stdout: SplitParser {
             onRead: data => {
                 activePresetsProcess.buffer += data + "\n";

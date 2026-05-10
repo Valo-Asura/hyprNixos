@@ -17,6 +17,8 @@ with pkgs; [
   gradia
 
   # Icons
+  adwaita-icon-theme
   kdePackages.breeze-icons
   hicolor-icon-theme
+  papirus-icon-theme
 ]

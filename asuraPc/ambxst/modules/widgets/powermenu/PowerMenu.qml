@@ -9,10 +9,13 @@ ActionGrid {
 
     signal itemSelected
 
-    layout: "row"
-    buttonSize: 48
-    iconSize: 20
-    spacing: 8
+    layout: "grid"
+    columns: 6
+    buttonSize: 62
+    iconSize: 22
+    spacing: 6
+    textSpacing: 0
+    hoverTextOnly: true
 
     Process {
         id: actionProcess
@@ -26,31 +29,37 @@ ActionGrid {
     actions: [
         {
             icon: Icons.lock,
+            text: "Lock",
             tooltip: "Lock Session",
             command: "/run/current-system/sw/bin/hyprlock"
         },
         {
             icon: Icons.suspend,
+            text: "Sleep",
             tooltip: "Suspend",
             command: "/run/current-system/sw/bin/systemctl suspend"
         },
         {
             icon: Icons.logout,
+            text: "Exit",
             tooltip: "Exit Hyprland",
             command: "/run/current-system/sw/bin/hyprctl dispatch exit"
         },
         {
             icon: Icons.reboot,
+            text: "Reboot",
             tooltip: "Reboot",
             command: "/run/current-system/sw/bin/systemctl reboot"
         },
         {
             icon: Icons.firmware,
-            tooltip: "UEFI Firmware",
+            text: "UEFI",
+            tooltip: "Reboot to UEFI Firmware",
             command: "/run/current-system/sw/bin/systemctl reboot --firmware-setup"
         },
         {
             icon: Icons.shutdown,
+            text: "Off",
             tooltip: "Power Off",
             command: "/run/current-system/sw/bin/systemctl poweroff"
         }

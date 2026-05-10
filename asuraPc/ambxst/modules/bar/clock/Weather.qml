@@ -151,7 +151,7 @@ StyledRect {
 
     function updateWeather() {
         var location = Config.weather.location.trim();
-        if (location.length === 0) {
+        if (location.length === 0 || location.toLowerCase() === "auto") {
             geoipProcess.command = ["curl", "-s", "https://ipapi.co/json/"];
             geoipProcess.running = true;
             return;

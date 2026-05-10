@@ -92,7 +92,7 @@ Button {
 
                     readonly property string iconName: {
                         if (root.desktopEntry && root.desktopEntry.icon) {
-                            return root.desktopEntry.icon;
+                            return AppSearch.validateIcon(root.desktopEntry.icon);
                         }
                         return AppSearch.guessIcon(root.appToplevel?.appId ?? "");
                     }
