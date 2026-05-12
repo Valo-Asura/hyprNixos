@@ -1,0 +1,46 @@
+{
+    "disks": [
+        "/"
+    ],
+    "idle": {
+        "general": {
+            "lock_cmd": "vibeshell-safe-lock",
+            "before_sleep_cmd": "vibeshell-lock-before-sleep",
+            "after_sleep_cmd": "vibeshell screen on"
+        },
+        "listeners": [
+            {
+                "timeout": 150,
+                "onTimeout": "vibeshell brightness 10 -s",
+                "onResume": "vibeshell brightness -r"
+            },
+            {
+                "timeout": 300,
+                "onTimeout": "vibeshell-safe-lock"
+            },
+            {
+                "timeout": 330,
+                "onTimeout": "vibeshell screen off",
+                "onResume": "vibeshell screen on"
+            },
+            {
+                "timeout": 1800,
+                "onTimeout": "vibeshell screen off",
+                "onResume": "vibeshell screen on"
+            },
+            {
+                "timeout": 3600,
+                "onTimeout": "vibeshell suspend"
+            }
+        ]
+    },
+    "ocr": {
+        "eng": true,
+        "spa": true,
+        "lat": false,
+        "jpn": false,
+        "chi_sim": false,
+        "chi_tra": false,
+        "kor": false
+    }
+}

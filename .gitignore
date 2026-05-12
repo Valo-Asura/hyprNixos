@@ -1,0 +1,14 @@
+# secrets / keys
+*.key
+*.pem
+*.age
+secrets/
+private/
+id_rsa
+id_ed25519
+*.enc
+
+# Nix build outputs
+result
+result-*
+.direnv/

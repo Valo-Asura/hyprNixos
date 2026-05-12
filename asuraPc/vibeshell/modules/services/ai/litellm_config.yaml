@@ -1,0 +1,17 @@
+model_list:
+  - model_name: qwen3:1.7b
+    litellm_params:
+      model: ollama/qwen3:1.7b
+      api_base: http://127.0.0.1:11434
+  - model_name: qwen3:4b
+    litellm_params:
+      model: ollama/qwen3:4b
+      api_base: http://127.0.0.1:11434
+  - model_name: qwen3:8b
+    litellm_params:
+      model: ollama/qwen3:8b
+      api_base: http://127.0.0.1:11434
+  - model_name: gemma4:e2b
+    litellm_params:
+      model: ollama/gemma4:e2b
+      api_base: http://127.0.0.1:11434
