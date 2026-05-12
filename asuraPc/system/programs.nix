@@ -2,14 +2,6 @@
 { pkgs, inputs, ... }:
 
 {
-  virtualisation.docker = {
-    enable = true;
-    enableOnBoot = true;
-    storageDriver = "overlay2";
-  };
-
-  hardware.nvidia-container-toolkit.enable = true;
-
   programs = {
     # Enable direnv system-wide
     direnv.enable = true;

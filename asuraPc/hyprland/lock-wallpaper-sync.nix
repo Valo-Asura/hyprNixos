@@ -21,22 +21,6 @@
       # Check if source wallpaper exists
       if [ -f "$CURRENT_WALLPAPER" ]; then
         mkdir -p "$LOCK_DIR"
-        
-        # Simple copy for performance (no conversion unless needed)
-        if [[ "$CURRENT_WALLPAPER" == *.png ]]; then
-          cp "$CURRENT_WALLPAPER" "$TMP_LOCK_WALLPAPER"
-        else
-          # Only convert if not PNG
-          if command -v convert >/dev/null 2>&1; then
-            convert "$CURRENT_WALLPAPER" "$TMP_LOCK_WALLPAPER"
-          else
-            cp "$CURRENT_WALLPAPER" "$TMP_LOCK_WALLPAPER"
-          fi
-        fi
-        
-        mv "$TMP_LOCK_WALLPAPER" "$LOCK_WALLPAPER"
-        chmod 644 "$LOCK_WALLPAPER"
-        echo "Lock screen wallpaper updated from: $CURRENT_WALLPAPER"
       else
         echo "Wallpaper not found at $CURRENT_WALLPAPER"
         exit 1

@@ -8,14 +8,6 @@ Checked on 2026-05-10 with `hyprctl binds -j` and `/etc/nixos/asuraPc/vibeshell/
 - Vibeshell default binds in repo: `/etc/nixos/asuraPc/vibeshell/binds.json`
 - Vibeshell live user binds: `~/.config/Vibeshell/binds.json`
 - Vibeshell bind editor: `SUPER+SHIFT+C` -> Settings -> Keybinds
-
-Vibeshell applies its binds at runtime with `hyprctl keyword`. If a static Nix bind and Vibeshell bind use the same key combo, the Vibeshell bind can replace the static one in the live session.
-
-## Edit Flow
-
-1. Open Vibeshell settings with `SUPER+SHIFT+C`.
-2. Select the `Keybinds` tab in the left settings rail.
-3. Edit a Vibeshell system/dashboard bind, or add a custom bind.
 4. Use Hyprland dispatchers such as `exec`, `workspace`, `movetoworkspace`, `killactive`, `layoutmsg`, `resizeactive`, or `togglespecialworkspace`.
 5. Leave compositor layouts empty to apply in all layouts, or restrict the bind to selected layouts.
 6. Verify live state:

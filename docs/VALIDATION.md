@@ -16,28 +16,12 @@ Results:
 
 - `git diff --check`: not available in `/etc/nixos` because this checkout has no `.git` metadata.
 - NixOS toplevel eval/build: passed.
-- NixOS toplevel build: passed.
-- Vibeshell package build: passed.
-- Flake check without builds: passed.
-
-## Vibeshell Runtime Checklist
-
-Use this after switching to the new generation:
 
 ```bash
 pgrep -a quickshell
 newest_qs_log="$(ls -td /run/user/1000/quickshell/by-id/* | head -n 1)/log.qslog"
 strings "$newest_qs_log" | rg 'Could not load icon|Failed to parse state|GameModeService: Failed|Vibeshell launch already|GeminiException|AuthenticationError'
 jq . /home/asura/.local/state/Vibeshell/states.json
-```
-
-Expected:
-
-- Quickshell is running.
-- No launch-lock, state parse, Gemini auth, or icon-load errors appear in the current log.
-- `states.json` parses as valid JSON.
-- LiteLLM is not started by default; set `VIBESHELL_ENABLE_LITELLM=1` when the proxy is needed.
-- Long-running clipboard, login-lock, sleep-monitor, and system-monitor helpers stay single-instance.
 
 ## Hardware and Storage
 

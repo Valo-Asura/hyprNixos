@@ -20,52 +20,6 @@ let
   primaryMonitor = "DP-1";
   primaryMonitorDesc = "Guangxi Century Innovation Display Electronics Co. Ltd 24FHDMIQII2G 0000000000001";
   primaryMode = "1920x1080@165";
-  loadingLogo = pkgs.runCommand "vibeshell-loading-logo.png" { nativeBuildInputs = [ pkgs.librsvg ]; } ''
-    rsvg-convert -w 512 -h 512 ${../assets/vibeshell-loading.svg} -o "$out"
-  '';
-  vibeshellStart = pkgs.writeShellScriptBin "vibeshell-start" ''
-    set -euo pipefail
-
-    state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/Vibeshell"
-    mkdir -p "$state_dir"
-
-    loader_pid=""
-    cleanup_loader() {
-      if [ -n "$loader_pid" ] && kill -0 "$loader_pid" 2>/dev/null; then
-        kill "$loader_pid" 2>/dev/null || true
-      fi
-    }
-
-    trap cleanup_loader EXIT
-
-    ${pkgs.swaybg}/bin/swaybg -c "#0b0f14" -i "${loadingLogo}" -m center >/dev/null 2>&1 &
-    loader_pid="$!"
-
-    if ! command -v vibeshell >/dev/null 2>&1; then
-      echo "vibeshell command not found" >>"$state_dir/quickshell-launch.log"
-      exit 127
-    fi
-
-    vibeshell >>"$state_dir/quickshell-launch.log" 2>&1 &
-    shell_pid="$!"
-
-    for _ in $(${pkgs.coreutils}/bin/seq 1 120); do
-      if ! kill -0 "$shell_pid" 2>/dev/null; then
-        break
-      fi
-      if ${pkgs.procps}/bin/pgrep -f '/(qs|quickshell).*shell.qml' >/dev/null 2>&1; then
-        ${pkgs.coreutils}/bin/sleep 0.8
-        cleanup_loader
-        loader_pid=""
-        break
-      fi
-      ${pkgs.coreutils}/bin/sleep 0.1
-    done
-
-    cleanup_loader
-    loader_pid=""
-    wait "$shell_pid"
-  '';
 in
 {
 

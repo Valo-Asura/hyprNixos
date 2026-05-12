@@ -67,11 +67,6 @@
   programs.brave = {
     enable = true;
     commandLineArgs = [
-      "--ozone-platform-hint=auto"
-      "--enable-features=OverlayScrollbar"
-      "--disk-cache-size=536870912"
-    ];
-    extensions = [ ];
   };
 
   xdg.mimeApps = {

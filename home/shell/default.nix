@@ -20,6 +20,15 @@
     bottom     # System monitor (used by `btm` alias and monitor function)
   ];
 
+<<<<<<< HEAD
+=======
+  home.sessionPath = [
+    "$HOME/.local/bin"
+    "$HOME/.cargo/bin"
+    "$HOME/go/bin"
+  ];
+
+>>>>>>> 089bacc (init nixos configuration)
   # ── Shell tools ──────────────────────────────────────────────────────────────
 
   programs.atuin = {
@@ -137,6 +146,11 @@
       ports   = "ss -tuln";
       ping    = "ping -c 5";
       code    = "kiro";
+<<<<<<< HEAD
+=======
+      cursor  = "cursor";
+      zed     = "zeditor";
+>>>>>>> 089bacc (init nixos configuration)
       c       = "clear";
       e       = "exit";
 

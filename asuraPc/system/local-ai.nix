@@ -10,40 +10,6 @@ let
   # Use Vulkan for GPU acceleration without the CUDA redist fetches that make
   # rebuilds depend on large NVIDIA source downloads.
   ollamaPkg = pkgsOllama.ollama-vulkan;
-  pullModel = ''
-    ${pkgs.coreutils}/bin/nice -n 15 ${pkgs.util-linux}/bin/ionice -c 3 ${ollamaPkg}/bin/ollama pull "$model"
-  '';
-  aiModelPull = pkgs.writeShellScriptBin "ai-model-pull" ''
-    set -euo pipefail
-
-    if [ "$#" -eq 0 ]; then
-      echo "Usage: ai-model-pull <model> [model ...]"
-      echo "Example: ai-model-pull qwen3:1.7b nomic-embed-text"
-      exit 2
-    fi
-
-    export OLLAMA_HOST="''${OLLAMA_HOST:-http://127.0.0.1:11434}"
-    for model in "$@"; do
-      echo "Pulling $model..."
-      ${pullModel}
-    done
-  '';
-  aiModelsPullCore = pkgs.writeShellScriptBin "ai-models-pull-core" ''
-    set -euo pipefail
-
-    export OLLAMA_HOST="''${OLLAMA_HOST:-http://127.0.0.1:11434}"
-    for model in qwen3:1.7b nomic-embed-text; do
-      echo "Pulling $model..."
-      ${pullModel}
-    done
-  '';
-  aiDownloadStop = pkgs.writeShellScriptBin "ai-download-stop" ''
-    set -euo pipefail
-
-    ${pkgs.systemd}/bin/systemctl stop ollama-model-loader.service >/dev/null 2>&1 || true
-    ${pkgs.procps}/bin/pkill -f 'ollama pull' >/dev/null 2>&1 || true
-    echo "Stopped Ollama model download jobs."
-  '';
   openWebuiPkg = pkgs.open-webui.overridePythonAttrs (oldAttrs: {
     dependencies =
       (oldAttrs.dependencies or [ ])
