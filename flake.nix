@@ -30,6 +30,8 @@
 
     vibeshell.url = "path:/etc/nixos/asuraPc/vibeshell";
 
+    code-cursor-nix.url = "github:jacopone/code-cursor-nix";
+
     # Secrets management
     sops-nix = {
       url = "github:Mic92/sops-nix";

@@ -74,6 +74,7 @@
 
     # IDE
     antigravity
+    inputs.code-cursor-nix.packages.${pkgs.stdenv.hostPlatform.system}.cursor
 
     # Terminal enhancements
     btop
