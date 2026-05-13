@@ -101,7 +101,7 @@ in
         "__GLX_VENDOR_LIBRARY_NAME,nvidia"
         "__EGL_VENDOR_LIBRARY_FILENAMES,/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json"
         "NVD_BACKEND,direct"
-        "SDL_VIDEODRIVER,wayland"
+        "SDL_VIDEODRIVER,wayland,x11"
         "CLUTTER_BACKEND,wayland"
         "XCURSOR_SIZE,24"
         "XCURSOR_THEME,Bibata-Modern-Classic"
