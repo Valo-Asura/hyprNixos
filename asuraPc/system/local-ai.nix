@@ -17,6 +17,22 @@ let
         qdrant-client
       ]);
   });
+  aiModelPull = pkgs.writeShellScriptBin "ai-model-pull" ''
+    set -euo pipefail
+    model="''${1:-qwen3:1.7b}"
+    exec ${ollamaPkg}/bin/ollama pull "$model"
+  '';
+  aiModelsPullCore = pkgs.writeShellScriptBin "ai-models-pull-core" ''
+    set -euo pipefail
+    ${ollamaPkg}/bin/ollama pull qwen3:1.7b
+    ${ollamaPkg}/bin/ollama pull nomic-embed-text
+  '';
+  aiDownloadStop = pkgs.writeShellScriptBin "ai-download-stop" ''
+    set -euo pipefail
+    ${pkgs.systemd}/bin/systemctl stop ollama-model-loader.service >/dev/null 2>&1 || true
+    ${pkgs.procps}/bin/pkill -f 'ollama pull' >/dev/null 2>&1 || true
+    echo "Stopped Ollama model pulls."
+  '';
 in
 
 {

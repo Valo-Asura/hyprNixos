@@ -30,8 +30,6 @@ let
       dracula-theme.theme-dracula
     ];
 
-    userSettings = editorSettings;
-
     keybindings = [
       {
         "key" = "ctrl+shift+t";

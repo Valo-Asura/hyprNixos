@@ -20,6 +20,26 @@ let
   primaryMonitor = "DP-1";
   primaryMonitorDesc = "Guangxi Century Innovation Display Electronics Co. Ltd 24FHDMIQII2G 0000000000001";
   primaryMode = "1920x1080@165";
+
+  # Startup wrapper: shows a splash logo, launches vibeshell, then removes the
+  # temporary background once Quickshell is detected.
+  vibeshellStart = pkgs.writeShellScriptBin "vibeshell-start" ''
+    # Show splash background via swaybg while Quickshell loads
+    ${pkgs.swaybg}/bin/swaybg -i ${../assets/vibeshell-loading.svg} -m fill &
+    SWAYBG_PID=$!
+
+    # Start vibeshell (the launcher script from the Vibeshell package)
+    vibeshell start &
+
+    # Wait until Quickshell process appears, then remove the splash
+    for i in $(seq 1 30); do
+      sleep 1
+      if ${pkgs.procps}/bin/pgrep -x qs > /dev/null 2>&1; then
+        break
+      fi
+    done
+    kill "$SWAYBG_PID" 2>/dev/null || true
+  '';
 in
 {
 
@@ -47,9 +67,7 @@ in
     # Reuse the package pair from the NixOS module so Hyprland and XDPH stay in sync.
     package = null;
     portalPackage = null;
-    plugins = [
-      inputs.hyprland-plugins.packages.${system}.hyprexpo
-    ];
+    plugins = [ ];
     xwayland.enable = true;
     settings = {
       "$mod" = "SUPER";
