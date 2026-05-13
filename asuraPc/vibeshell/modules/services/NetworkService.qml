@@ -28,14 +28,6 @@ Singleton {
 
     property string networkName: ""
     property int networkStrength: 0
-    property bool vpnConfigured: false
-    property bool vpnActive: false
-    readonly property bool vpnProtected: vpnConfigured && vpnActive
-    property string vpnName: ""
-    property string vpnStatus: "unconfigured"
-    property bool vpnImporting: vpnImportProc.running
-    property bool vpnDisabling: vpnDisableProc.running
-    property string vpnImportMessage: ""
 
     // Control functions
     function enableWifi(enabled = true): void {
@@ -76,57 +68,6 @@ Singleton {
 
     function openPublicWifiPortal() {
         Quickshell.execDetached(["xdg-open", "https://nmcheck.gnome.org/"]);
-    }
-
-    function openVpnSettings() {
-        Quickshell.execDetached(["nm-connection-editor"]);
-    }
-
-    function importWireguardFromClipboard(profileName: string): void {
-        const name = profileName && profileName.trim().length > 0 ? profileName.trim() : "asura-wg0";
-        vpnImportMessage = "Importing WireGuard profile...";
-        vpnImportProc.environment = ({ VPN_NAME: name });
-        vpnImportProc.command = ["bash", "-lc",
-            "set -euo pipefail\n" +
-            "name=\"${VPN_NAME:-asura-wg0}\"\n" +
-            "tmp=\"${XDG_RUNTIME_DIR:-/tmp}/vibeshell-wireguard-import.conf\"\n" +
-            "umask 077\n" +
-            "if command -v wl-paste >/dev/null 2>&1; then\n" +
-            "  wl-paste --type text/plain > \"$tmp\" 2>/dev/null || wl-paste > \"$tmp\"\n" +
-            "else\n" +
-            "  echo 'wl-paste is not installed' >&2\n" +
-            "  exit 2\n" +
-            "fi\n" +
-            "if ! grep -q '^\\[Interface\\]' \"$tmp\" || ! grep -q '^\\[Peer\\]' \"$tmp\"; then\n" +
-            "  rm -f \"$tmp\"\n" +
-            "  echo 'Clipboard does not contain a WireGuard .conf file' >&2\n" +
-            "  exit 3\n" +
-            "fi\n" +
-            "existing=$(nmcli -t -f NAME,TYPE c show | awk -F: -v name=\"$name\" '$1==name && ($2==\"wireguard\" || $2==\"vpn\"){print $1; exit}')\n" +
-            "[ -n \"$existing\" ] && nmcli connection delete \"$existing\" >/dev/null 2>&1 || true\n" +
-            "nmcli connection import type wireguard file \"$tmp\" >/dev/null\n" +
-            "imported=$(nmcli -t -f NAME,TYPE c show | awk -F: '$2==\"wireguard\"{name=$1} END{print name}')\n" +
-            "rm -f \"$tmp\"\n" +
-            "[ -n \"$imported\" ] || { echo 'NetworkManager did not create a WireGuard profile' >&2; exit 4; }\n" +
-            "nmcli connection modify \"$imported\" connection.id \"$name\" connection.autoconnect no wireguard.mtu 1280 wireguard.peer-routes no wireguard.ip4-auto-default-route no wireguard.ip6-auto-default-route no ipv4.never-default yes ipv6.method disabled ipv6.never-default yes >/dev/null\n" +
-            "printf 'Imported %s\\n' \"$name\"\n"
-        ];
-        vpnImportProc.running = true;
-    }
-
-    function disableVpn(): void {
-        vpnImportMessage = "Disabling VPN...";
-        vpnDisableProc.running = true;
-    }
-
-    function toggleVpn(): void {
-        if (!vpnConfigured || vpnName.length === 0) {
-            openVpnSettings();
-            return;
-        }
-
-        vpnToggleProc.command = ["nmcli", "connection", vpnActive ? "down" : "up", vpnName];
-        vpnToggleProc.running = true;
     }
 
     // Helper function for wifi icon based on strength
@@ -210,7 +151,6 @@ Singleton {
         wifiStatusProcess.running = true;
         updateNetworkName.running = true;
         updateNetworkStrength.running = true;
-        updateVpnStatus.startCheck();
     }
 
     Process {
@@ -287,78 +227,6 @@ Singleton {
             onRead: data => {
                 root.networkStrength = parseInt(data) || 0;
             }
-        }
-    }
-
-    Process {
-        id: updateVpnStatus
-        property string buffer: ""
-        command: ["bash", "-lc", "configured=$(nmcli -t -f NAME,TYPE c show | awk -F: '$2==\"wireguard\" || $2==\"vpn\"{print $1; exit}'); active=$(nmcli -t -f NAME,TYPE c show --active | awk -F: '$2==\"wireguard\" || $2==\"vpn\"{print $1; exit}'); printf '%s\\n%s\\n' \"$configured\" \"$active\""]
-        running: true
-        function startCheck() {
-            buffer = "";
-            updateVpnStatus.running = true;
-        }
-        stdout: SplitParser {
-            onRead: line => {
-                updateVpnStatus.buffer += line + "\n";
-            }
-        }
-        onExited: (exitCode, exitStatus) => {
-            const lines = updateVpnStatus.buffer.split("\n");
-            const configured = (lines[0] || "").trim();
-            const active = (lines[1] || "").trim();
-            root.vpnConfigured = configured.length > 0;
-            root.vpnActive = active.length > 0;
-            root.vpnName = active.length > 0 ? active : configured;
-            root.vpnStatus = !root.vpnConfigured ? "unconfigured" : (root.vpnActive ? "active" : "inactive");
-        }
-    }
-
-    Process {
-        id: vpnToggleProc
-        running: false
-        onExited: root.update()
-    }
-
-    Process {
-        id: vpnDisableProc
-        running: false
-        command: ["bash", "-lc",
-            "set -u\n" +
-            "for name in $(nmcli -t -f NAME,TYPE c show --active | awk -F: '$2==\"wireguard\" || $2==\"vpn\"{print $1}'); do\n" +
-            "  nmcli connection down \"$name\" >/dev/null 2>&1 || true\n" +
-            "done\n" +
-            "nmcli -t -f NAME,TYPE c show | awk -F: '$2==\"wireguard\" || $2==\"vpn\"{print $1}' | while IFS= read -r name; do\n" +
-            "  [ -n \"$name\" ] || continue\n" +
-            "  nmcli connection modify \"$name\" connection.autoconnect no >/dev/null 2>&1 || true\n" +
-            "  nmcli connection modify \"$name\" wireguard.peer-routes no wireguard.ip4-auto-default-route no wireguard.ip6-auto-default-route no wireguard.mtu 1280 ipv4.never-default yes ipv6.method disabled ipv6.never-default yes >/dev/null 2>&1 || true\n" +
-            "done\n" +
-            "resolvectl flush-caches >/dev/null 2>&1 || true\n" +
-            "nmcli general reload >/dev/null 2>&1 || true\n"
-        ]
-        onExited: exitCode => {
-            root.vpnImportMessage = exitCode === 0 ? "VPN disabled; traffic stays on normal internet" : "VPN disable failed";
-            root.update();
-        }
-    }
-
-    Process {
-        id: vpnImportProc
-        running: false
-        stdout: StdioCollector {
-            id: vpnImportStdout
-        }
-        stderr: StdioCollector {
-            id: vpnImportStderr
-        }
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                root.vpnImportMessage = vpnImportStdout.text.trim() || "WireGuard profile imported";
-            } else {
-                root.vpnImportMessage = vpnImportStderr.text.trim() || "WireGuard import failed";
-            }
-            root.update();
         }
     }
 

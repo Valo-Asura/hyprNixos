@@ -1,7 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import Quickshell
 import Quickshell.Widgets
+import Quickshell.Wayland
 import Quickshell.Services.Mpris
 import qs.modules.theme
 import qs.modules.services
@@ -18,6 +20,62 @@ Item {
     property real position: player?.position ?? 0.0
     property real length: player?.length ?? 1.0
     property bool hasArtwork: (player?.trackArtUrl ?? "") !== ""
+    property bool showPlayerTitleIntro: player !== null
+    readonly property string playerTitle: {
+        const title = (player?.trackTitle ?? "").trim();
+        const artist = (player?.trackArtist ?? "").trim();
+        if (title.length > 0 && artist.length > 0)
+            return title + " - " + artist;
+        if (title.length > 0)
+            return title;
+        return (player?.identity ?? "Media player").trim();
+    }
+    readonly property var activeToplevel: ToplevelManager.activeToplevel
+    readonly property string appTitle: {
+        const title = (activeToplevel?.title ?? "").trim();
+        const appId = (activeToplevel?.appId ?? "").trim();
+        if (title.length > 0)
+            return title;
+        return appId;
+    }
+    readonly property bool hasActiveAppTitle: activeToplevel && activeToplevel.activated && appTitle.length > 0
+    readonly property bool showIdleWave: player === null && !hasActiveAppTitle
+    readonly property bool showAppTitle: player === null && hasActiveAppTitle
+    readonly property bool showPlayerTitle: player !== null && showPlayerTitleIntro
+    readonly property bool showPlayerControls: player !== null && !showPlayerTitleIntro
+
+    function restartPlayerTitleIntro() {
+        if (player === null) {
+            showPlayerTitleIntro = false;
+            playerTitleIntroTimer.stop();
+            return;
+        }
+
+        showPlayerTitleIntro = true;
+        playerTitleIntroTimer.restart();
+    }
+
+    onPlayerChanged: restartPlayerTitleIntro()
+
+    Timer {
+        id: playerTitleIntroTimer
+        interval: 15000
+        repeat: false
+        running: compactPlayer.player !== null
+        onTriggered: compactPlayer.showPlayerTitleIntro = false
+    }
+
+    Connections {
+        target: compactPlayer.player
+
+        function onTrackTitleChanged() {
+            compactPlayer.restartPlayerTitleIntro();
+        }
+
+        function onTrackArtistChanged() {
+            compactPlayer.restartPlayerTitleIntro();
+        }
+    }
 
     function getPlayerIcon(player) {
         if (!player)
@@ -74,7 +132,7 @@ Item {
             height: 24
             lineWidth: 2
             fullLength: width
-            visible: compactPlayer.player === null
+            visible: compactPlayer.showIdleWave
             opacity: 1.0
             Behavior on color {
                 enabled: Config.animDuration > 0
@@ -85,6 +143,60 @@ Item {
             }
             FrameAnimation {
                 running: noPlayerWavyLine.visible
+            }
+        }
+
+        Text {
+            id: appTitleText
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            text: compactPlayer.appTitle
+            visible: compactPlayer.showAppTitle
+            opacity: visible ? 1 : 0
+            color: Colors.overBackground
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-1)
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+            layer.enabled: true
+            layer.effect: BgShadow {}
+
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+            }
+        }
+
+        Text {
+            id: playerTitleText
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            text: compactPlayer.playerTitle
+            visible: compactPlayer.showPlayerTitle
+            opacity: visible ? 1 : 0
+            color: Colors.overBackground
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-1)
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+            layer.enabled: true
+            layer.effect: BgShadow {}
+
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
             }
         }
 
@@ -141,7 +253,7 @@ Item {
             spacing: (compactPlayer.player !== null && compactPlayer.notchHovered) ? 4 : 0
             layer.enabled: true
             layer.effect: BgShadow {}
-            visible: compactPlayer.player !== null
+            visible: compactPlayer.showPlayerControls
             Behavior on spacing {
                 enabled: Config.animDuration > 0
                 NumberAnimation {

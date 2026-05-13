@@ -511,18 +511,14 @@ PanelWindow {
                     layerEnabled: Config.showBackground
                 }
 
-                Bar.SettingsButton {
-                    id: settingsButton
-                }
-
                 Clock {
                     id: clockComponent
                     bar: panel
                     layerEnabled: Config.showBackground
                 }
 
-                PowerButton {
-                    id: powerButton
+                Bar.SettingsButton {
+                    id: settingsButton
                 }
             }
 
@@ -669,18 +665,14 @@ PanelWindow {
                     layerEnabled: Config.showBackground
                 }
 
-                Bar.SettingsButton {
-                    id: settingsButtonVert
-                }
-
                 Clock {
                     id: clockComponentVert
                     bar: panel
                     layerEnabled: Config.showBackground
                 }
 
-                PowerButton {
-                    id: powerButtonVert
+                Bar.SettingsButton {
+                    id: settingsButtonVert
                     Layout.preferredHeight: 36
                 }
             }
