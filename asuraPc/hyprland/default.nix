@@ -28,8 +28,8 @@ let
     ${pkgs.swaybg}/bin/swaybg -i ${../assets/vibeshell-loading.svg} -m fill &
     SWAYBG_PID=$!
 
-    # Start vibeshell (the launcher script from the Vibeshell package)
-    vibeshell start &
+    # Start vibeshell (no subcommand = launch; cli.sh's "" case handles startup)
+    vibeshell &
 
     # Wait until Quickshell process appears, then remove the splash
     for i in $(seq 1 30); do

@@ -32,6 +32,20 @@
     };
   };
 
+  # wpa_supplicant must be present so NetworkManager's wpa_supplicant backend
+  # can D-Bus activate it for the Broadcom BCM4360 wifi card.
+  environment.systemPackages = [ pkgs.wpa_supplicant ];
+
+  # Create the D-Bus activatable wpa_supplicant service that NetworkManager expects.
+  systemd.services.wpa_supplicant = {
+    description = "WPA Supplicant (for NetworkManager)";
+    wantedBy = [ ];
+    serviceConfig = {
+      ExecStart = "${pkgs.wpa_supplicant}/bin/wpa_supplicant -u -s";
+      Restart = "on-failure";
+    };
+  };
+
   # A slow or reconnecting Archer T6E link should not stall boot.
   systemd.services.NetworkManager-wait-online = {
     enable = false;
