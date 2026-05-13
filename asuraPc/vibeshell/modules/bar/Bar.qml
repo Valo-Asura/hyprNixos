@@ -500,10 +500,10 @@ PanelWindow {
                     id: toolsButton
                 }
 
-                //SysTray {
-                 //   bar: panel
-               //     layer.enabled: Config.showBackground
-               // }
+                SysTray {
+                   bar: panel
+                   layer.enabled: Config.showBackground
+                }
 
                 ControlsButton {
                     id: controlsButton
@@ -521,8 +521,20 @@ PanelWindow {
                     id: settingsButton
                 }
 
-                PowerButton {
+                ToggleButton {
                     id: powerButton
+                    Layout.preferredWidth: 36
+                    Layout.preferredHeight: 36
+                    visible: true
+                    buttonIcon: Icons.shutdown
+                    tooltipText: "Power Menu"
+                    onToggle: function () {
+                        if (Visibilities.currentActiveModule === "powermenu") {
+                            Visibilities.setActiveModule("");
+                        } else {
+                            Visibilities.setActiveModule("powermenu");
+                        }
+                    }
                 }
             }
 
@@ -680,9 +692,20 @@ PanelWindow {
                     Layout.preferredHeight: 36
                 }
 
-                PowerButton {
+                ToggleButton {
                     id: powerButtonVert
+                    Layout.preferredWidth: 36
                     Layout.preferredHeight: 36
+                    visible: true
+                    buttonIcon: Icons.shutdown
+                    tooltipText: "Power Menu"
+                    onToggle: function () {
+                        if (Visibilities.currentActiveModule === "powermenu") {
+                            Visibilities.setActiveModule("");
+                        } else {
+                            Visibilities.setActiveModule("powermenu");
+                        }
+                    }
                 }
             }
         }
