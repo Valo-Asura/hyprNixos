@@ -24,19 +24,13 @@
 
     wireless.enable = lib.mkForce false;
 
-    firewall = {
-      enable = true;
-      allowPing = true;
-      checkReversePath = true;
-      allowedTCPPorts = [ ];
-      allowedUDPPorts = [ ];
-    };
-  };
 
   # A slow or reconnecting Archer T6E link should not stall boot.
-  services.resolved = {
-    enable = true;
-    settings.Resolve = {
-      DNSSEC = "allow-downgrade";
-      DNSOverTLS = "false";
 }
+=======
+#       ${pkgs.systemd}/bin/resolvectl flush-caches >/dev/null 2>&1 || true
+#       ${pkgs.networkmanager}/bin/nmcli general reload >/dev/null 2>&1 || true
+#     fi
+#   '';
+# }
+>>>>>>> b5fe558 (init nixos configuration)
