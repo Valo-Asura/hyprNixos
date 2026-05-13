@@ -500,10 +500,10 @@ PanelWindow {
                     id: toolsButton
                 }
 
-                SysTray {
-                    bar: panel
-                    layer.enabled: Config.showBackground
-                }
+                //SysTray {
+                 //   bar: panel
+               //     layer.enabled: Config.showBackground
+               // }
 
                 ControlsButton {
                     id: controlsButton
@@ -519,6 +519,10 @@ PanelWindow {
 
                 Bar.SettingsButton {
                     id: settingsButton
+                }
+
+                PowerButton {
+                    id: powerButton
                 }
             }
 
@@ -673,6 +677,11 @@ PanelWindow {
 
                 Bar.SettingsButton {
                     id: settingsButtonVert
+                    Layout.preferredHeight: 36
+                }
+
+                PowerButton {
+                    id: powerButtonVert
                     Layout.preferredHeight: 36
                 }
             }
