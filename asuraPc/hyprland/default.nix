@@ -64,6 +64,7 @@ in
 
   wayland.windowManager.hyprland = {
     enable = true;
+    configType = "lua";
     # Reuse the package pair from the NixOS module so Hyprland and XDPH stay in sync.
     package = null;
     portalPackage = null;
