@@ -52,12 +52,8 @@ in
       active_border_color = colors.base0E;
       inactive_border_color = colors.base02;
 
-      # Background image from /etc/nixos/asuraPc/assets (Nix store path at build time)
-      # Switch to kittyWallpaperAlt (ax.png) by changing kittyWallpaper in terminal/default.nix
-      background_image = toString kittyWallpaper;
-      background_image_layout = "cscaled";
-      # Softer global wallpaper so a right-side fastfetch Kitty logo stays readable
-      background_tint = "0.76";
+      # Solid background color from Stylix will be used
+      # (Background image removed for readability)
 
       # Terminal size - bigger for better productivity
       remember_window_size = "no";
