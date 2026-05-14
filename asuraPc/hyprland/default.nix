@@ -165,7 +165,7 @@ in
         direct_scanout = false; # disabled: causes crashes with NVIDIA on Wayland
       };
 
-      windowrulev2 = [
+      windowrule = [
         # File pickers and uploads
         "float, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
         "center, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
