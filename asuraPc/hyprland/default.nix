@@ -167,22 +167,22 @@ in
 
       windowrule = [
         # File pickers and uploads
-        "match:title ^(.*(Open File|Choose Files|File Upload|Save As).*)$, float = true"
-        "match:title ^(.*(Open File|Choose Files|File Upload|Save As).*)$, center = true"
+        "float, title:^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$"
+        "center, title:^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$"
         
         # Authentication and Polkit
-        "match:title ^(.*(Authentication Required|PolicyKit1).*)$, float = true"
-        "match:title ^(.*(Authentication Required|PolicyKit1).*)$, center = true"
-        "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, float = true"
-        "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, center = true"
+        "float, title:^(.*(Authentication Required|PolicyKit1).*)$"
+        "center, title:^(.*(Authentication Required|PolicyKit1).*)$"
+        "float, class:^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$"
+        "center, class:^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$"
 
         # Archivers and file managers doing pop-up tasks
-        "match:class ^(file-roller|org.gnome.FileRoller)$, float = true"
-        "match:class ^(file-roller|org.gnome.FileRoller)$, center = true"
+        "float, class:^(file-roller|org.gnome.FileRoller)$"
+        "center, class:^(file-roller|org.gnome.FileRoller)$"
         
         # XDG Desktop Portals
-        "match:class ^(xdg-desktop-portal-.*)$, float = true"
-        "match:class ^(xdg-desktop-portal-.*)$, center = true"
+        "float, class:^(xdg-desktop-portal-.*)$"
+        "center, class:^(xdg-desktop-portal-.*)$"
       ];
 
       layerrule = [
