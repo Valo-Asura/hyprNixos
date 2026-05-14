@@ -167,26 +167,26 @@ in
 
       windowrule = [
         # File pickers and uploads
-        "float, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
-        "center, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
+        "match:title ^(.*(Open File|Choose Files|File Upload|Save As).*)$, float = true"
+        "match:title ^(.*(Open File|Choose Files|File Upload|Save As).*)$, center = true"
         
         # Authentication and Polkit
-        "float, title:^(.*(Authentication Required|PolicyKit1).*)$"
-        "center, title:^(.*(Authentication Required|PolicyKit1).*)$"
-        "float, class:^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$"
-        "center, class:^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$"
+        "match:title ^(.*(Authentication Required|PolicyKit1).*)$, float = true"
+        "match:title ^(.*(Authentication Required|PolicyKit1).*)$, center = true"
+        "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, float = true"
+        "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, center = true"
 
         # Archivers and file managers doing pop-up tasks
-        "float, class:^(file-roller|org.gnome.FileRoller)$"
-        "center, class:^(file-roller|org.gnome.FileRoller)$"
+        "match:class ^(file-roller|org.gnome.FileRoller)$, float = true"
+        "match:class ^(file-roller|org.gnome.FileRoller)$, center = true"
         
         # XDG Desktop Portals
-        "float, class:^(xdg-desktop-portal-.*)$"
-        "center, class:^(xdg-desktop-portal-.*)$"
+        "match:class ^(xdg-desktop-portal-.*)$, float = true"
+        "match:class ^(xdg-desktop-portal-.*)$, center = true"
 
         # Generic dialogs and pop-ups
-        "float, windowrole:^(pop-up|dialog|task_dialog)$"
-        "center, windowrole:^(pop-up|dialog|task_dialog)$"
+        "match:windowrole ^(pop-up|dialog|task_dialog)$, float = true"
+        "match:windowrole ^(pop-up|dialog|task_dialog)$, center = true"
       ];
 
       layerrule = [
