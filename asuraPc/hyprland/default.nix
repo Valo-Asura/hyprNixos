@@ -165,10 +165,29 @@ in
         direct_scanout = false; # disabled: causes crashes with NVIDIA on Wayland
       };
 
-      windowrule = [
-        "match:tag modal, float = true"
-        "match:tag modal, pin = true"
-        "match:tag modal, center = true"
+      windowrulev2 = [
+        # File pickers and uploads
+        "float, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
+        "center, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
+        "size 800 600, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
+        
+        # Authentication and Polkit
+        "float, title:^(.*(Authentication Required|PolicyKit1).*)$"
+        "center, title:^(.*(Authentication Required|PolicyKit1).*)$"
+        "float, class:^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$"
+        "center, class:^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$"
+
+        # Archivers and file managers doing pop-up tasks
+        "float, class:^(file-roller|org.gnome.FileRoller)$"
+        "center, class:^(file-roller|org.gnome.FileRoller)$"
+        
+        # XDG Desktop Portals
+        "float, class:^(xdg-desktop-portal-.*)$"
+        "center, class:^(xdg-desktop-portal-.*)$"
+
+        # Generic dialogs and pop-ups
+        "float, windowrole:^(pop-up|dialog|task_dialog)$"
+        "center, windowrole:^(pop-up|dialog|task_dialog)$"
       ];
 
       layerrule = [
