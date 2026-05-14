@@ -183,10 +183,6 @@ in
         # XDG Desktop Portals
         "match:class ^(xdg-desktop-portal-.*)$, float = true"
         "match:class ^(xdg-desktop-portal-.*)$, center = true"
-
-        # Generic dialogs and pop-ups
-        "match:windowrole ^(pop-up|dialog|task_dialog)$, float = true"
-        "match:windowrole ^(pop-up|dialog|task_dialog)$, center = true"
       ];
 
       layerrule = [
