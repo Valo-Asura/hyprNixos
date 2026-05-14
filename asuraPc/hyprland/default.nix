@@ -169,20 +169,26 @@ in
         # File pickers and uploads
         "match:title ^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$, float 1"
         "match:title ^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$, center 1"
+        "match:title ^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$, size 900 600"
         
         # Authentication and Polkit
         "match:title ^(.*(Authentication Required|PolicyKit1).*)$, float 1"
         "match:title ^(.*(Authentication Required|PolicyKit1).*)$, center 1"
+        "match:title ^(.*(Authentication Required|PolicyKit1).*)$, size 500 400"
+        
         "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, float 1"
         "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, center 1"
+        "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, size 500 400"
 
         # Archivers and file managers doing pop-up tasks
         "match:class ^(file-roller|org.gnome.FileRoller)$, float 1"
         "match:class ^(file-roller|org.gnome.FileRoller)$, center 1"
+        "match:class ^(file-roller|org.gnome.FileRoller)$, size 800 600"
         
         # XDG Desktop Portals
         "match:class ^(xdg-desktop-portal-.*)$, float 1"
         "match:class ^(xdg-desktop-portal-.*)$, center 1"
+        "match:class ^(xdg-desktop-portal-.*)$, size 900 600"
       ];
 
       layerrule = [
