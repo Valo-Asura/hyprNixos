@@ -14,11 +14,19 @@ let
     base00 = "#282828";
     base01 = "#32302f";
     base02 = "#3c3836";
+    base03 = "#504945";
+    base04 = "#665c54";
     base05 = "#d4be98";
+    base06 = "#d5c4a1";
+    base07 = "#ebdbb2";
+    base08 = "#ea6962";
+    base09 = "#e78a4e";
     base0A = "#d8a657";
     base0B = "#a9b665";
+    base0C = "#89b482";
     base0D = "#7daea3";
     base0E = "#d3869b";
+    base0F = "#bd6f3e";
   };
 in
 {
@@ -110,6 +118,26 @@ in
       inactive_tab_foreground = colors.base05;
       active_tab_font_style = "bold";
       inactive_tab_font_style = "normal";
+
+      # Base16 Terminal Colors from Stylix
+      foreground = colors.base05;
+      background = colors.base00;
+      color0 = colors.base00;
+      color1 = colors.base08;
+      color2 = colors.base0B;
+      color3 = colors.base0A;
+      color4 = colors.base0D;
+      color5 = colors.base0E;
+      color6 = colors.base0C;
+      color7 = colors.base05;
+      color8 = colors.base03;
+      color9 = colors.base08;
+      color10 = colors.base0B;
+      color11 = colors.base0A;
+      color12 = colors.base0D;
+      color13 = colors.base0E;
+      color14 = colors.base0C;
+      color15 = colors.base07;
 
       # Advanced features
       allow_remote_control = "yes";
