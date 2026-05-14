@@ -226,7 +226,7 @@ in
         set_color normal
         echo -n "in "
         set_color red
-        echo -n (prompt_pwd)
+        echo -n (pwd | string replace -r "^$HOME" "~")
         echo ""
         
         # Bottom line: ╰─λ
