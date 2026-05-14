@@ -169,7 +169,6 @@ in
         # File pickers and uploads
         "float, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
         "center, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
-        "size 800 600, title:^(.*(Open File|Choose Files|File Upload|Save As).*)$"
         
         # Authentication and Polkit
         "float, title:^(.*(Authentication Required|PolicyKit1).*)$"
