@@ -66,13 +66,15 @@
     nix-direnv
     nixfmt
     nil
+    nixd
     uv
     inter
     sops
     docker
     docker-compose
 
-    # IDE
+    # IDE & Editor
+    neovim
     antigravity
     (pkgs.callPackage ./cursor.nix { })
 
