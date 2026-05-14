@@ -8,39 +8,45 @@ let
     logo = {
       type = "kitty";
       source = toString logoImage;
-      width = 36;
-      height = 18;
-      position = "right";
+      width = 30;
+      height = 15;
+      position = "left";
       padding = {
-        top = 0;
+        top = 1;
         left = 2;
-        right = 1;
+        right = 3;
       };
     };
     display = {
-      separator = ": ";
+      separator = " :: ";
       brightColor = true;
-      color = {
-        keys = "cyan";
-        title = "bright_blue";
-      };
     };
     modules = [
-      "title"
-      "separator"
-      "os"
-      "host"
-      "kernel"
-      "wm"
-      "shell"
-      "terminal"
-      "terminalfont"
-      "cpu"
-      "gpu"
-      "memory"
-      "swap"
-      "disk"
-      "colors"
+      "break"
+      {
+        type = "custom";
+        format = "▪ ──── {#31}Hardware Information{#} ──── ▪";
+      }
+      { type = "host"; key = "󰌢 "; keyColor = "red"; }
+      { type = "cpu"; key = "󰻠 "; keyColor = "red"; }
+      { type = "gpu"; key = "󰢮 "; keyColor = "red"; }
+      { type = "memory"; key = "󰑭 "; keyColor = "red"; }
+      { type = "display"; key = "󰍹 "; keyColor = "red"; }
+      "break"
+      {
+        type = "custom";
+        format = "▪ ──── {#31}Software Information{#} ──── ▪";
+      }
+      { type = "os"; key = " "; keyColor = "red"; }
+      { type = "kernel"; key = " "; keyColor = "red"; }
+      { type = "wm"; key = " "; keyColor = "red"; }
+      { type = "shell"; key = " "; keyColor = "red"; }
+      { type = "terminal"; key = " "; keyColor = "red"; }
+      "break"
+      {
+        type = "colors";
+        symbol = "circle";
+      }
     ];
   };
 in

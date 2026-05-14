@@ -215,6 +215,39 @@ in
 
   # Custom shell functions for enhanced terminal experience
   programs.fish.functions = {
+    # Custom shell prompt matching the reference screenshot
+    fish_prompt = {
+      body = ''
+        set -l last_status $status
+        
+        # Top line: user in dir
+        set_color yellow
+        echo -n "$USER "
+        set_color normal
+        echo -n "in "
+        set_color red
+        echo -n (prompt_pwd)
+        echo ""
+        
+        # Bottom line: ╰─λ
+        set_color red
+        echo -n " ╰─λ "
+        set_color normal
+      '';
+    };
+
+    # Automatically load fastfetch and fortune on startup
+    fish_greeting = {
+      body = ''
+        fastfetch
+        echo ""
+        set_color cyan
+        fortune -s
+        set_color normal
+        echo ""
+      '';
+    };
+
     # Clear terminal completely
     cls = {
       description = "Clear terminal screen and scrollback history";
