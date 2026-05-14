@@ -43,7 +43,7 @@ in
       # Window settings — padding + border tuned for wallpaper + Hyprland blur
       confirm_os_window_close = 0;
       hide_window_decorations = "yes";
-      window_padding_width = "20";
+      window_padding_width = "35";
       window_margin_width = "0";
 
       # Enhanced visual settings (magenta accent like reference rices)
