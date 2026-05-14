@@ -20,7 +20,16 @@ Item {
     property real position: player?.position ?? 0.0
     property real length: player?.length ?? 1.0
     property bool hasArtwork: (player?.trackArtUrl ?? "") !== ""
-    property bool showPlayerTitleIntro: player !== null
+    property bool showPlayerTitleIntro: false
+    property string lastIntroTrackKey: ""
+
+    readonly property int introMs: {
+        const v = Config.bar.playerTitleIntroMs;
+        if (v === undefined || v === null)
+            return 2800;
+        return Math.max(0, v);
+    }
+
     readonly property string playerTitle: {
         const title = (player?.trackTitle ?? "").trim();
         const artist = (player?.trackArtist ?? "").trim();
@@ -44,24 +53,52 @@ Item {
     readonly property bool showPlayerTitle: player !== null && showPlayerTitleIntro
     readonly property bool showPlayerControls: player !== null && !showPlayerTitleIntro
 
+    function trackSignature() {
+        if (!player)
+            return "";
+        return (player.trackTitle ?? "").trim() + "\u001f" + (player.trackArtist ?? "").trim();
+    }
+
     function restartPlayerTitleIntro() {
         if (player === null) {
             showPlayerTitleIntro = false;
+            lastIntroTrackKey = "";
             playerTitleIntroTimer.stop();
             return;
         }
 
+        if (introMs <= 0) {
+            showPlayerTitleIntro = false;
+            playerTitleIntroTimer.stop();
+            lastIntroTrackKey = trackSignature();
+            return;
+        }
+
         showPlayerTitleIntro = true;
+        playerTitleIntroTimer.interval = introMs;
         playerTitleIntroTimer.restart();
+        lastIntroTrackKey = trackSignature();
     }
 
-    onPlayerChanged: restartPlayerTitleIntro()
+    function maybeRestartIntroForTrackMetadata() {
+        if (!player)
+            return;
+        const key = trackSignature();
+        if (key === lastIntroTrackKey)
+            return;
+        restartPlayerTitleIntro();
+    }
+
+    onPlayerChanged: {
+        lastIntroTrackKey = "";
+        restartPlayerTitleIntro();
+    }
 
     Timer {
         id: playerTitleIntroTimer
-        interval: 15000
+        interval: 2800
         repeat: false
-        running: compactPlayer.player !== null
+        running: compactPlayer.player !== null && compactPlayer.introMs > 0
         onTriggered: compactPlayer.showPlayerTitleIntro = false
     }
 
@@ -69,11 +106,17 @@ Item {
         target: compactPlayer.player
 
         function onTrackTitleChanged() {
-            compactPlayer.restartPlayerTitleIntro();
+            compactPlayer.maybeRestartIntroForTrackMetadata();
         }
 
         function onTrackArtistChanged() {
-            compactPlayer.restartPlayerTitleIntro();
+            compactPlayer.maybeRestartIntroForTrackMetadata();
+        }
+
+        function onPositionChanged() {
+            if (!positionSlider.isDragging && compactPlayer.player) {
+                positionSlider.value = compactPlayer.length > 0 ? Math.min(1.0, compactPlayer.position / compactPlayer.length) : 0;
+            }
         }
     }
 
@@ -103,15 +146,6 @@ Item {
                 positionSlider.value = compactPlayer.length > 0 ? Math.min(1.0, compactPlayer.position / compactPlayer.length) : 0;
             }
             compactPlayer.player?.positionChanged();
-        }
-    }
-
-    Connections {
-        target: compactPlayer.player
-        function onPositionChanged() {
-            if (!positionSlider.isDragging && compactPlayer.player) {
-                positionSlider.value = compactPlayer.length > 0 ? Math.min(1.0, compactPlayer.position / compactPlayer.length) : 0;
-            }
         }
     }
 
@@ -216,10 +250,11 @@ Item {
 
             MultiEffect {
                 anchors.fill: backgroundArt
+                visible: compactPlayer.hasArtwork
                 source: backgroundArt
-                blurEnabled: true
-                blurMax: 32
-                blur: 0.75
+                blurEnabled: compactPlayer.hasArtwork && compactPlayer.notchHovered
+                blurMax: compactPlayer.notchHovered ? 32 : 14
+                blur: compactPlayer.notchHovered ? 0.75 : 0.35
                 autoPaddingEnabled: false
                 opacity: hasArtwork ? 1.0 : 0.0
                 Behavior on opacity {
@@ -281,9 +316,11 @@ Item {
                     }
                     MultiEffect {
                         anchors.fill: parent
+                        visible: compactPlayer.hasArtwork
                         source: artworkImage
-                        blurMax: 32
-                        blur: 0.75
+                        blurEnabled: compactPlayer.hasArtwork
+                        blurMax: compactPlayer.notchHovered ? 32 : 10
+                        blur: compactPlayer.notchHovered ? 0.75 : 0.28
                         opacity: hasArtwork ? 1.0 : 0.0 // Simplificado
                         Behavior on opacity {
                             enabled: Config.animDuration > 0
@@ -413,6 +450,7 @@ Item {
                 Layout.rightMargin: compactPlayer.notchHovered ? 0 : 8
                 visible: compactPlayer.player !== null
                 player: compactPlayer.player
+                enableWavyAnimation: false
                 // Le pasamos 'hasArtwork' para que el slider también pueda usar los colores dinámicos
                 hasArtwork: compactPlayer.hasArtwork
             }

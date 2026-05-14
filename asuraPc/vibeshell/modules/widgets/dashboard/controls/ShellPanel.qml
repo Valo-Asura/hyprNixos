@@ -718,6 +718,20 @@ Item {
                             }
                         }
 
+                        NumberInputRow {
+                            label: "Player title intro duration"
+                            value: Config.bar.playerTitleIntroMs ?? 2800
+                            minValue: 0
+                            maxValue: 60000
+                            suffix: "ms"
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.bar.playerTitleIntroMs) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.playerTitleIntroMs = newValue;
+                                }
+                            }
+                        }
+
                         Separator {
                             Layout.fillWidth: true
                         }

@@ -53,6 +53,7 @@ Singleton {
                     return;
                 }
             }
+            root.isInitializing = false;
         }
     }
 
@@ -78,7 +79,11 @@ Singleton {
                         return;
                     }
                 }
+                if (root.filteredPlayers.length > 0)
+                    root.isInitializing = false;
+                return;
             }
+            root.isInitializing = false;
         } catch (e) {
             console.warn("Error loading last player:", e);
             root.isInitializing = false;

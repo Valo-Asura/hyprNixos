@@ -8,6 +8,7 @@ var data = {
     "launcherIconSize": 18,
     "screenList": [],
     "enableFirefoxPlayer": false,
+    "playerTitleIntroMs": 2800,
     "barColor": [["surface", 0.0]],
     "pinnedOnStartup": true,
     "hoverToReveal": true,

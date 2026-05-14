@@ -5,6 +5,8 @@
   imports = [
     ./git
     ./terminal
+    ./neovim
+    ./fastfetch
     ./scripts
   ];
 }

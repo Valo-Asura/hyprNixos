@@ -591,6 +591,7 @@ Singleton {
             property int launcherIconSize: 24
             property list<string> screenList: []
             property bool enableFirefoxPlayer: false
+            property int playerTitleIntroMs: 2800
             property list<var> barColor: [["surface", 0.0]]
             // Auto-hide properties
             property bool pinnedOnStartup: true

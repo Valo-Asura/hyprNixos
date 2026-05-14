@@ -6,6 +6,10 @@
 }:
 
 let
+  # Local assets (committed under asuraPc/assets) — used as Kitty background.
+  kittyWallpaper = ../assets/sans.png;
+  kittyWallpaperAlt = ../assets/ax.png;
+
   colors = config.lib.stylix.colors.withHashtag or {
     base00 = "#282828";
     base01 = "#32302f";
@@ -14,6 +18,7 @@ let
     base0A = "#d8a657";
     base0B = "#a9b665";
     base0D = "#7daea3";
+    base0E = "#d3869b";
   };
 in
 {
@@ -27,17 +32,24 @@ in
     };
 
     settings = {
-      # Window settings - minimal and clean
+      # Window settings — padding + border tuned for wallpaper + Hyprland blur
       confirm_os_window_close = 0;
       hide_window_decorations = "yes";
-      window_padding_width = "12";
+      window_padding_width = "20";
       window_margin_width = "0";
 
-      # Enhanced visual settings
+      # Enhanced visual settings (magenta accent like reference rices)
       draw_minimal_borders = "yes";
-      window_border_width = "1pt";
-      active_border_color = colors.base0A;
+      window_border_width = "2pt";
+      active_border_color = colors.base0E;
       inactive_border_color = colors.base02;
+
+      # Background image from /etc/nixos/asuraPc/assets (Nix store path at build time)
+      # Switch to kittyWallpaperAlt (ax.png) by changing kittyWallpaper in terminal/default.nix
+      background_image = toString kittyWallpaper;
+      background_image_layout = "cscaled";
+      # Softer global wallpaper so a right-side fastfetch Kitty logo stays readable
+      background_tint = "0.76";
 
       # Terminal size - bigger for better productivity
       remember_window_size = "no";
@@ -48,8 +60,8 @@ in
       enable_audio_bell = "no";
       visual_bell_duration = "0.0";
 
-      # Appearance - let Stylix handle colors but enhance visuals
-      background_opacity = "0.92";
+      # Appearance — transparency works with Hyprland blur; wallpaper shows through
+      background_opacity = "0.84";
       dynamic_background_opacity = "yes";
       cursor_blink_interval = 0;
       cursor_shape = "block";

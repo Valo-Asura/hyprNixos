@@ -16,6 +16,7 @@ Item {
     property real position: player?.position ?? 0.0
     property real length: player?.length ?? 1.0
     property bool hasArtwork: (player?.trackArtUrl ?? "") !== ""
+    property bool enableWavyAnimation: true
     // property var playerColors: hasArtwork ? PlayerColors.getColorsForPlayer(player) : null
 
     property alias value: slider.value
@@ -33,9 +34,9 @@ Item {
         value: root.length > 0 ? Math.min(1.0, root.position / root.length) : 0
         progressColor: root.useCustomColors ? root.customProgressColor : Styling.srItem("overprimary")
         backgroundColor: root.useCustomColors ? root.customBackgroundColor : Colors.shadow
-        wavy: true
-        wavyAmplitude: root.isPlaying ? 1 : 0.0
-        wavyFrequency: root.isPlaying ? 8 : 0
+        wavy: root.enableWavyAnimation
+        wavyAmplitude: root.enableWavyAnimation && root.isPlaying ? 1 : 0.0
+        wavyFrequency: root.enableWavyAnimation && root.isPlaying ? 8 : 0
         heightMultiplier: root.player ? 8 : 4
         smoothDrag: true
         scroll: false

@@ -8,13 +8,14 @@ let
   plymouthTheme = pkgs.stdenvNoCC.mkDerivation {
     pname = "vibeshell-plymouth-theme";
     version = "1.0.0";
+    # File is committed as .svg but content is JPEG (JFIF); rsvg-convert cannot parse it.
     src = ../assets/vibeshell-loading.svg;
-    nativeBuildInputs = [ pkgs.librsvg ];
+    nativeBuildInputs = [ pkgs.imagemagick ];
     dontUnpack = true;
     installPhase = ''
       theme_dir="$out/share/plymouth/themes/vibeshell"
       mkdir -p "$theme_dir"
-      rsvg-convert -w 256 -h 256 "$src" -o "$theme_dir/logo.png"
+      ${pkgs.imagemagick}/bin/magick convert "$src" -resize 256x256 -gravity center -extent 256x256 "$theme_dir/logo.png"
 
       cat > "$theme_dir/vibeshell.plymouth" <<'EOF'
 [Plymouth Theme]
