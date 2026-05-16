@@ -14,9 +14,12 @@
     enable = true;
     freeMemThreshold = 10;
     freeSwapThreshold = 10;
-    # Never kill Hyprland, quickshell, pipewire, or the display session
+    # Never kill Hyprland, quickshell, pipewire, or the display session.
+    # extraArgs entries must be separate words — earlyoom can't parse
+    # shell-quoted strings like "--avoid 'regex'" as a single token.
     extraArgs = [
-      "--avoid '(hyprland|quickshell|pipewire|wireplumber|sddm|login)'"
+      "--avoid"
+      "(hyprland|quickshell|pipewire|wireplumber|sddm|login)"
     ];
     enableNotifications = true;
   };
