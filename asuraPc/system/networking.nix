@@ -15,6 +15,7 @@
       wifi = {
         # Archer T6E / AC1300 is Broadcom BCM4360-class hardware.
         backend = "wpa_supplicant";
+        macAddress = "permanent";
         powersave = false;
         scanRandMacAddress = false;
       };
@@ -118,6 +119,20 @@
 
       ${pkgs.systemd}/bin/resolvectl flush-caches >/dev/null 2>&1 || true
       ${pkgs.networkmanager}/bin/nmcli general reload >/dev/null 2>&1 || true
+    fi
+  '';
+
+  # This router advertises the same "_5G" SSID on both 2.4 and 5 GHz radios.
+  # The Broadcom STA driver repeatedly hops between them and times out, so keep
+  # the saved 5 GHz profile on band "a" when it exists.
+  system.activationScripts.stabilizeKnownWifiProfiles.text = ''
+    if ${pkgs.systemd}/bin/systemctl -q is-active NetworkManager.service \
+      && ${pkgs.networkmanager}/bin/nmcli -t -f NAME connection show \
+        | ${pkgs.gnugrep}/bin/grep -Fxq 'JioFiber-rqurc_5G'; then
+      ${pkgs.networkmanager}/bin/nmcli connection modify 'JioFiber-rqurc_5G' \
+        802-11-wireless.band a \
+        802-11-wireless.cloned-mac-address permanent \
+        802-11-wireless.mac-address-randomization never >/dev/null 2>&1 || true
     fi
   '';
 }

@@ -63,8 +63,23 @@ in
       registers_dir="$HOME/.config/$editor/User/globalStorage/vscodevim.vim"
       ${pkgs.coreutils}/bin/mkdir -p "$registers_dir"
       ${pkgs.coreutils}/bin/touch "$registers_dir/.registers"
+
+      # Some bundled extensions copy helper files from the immutable Nix store,
+      # then update them in place later. Keep their mutable storage writable.
+      mutable_storage="$HOME/.config/$editor/User/globalStorage"
+      if [ -d "$mutable_storage" ]; then
+        ${pkgs.findutils}/bin/find "$mutable_storage" -path '*/github.copilot-chat/*' \
+          -exec ${pkgs.coreutils}/bin/chmod u+rwX {} +
+      fi
     done
   '';
+
+  programs.vscode = {
+    enable = true;
+    # VS Code itself stays system-level; Home Manager only owns its user config.
+    package = null;
+    profiles.default = mutableCodeProfile;
+  };
 
   programs.kiro = {
     enable = true;
