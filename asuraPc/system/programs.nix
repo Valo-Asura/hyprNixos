@@ -1,5 +1,5 @@
 # Programs Configuration
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 
 {
   programs = {
@@ -13,8 +13,8 @@
     # the main configuration lives in Home Manager.
     hyprland = {
       enable = true;
-      package = pkgs.hyprland;
-      portalPackage = pkgs.xdg-desktop-portal-hyprland;
+      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+      portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
       xwayland.enable = true;
     };
 

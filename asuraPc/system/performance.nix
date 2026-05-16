@@ -14,13 +14,8 @@
     enable = true;
     freeMemThreshold = 10;
     freeSwapThreshold = 10;
-    # Never kill Hyprland, quickshell, pipewire, or the display session.
-    # extraArgs entries must be separate words — earlyoom can't parse
-    # shell-quoted strings like "--avoid 'regex'" as a single token.
-    extraArgs = [
-      "--avoid"
-      "(hyprland|quickshell|pipewire|wireplumber|sddm|login)"
-    ];
+    # Keep extraArgs empty here. The current module serializes regex-style
+    # options through EARLYOOM_ARGS in a way earlyoom receives as one bad arg.
     enableNotifications = true;
   };
 
