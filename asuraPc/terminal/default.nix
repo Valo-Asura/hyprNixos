@@ -71,9 +71,10 @@ in
       enable_audio_bell = "no";
       visual_bell_duration = "0.0";
 
-      # Appearance — transparency works with Hyprland blur; wallpaper shows through
-      background_opacity = "0.84";
-      dynamic_background_opacity = "yes";
+      # Appearance — solid opaque background keeps text readable without a wallpaper.
+      # Re-enable background_opacity if you add a background_image back.
+      background_opacity = "1.0";
+      dynamic_background_opacity = "no";
       cursor_blink_interval = 0;
       cursor_shape = "block";
       cursor_beam_thickness = "1.5";
@@ -178,11 +179,6 @@ in
       # Useful shortcuts
       "ctrl+shift+f" =
         "launch --type=overlay --stdin-source=@screen_scrollback fzf --no-sort --no-mouse --exact -i";
-
-      # Fun shortcuts
-      "ctrl+shift+j" = "launch --type=tab fish -c joke";
-      "ctrl+shift+m" = "launch --type=tab fish -c matrix";
-      "ctrl+alt+w" = "launch --type=tab fish -c weather_fun";
     };
   };
 
@@ -248,14 +244,12 @@ in
     # Automatically load fastfetch and fortune on startup
     fish_greeting = {
       body = ''
-        if test "$ASURA_SHOW_SHELL_BANNER" = "1"
-          fastfetch-smart
-          echo ""
-          set_color cyan
-          fortune -s
-          set_color normal
-          echo ""
-        end
+        fastfetch
+        echo ""
+        set_color cyan
+        fortune -s
+        set_color normal
+        echo ""
       '';
     };
 

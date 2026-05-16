@@ -29,11 +29,18 @@
       # Heavy Rust/C++ builds can fill shm and cause OOM-adjacent stalls.
       sandbox-dev-shm-size = "25%";
 
-      # Cap substitution parallelism to avoid bandwidth monopoly.
-      max-substitution-jobs = 16;
-
       # Allow builds to use binary cache before falling back to source.
       fallback = true;
+
+      # Use binary caches aggressively to avoid local compiles
+      substituters = [
+        "https://cache.nixos.org"
+        "https://nix-community.cachix.org"
+      ];
+      trusted-public-keys = [
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCUSBrg="
+      ];
     };
     daemonCPUSchedPolicy = "batch";
     daemonIOSchedClass = "idle";
@@ -85,8 +92,14 @@
       set -euo pipefail
 
       echo "[nixos-rebuild-safe] Running rebuild with reduced CPU/IO priority..."
-      echo "  max-jobs=6  cores=4  nice=15  ionice=idle"
+      echo "  max-jobs=6  cores=4  nice=15  ionice=idle  MAKEFLAGS=-j6"
       echo ""
+
+      # MAKEFLAGS caps linker/compiler parallelism inside each sandbox;
+      # without this, Rust link steps can spike to all 12 threads even
+      # when nix caps max-jobs.
+      export MAKEFLAGS="-j6"
+      export CARGO_BUILD_JOBS="6"
 
       exec ${pkgs.util-linux}/bin/ionice -c 3 \
         ${pkgs.coreutils}/bin/nice -n 15 \
@@ -125,8 +138,14 @@
     # rebuild workers whenever interactive apps need cores.
     # (default CPUWeight = 100; lower = yields more readily)
     nix-daemon.serviceConfig = {
-      CPUWeight = 20;
-      IOWeight = 20;
+      CPUWeight = 15;  # was 20 — yield even harder
+      IOWeight = 15;
+      # Kernel memory pressure: constrain nix-daemon to 60% of RAM
+      # before it starts blocking on allocation. Prevents desktop freeze
+      # when many parallel builds allocate simultaneously.
+      MemoryHigh = "60%";
+      MemoryMax = "80%";
+      MemorySwapMax = "2G";
     };
   };
 

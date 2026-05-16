@@ -5,6 +5,22 @@
   # IRQ balancing across CPU cores
   services.irqbalance.enable = true;
 
+  # ── OOM killer: earlyoom ──────────────────────────────────────────
+  # Kills the highest-memory process when RAM gets critically low,
+  # BEFORE the kernel OOM killer fires. This prevents the multi-second
+  # desktop freeze that occurs when the kernel OOM killer stalls I/O.
+  # Trigger at <10% free RAM / <10% free swap.
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 10;
+    freeSwapThreshold = 10;
+    # Never kill Hyprland, quickshell, pipewire, or the display session
+    extraArgs = [
+      "--avoid '(hyprland|quickshell|pipewire|wireplumber|sddm|login)'"
+    ];
+    enableNotifications = true;
+  };
+
   # User-space sched-ext scheduler for smoother interactive desktop load on 6.12+ kernels.
   services.scx = {
     enable = true;
