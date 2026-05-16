@@ -2,5 +2,5 @@
 
 var data = {
     "position": "bottom",
-    "imagePath": ""
+    "imagePath": "/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png"
 }

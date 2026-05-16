@@ -1,41 +1,55 @@
 {
   pkgs,
-  config,
-  inputs,
+  lib,
   ...
 }:
+let
+  mkLuaInline = lib.generators.mkLuaInline;
+  toLuaString = builtins.toJSON;
+  superKey = "SUPER";
+  superShift = "SUPER + SHIFT";
+  superAlt = "SUPER + ALT";
+  ctrlKey = "CTRL";
+
+  mkBind = keys: dispatcher: opts: {
+    _args = [
+      keys
+      (mkLuaInline dispatcher)
+    ]
+    ++ lib.optional (opts != null) opts;
+  };
+
+  exec = command: "hl.dsp.exec_cmd(${toLuaString command})";
+  focusWorkspace = workspace: "hl.dsp.focus({ workspace = ${toLuaString workspace} })";
+  moveToWorkspace = workspace: "hl.dsp.window.move({ workspace = ${toLuaString workspace} })";
+in
 {
   wayland.windowManager.hyprland.settings = {
-    "$mainMod" = "SUPER";
-    "$shiftMod" = "SUPER_SHIFT";
     bind = [
-      "$mainMod, Q, killactive" # Close window
-      "$mainMod, H, exit" # Exit Hyprland
-      "$mainMod, F, exec, ${pkgs.thunar}/bin/thunar" # Thunar file manager
-      "$mainMod, G, togglefloating" # Toggle Floating
-      "$mainMod, J, layoutmsg, togglesplit" # Toggle Split (Hyprland 0.54+)
-      "$mainMod, B, exec, ${pkgs.brave}/bin/brave" # Brave browser
-      "$mainMod, T, exec, ${pkgs.kitty}/bin/kitty" # Kitty
-      "$mainMod, I, exec, code --enable-features=UseOzonePlatform --ozone-platform=wayland" # IDE
-      "$mainMod, E, exec, ${pkgs.telegram-desktop}/bin/telegram-desktop" # Telegram
-      "$mainMod, W, exec, ${pkgs.wofi}/bin/wofi" # Wofi
-      # "ALT, TAB, plugin:expo:toggle"
-      "ctrl, l, exec, /run/current-system/sw/bin/vibeshell-safe-lock" # Lock screen
-      "$mainMod, L, exec, /run/current-system/sw/bin/vibeshell-safe-lock" # Lock screen (Super+L)
-
-      "$shiftMod,C, exec, clipboard" # Clipboard picker with wofi
-
-      # Wallpaper controls
-      "$mainMod, P, exec, wallpaper-switch static" # Static wallpaper (hyprpaper)
-      "$shiftMod, P, exec, wallpaper-switch animated" # Animated wallpaper (awww)
-      "$mainMod ALT, P, exec, sync-lock-wallpaper" # Sync current wallpaper to lock screen
-
-      # Screenshot controls
-      ", Print, exec, grim -g \"$(slurp)\" - | wl-copy" # Screenshot selection to clipboard
-      "$mainMod, Print, exec, grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png" # Full screenshot
-      "$shiftMod, Print, exec, grim -g \"$(slurp)\" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png" # Selection screenshot
-      "$shiftMod,E, exec, ${pkgs.wofi-emoji}/bin/wofi-emoji" # Emoji picker with wofi
-      "$mod,F2, exec, night-shift" # Toggle night shift
+      (mkBind "${superKey} + Q" "hl.dsp.window.close()" null)
+      (mkBind "${superKey} + H" "hl.dsp.exit()" null)
+      (mkBind "${superKey} + F" (exec "${pkgs.thunar}/bin/thunar") null)
+      (mkBind "${superKey} + G" "hl.dsp.window.float({ action = \"toggle\" })" null)
+      (mkBind "${superKey} + J" "hl.dsp.layout(\"togglesplit\")" null)
+      (mkBind "${superKey} + B" (exec "${pkgs.brave}/bin/brave") null)
+      (mkBind "${superKey} + T" (exec "${pkgs.kitty}/bin/kitty") null)
+      (mkBind "${superKey} + I" (exec "code") null)
+      (mkBind "${superKey} + E" (exec "${pkgs.telegram-desktop}/bin/telegram-desktop") null)
+      (mkBind "${superKey} + W" (exec "${pkgs.wofi}/bin/wofi") null)
+      (mkBind "${ctrlKey} + L" (exec "/run/current-system/sw/bin/vibeshell-safe-lock") null)
+      (mkBind "${superKey} + L" (exec "/run/current-system/sw/bin/vibeshell-safe-lock") null)
+      (mkBind "${superShift} + C" (exec "clipboard") null)
+      (mkBind "${superKey} + P" (exec "wallpaper-switch static") null)
+      (mkBind "${superShift} + P" (exec "wallpaper-switch animated") null)
+      (mkBind "${superAlt} + P" (exec "sync-lock-wallpaper") null)
+      (mkBind "Print" (exec "grim -g \"$(slurp)\" - | wl-copy") null)
+      (mkBind "${superKey} + Print" (exec "grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png") null)
+      (mkBind "${superShift} + Print"
+        (exec "grim -g \"$(slurp)\" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png")
+        null
+      )
+      (mkBind "${superShift} + E" (exec "${pkgs.wofi-emoji}/bin/wofi-emoji") null)
+      (mkBind "${superKey} + F2" (exec "night-shift") null)
     ]
     ++ (builtins.concatLists (
       builtins.genList (
@@ -44,36 +58,39 @@
           ws = i + 1;
         in
         [
-          "$mod,code:1${toString i}, workspace, ${toString ws}"
-          "$mod SHIFT,code:1${toString i}, movetoworkspace, ${toString ws}"
+          (mkBind "${superKey} + code:1${toString i}" (focusWorkspace (toString ws)) null)
+          (mkBind "${superShift} + code:1${toString i}" (moveToWorkspace (toString ws)) null)
         ]
       ) 9
-    ));
-
-    bindm = [
-      "$mod,mouse:272, movewindow" # Move Window (mouse)
-      "$mod,mouse:273, resizewindow" # Resize Window (mouse)
-      "$mod,TAB, resizewindow" # Resize Window (mouse)
+    ))
+    ++ [
+      (mkBind "${superKey} + mouse:272" "hl.dsp.window.drag()" { mouse = true; })
+      (mkBind "${superKey} + mouse:273" "hl.dsp.window.resize()" { mouse = true; })
+      (mkBind "${superKey} + TAB" "hl.dsp.window.resize()" { mouse = true; })
+      (mkBind "${superKey} + SUPER_L" (exec "vibeshell run dashboard-widgets") { release = true; })
+      (mkBind "XF86AudioMute" (exec "sound-toggle") { locked = true; })
+      (mkBind "XF86AudioPlay" (exec "${pkgs.playerctl}/bin/playerctl play-pause") { locked = true; })
+      (mkBind "XF86AudioNext" (exec "${pkgs.playerctl}/bin/playerctl next") { locked = true; })
+      (mkBind "XF86AudioPrev" (exec "${pkgs.playerctl}/bin/playerctl previous") { locked = true; })
+      (mkBind "switch:Lid Switch" (exec "/run/current-system/sw/bin/vibeshell-safe-lock") {
+        locked = true;
+      })
+      (mkBind "XF86AudioRaiseVolume" (exec "sound-up") {
+        locked = true;
+        repeating = true;
+      })
+      (mkBind "XF86AudioLowerVolume" (exec "sound-down") {
+        locked = true;
+        repeating = true;
+      })
+      (mkBind "XF86MonBrightnessUp" (exec "brightness-up") {
+        locked = true;
+        repeating = true;
+      })
+      (mkBind "XF86MonBrightnessDown" (exec "brightness-down") {
+        locked = true;
+        repeating = true;
+      })
     ];
-
-    bindr = [
-      "SUPER, SUPER_L, exec, vibeshell run dashboard-widgets" # Open app search on Super key release
-    ];
-
-    bindl = [
-      ",XF86AudioMute, exec, sound-toggle" # Toggle Mute
-      ",XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause" # Play/Pause Song
-      ",XF86AudioNext, exec, ${pkgs.playerctl}/bin/playerctl next" # Next Song
-      ",XF86AudioPrev, exec, ${pkgs.playerctl}/bin/playerctl previous" # Previous Song
-      ",switch:Lid Switch, exec, /run/current-system/sw/bin/vibeshell-safe-lock" # Lock when closing Lid
-    ];
-
-    bindle = [
-      ",XF86AudioRaiseVolume, exec, sound-up" # Sound Up
-      ",XF86AudioLowerVolume, exec, sound-down" # Sound Down
-      ",XF86MonBrightnessUp, exec, brightness-up" # Brightness Up
-      ",XF86MonBrightnessDown, exec, brightness-down" # Brightness Down
-    ];
-
   };
 }

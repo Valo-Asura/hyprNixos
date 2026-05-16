@@ -71,152 +71,306 @@ in
     plugins = [ ];
     xwayland.enable = true;
     settings = {
-      "$mod" = "SUPER";
-      "$shiftMod" = "SUPER_SHIFT";
-
-      exec-once = [
-        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP LANG LC_CTYPE LC_TIME LC_MONETARY LC_NUMERIC LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION"
-        "${vibeshellStart}/bin/vibeshell-start"
-      ];
-
       monitor = [
-        "desc:${primaryMonitorDesc},${primaryMode},0x0,1"
-        "${primaryMonitor},${primaryMode},0x0,1"
-        ",preferred,auto,1"
+        {
+          output = "desc:${primaryMonitorDesc}";
+          mode = primaryMode;
+          position = "0x0";
+          scale = "1";
+        }
+        {
+          output = primaryMonitor;
+          mode = primaryMode;
+          position = "0x0";
+          scale = "1";
+        }
+        {
+          output = "";
+          mode = "preferred";
+          position = "auto";
+          scale = "1";
+        }
       ];
 
       env = [
-        "XDG_SESSION_TYPE,wayland"
-        "XDG_CURRENT_DESKTOP,Hyprland"
-        "XDG_SESSION_DESKTOP,Hyprland"
-        "LANG,en_IN"
-        "MOZ_ENABLE_WAYLAND,1"
-        "NIXOS_OZONE_WL,1"
-        "QT_QPA_PLATFORM,wayland;xcb"
-        "QT_WAYLAND_DISABLE_WINDOWDECORATION,1"
-        "ELECTRON_OZONE_PLATFORM_HINT,auto"
-        "__GL_GSYNC_ALLOWED,0"
-        "__GL_VRR_ALLOWED,0"
-        "LIBVA_DRIVER_NAME,nvidia"
-        "GBM_BACKEND,nvidia-drm"
-        "__GLX_VENDOR_LIBRARY_NAME,nvidia"
-        "__EGL_VENDOR_LIBRARY_FILENAMES,/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json"
-        "NVD_BACKEND,direct"
-        "SDL_VIDEODRIVER,wayland,x11"
-        "CLUTTER_BACKEND,wayland"
-        "XCURSOR_SIZE,24"
-        "XCURSOR_THEME,Bibata-Modern-Classic"
+        {
+          _args = [
+            "XDG_SESSION_TYPE"
+            "wayland"
+          ];
+        }
+        {
+          _args = [
+            "XDG_CURRENT_DESKTOP"
+            "Hyprland"
+          ];
+        }
+        {
+          _args = [
+            "XDG_SESSION_DESKTOP"
+            "Hyprland"
+          ];
+        }
+        {
+          _args = [
+            "LANG"
+            "en_IN"
+          ];
+        }
+        {
+          _args = [
+            "MOZ_ENABLE_WAYLAND"
+            "1"
+          ];
+        }
+        {
+          _args = [
+            "NIXOS_OZONE_WL"
+            "1"
+          ];
+        }
+        {
+          _args = [
+            "QT_QPA_PLATFORM"
+            "wayland;xcb"
+          ];
+        }
+        {
+          _args = [
+            "QT_WAYLAND_DISABLE_WINDOWDECORATION"
+            "1"
+          ];
+        }
+        {
+          _args = [
+            "ELECTRON_OZONE_PLATFORM_HINT"
+            "auto"
+          ];
+        }
+        {
+          _args = [
+            "__GL_GSYNC_ALLOWED"
+            "0"
+          ];
+        }
+        {
+          _args = [
+            "__GL_VRR_ALLOWED"
+            "0"
+          ];
+        }
+        {
+          _args = [
+            "LIBVA_DRIVER_NAME"
+            "nvidia"
+          ];
+        }
+        {
+          _args = [
+            "GBM_BACKEND"
+            "nvidia-drm"
+          ];
+        }
+        {
+          _args = [
+            "__GLX_VENDOR_LIBRARY_NAME"
+            "nvidia"
+          ];
+        }
+        {
+          _args = [
+            "__EGL_VENDOR_LIBRARY_FILENAMES"
+            "/run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json"
+          ];
+        }
+        {
+          _args = [
+            "NVD_BACKEND"
+            "direct"
+          ];
+        }
+        {
+          _args = [
+            "SDL_VIDEODRIVER"
+            "wayland,x11"
+          ];
+        }
+        {
+          _args = [
+            "CLUTTER_BACKEND"
+            "wayland"
+          ];
+        }
+        {
+          _args = [
+            "XCURSOR_SIZE"
+            "24"
+          ];
+        }
+        {
+          _args = [
+            "XCURSOR_THEME"
+            "Bibata-Modern-Classic"
+          ];
+        }
       ];
 
-      cursor = {
-        default_monitor = primaryMonitor;
-        no_hardware_cursors = true;
-      };
-
-      general = {
-        resize_on_border = true;
-        gaps_in = gaps-in;
-        gaps_out = gaps-out;
-        border_size = border-size;
-
-        layout = "master";
-        "col.active_border" = border-color;
-      };
-
-      decoration = {
-        active_opacity = active-opacity;
-        inactive_opacity = inactive-opacity;
-        rounding = rounding;
-
-        shadow = {
-          enabled = false;
-        };
-
-        blur = {
-          enabled = blur;
-          size = 3;
-          passes = 1;
-          new_optimizations = true;
-        };
-      };
-
-      master = {
-        new_status = "master";
-        allow_small_split = true;
-        mfact = 0.5;
-      };
-
-      debug = {
-        vfr = true;
-      };
-
-      misc = {
-        vrr = 1;
-        animate_manual_resizes = false;
-        animate_mouse_windowdragging = false;
-        disable_hyprland_logo = true;
-        disable_splash_rendering = true;
-        force_default_wallpaper = 0;
-        focus_on_activate = true;
-        enable_swallow = false;
-        swallow_regex = "";
-      };
-
-      render = {
-        direct_scanout = false; # disabled: causes crashes with NVIDIA on Wayland
-      };
-
-      windowrule = [
-        # File pickers and uploads
-        "match:title ^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$, float 1"
-        "match:title ^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$, center 1"
-        "match:title ^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$, size 900 600"
-        
-        # Authentication and Polkit
-        "match:title ^(.*(Authentication Required|PolicyKit1).*)$, float 1"
-        "match:title ^(.*(Authentication Required|PolicyKit1).*)$, center 1"
-        "match:title ^(.*(Authentication Required|PolicyKit1).*)$, size 500 400"
-        
-        "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, float 1"
-        "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, center 1"
-        "match:class ^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$, size 500 400"
-
-        # Archivers and file managers doing pop-up tasks
-        "match:class ^(file-roller|org.gnome.FileRoller)$, float 1"
-        "match:class ^(file-roller|org.gnome.FileRoller)$, center 1"
-        "match:class ^(file-roller|org.gnome.FileRoller)$, size 800 600"
-        
-        # XDG Desktop Portals
-        "match:class ^(xdg-desktop-portal-.*)$, float 1"
-        "match:class ^(xdg-desktop-portal-.*)$, center 1"
-        "match:class ^(xdg-desktop-portal-.*)$, size 900 600"
+      on = [
+        {
+          _args = [
+            "hyprland.start"
+            (lib.generators.mkLuaInline ''
+              function()
+                hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP LANG LC_CTYPE LC_TIME LC_MONETARY LC_NUMERIC LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION")
+                hl.exec_cmd("${vibeshellStart}/bin/vibeshell-start")
+              end
+            '')
+          ];
+        }
       ];
 
-      layerrule = [
-        "no_anim on, match:namespace launcher"
-        "no_anim on, match:namespace ^ags-.*$"
-      ];
+      config = {
+        cursor = {
+          default_monitor = primaryMonitor;
+          no_hardware_cursors = 1;
+        };
 
-      input = {
-        kb_layout = keyboardLayout;
-        kb_options = "caps:escape";
-        follow_mouse = 1;
-        sensitivity = 0.5;
-        repeat_delay = 300;
-        repeat_rate = 50;
-        numlock_by_default = true;
+        general = {
+          resize_on_border = true;
+          gaps_in = gaps-in;
+          gaps_out = gaps-out;
+          border_size = border-size;
+          layout = "master";
+          "col.active_border" = border-color;
+        };
 
-        touchpad = {
-          natural_scroll = true;
-          tap_button_map = "lrm";
-          clickfinger_behavior = false;
+        decoration = {
+          active_opacity = active-opacity;
+          inactive_opacity = inactive-opacity;
+          rounding = rounding;
+
+          shadow = {
+            enabled = false;
+          };
+
+          blur = {
+            enabled = blur;
+            size = 3;
+            passes = 1;
+            new_optimizations = true;
+          };
+        };
+
+        master = {
+          new_status = "master";
+          allow_small_split = true;
+          mfact = 0.5;
+        };
+
+        debug = {
+          vfr = true;
+        };
+
+        misc = {
+          vrr = 1;
+          animate_manual_resizes = false;
+          animate_mouse_windowdragging = false;
+          disable_hyprland_logo = true;
+          disable_splash_rendering = true;
+          force_default_wallpaper = 0;
+          focus_on_activate = true;
+          enable_swallow = false;
+          swallow_regex = "";
+        };
+
+        render = {
+          # Disabled: direct scanout has been unstable with NVIDIA.
+          direct_scanout = 0;
+        };
+
+        input = {
+          kb_layout = keyboardLayout;
+          kb_options = "caps:escape";
+          follow_mouse = 1;
+          sensitivity = 0.5;
+          repeat_delay = 300;
+          repeat_rate = 50;
+          numlock_by_default = true;
+
+          touchpad = {
+            natural_scroll = true;
+            tap_button_map = "lrm";
+            clickfinger_behavior = false;
+          };
         };
       };
+
+      window_rule = [
+        {
+          match.title = "^(.*(Open File|Choose Files|File Upload|Save As|Library).*)$";
+          float = true;
+          center = true;
+          size = [
+            900
+            600
+          ];
+        }
+        {
+          match.title = "^(.*(Authentication Required|PolicyKit1).*)$";
+          float = true;
+          center = true;
+          size = [
+            500
+            400
+          ];
+        }
+        {
+          match.class = "^(polkit-gnome-authentication-agent-1|hyprpolkitagent|polkit-kde-authentication-agent-1)$";
+          float = true;
+          center = true;
+          size = [
+            500
+            400
+          ];
+        }
+        {
+          match.class = "^(file-roller|org.gnome.FileRoller)$";
+          float = true;
+          center = true;
+          size = [
+            800
+            600
+          ];
+        }
+        {
+          match.class = "^(xdg-desktop-portal-.*)$";
+          float = true;
+          center = true;
+          size = [
+            900
+            600
+          ];
+        }
+      ];
+
+      layer_rule = [
+        {
+          match.namespace = "launcher";
+          no_anim = true;
+        }
+        {
+          match.namespace = "^ags-.*$";
+          no_anim = true;
+        }
+      ];
 
       gesture = [
-        "3, horizontal, workspace"
+        {
+          fingers = 3;
+          direction = "horizontal";
+          action = "workspace";
+        }
       ];
-
     };
   };
 
