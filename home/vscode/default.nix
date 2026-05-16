@@ -2,6 +2,13 @@
 { lib, pkgs, ... }:
 
 let
+  codeWrapper = pkgs.writeShellScriptBin "code" ''
+    exec ${pkgs.vscode}/bin/code \
+      --enable-features=UseOzonePlatform \
+      --ozone-platform=wayland \
+      "$@"
+  '';
+
   commonProfile = {
     extensions = with pkgs.vscode-extensions; [
       # Direnv support
@@ -51,9 +58,32 @@ let
   ];
 in
 {
+  home.packages = [ codeWrapper ];
+
+  home.activation.repairEditorCodexSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    for editor in Code VSCodium Kiro; do
+      settings="$HOME/.config/$editor/User/settings.json"
+      if [ -f "$settings" ] && ${pkgs.jq}/bin/jq -e '.["chatgpt.cliExecutable"] == "/run/current-system/sw/bin/codex"' "$settings" >/dev/null 2>&1; then
+        tmp="$(${pkgs.coreutils}/bin/mktemp)"
+        ${pkgs.jq}/bin/jq 'del(.["chatgpt.cliExecutable"])' "$settings" > "$tmp"
+        ${pkgs.coreutils}/bin/mv "$tmp" "$settings"
+      fi
+
+      registers_dir="$HOME/.config/$editor/User/globalStorage/vscodevim.vim"
+      ${pkgs.coreutils}/bin/mkdir -p "$registers_dir"
+      ${pkgs.coreutils}/bin/touch "$registers_dir/.registers"
+    done
+  '';
+
   programs.vscode = {
     enable = true;
     package = pkgs.vscode;
+    profiles.default = mutableCodeProfile;
+  };
+
+  programs.vscodium = {
+    enable = true;
+    package = pkgs.vscodium;
     profiles.default = mutableCodeProfile;
   };
 
