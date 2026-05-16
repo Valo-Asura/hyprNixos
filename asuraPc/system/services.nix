@@ -94,7 +94,9 @@ in
     mongodb = {
       enable = true;
       bind_ip = "127.0.0.1";
-      package = pkgs.mongodb;
+      # mongodb-ce downloads the official upstream pre-built binary.
+      # pkgs.mongodb compiles from source (30-60min, OOM kills the desktop).
+      package = pkgs.mongodb-ce;
       mongoshPackage = pkgs.mongosh;
     };
     printing.enable = false; # no printer — removes CUPS daemon
