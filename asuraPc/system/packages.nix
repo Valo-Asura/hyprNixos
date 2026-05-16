@@ -72,6 +72,12 @@
     sops
     docker
     docker-compose
+    nodejs
+    playwright
+    playwright-driver
+    chromium
+    mongosh
+    mongodb-tools
 
     # IDE & Editor
     neovim

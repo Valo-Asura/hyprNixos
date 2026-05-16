@@ -12,7 +12,7 @@ var data = {
     },
     "rag": {
         "enabled": true,
-        "source": "local-chat-memory"
+        "source": "sqlite-chat-memory"
     },
     "apiKeys": {}
 }

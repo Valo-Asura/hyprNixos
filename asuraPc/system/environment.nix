@@ -22,6 +22,8 @@
       # Accessibility support for keyboard input
       GTK_MODULES = "gail:atk-bridge";
       NO_AT_BRIDGE = "0";
+      PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
     };
 
     variables = {

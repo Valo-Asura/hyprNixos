@@ -1212,7 +1212,7 @@ Singleton {
             })
             property var rag: ({
                 enabled: true,
-                source: "local-chat-memory"
+                source: "sqlite-chat-memory"
             })
             property var apiKeys: ({})
         }

@@ -73,7 +73,8 @@ let
       fi
     fi
   '';
-in {
+in
+{
   services = {
     blueman = {
       enable = true;
@@ -86,10 +87,16 @@ in {
       # dbus-broker reduces desktop service activation latency compared to the classic daemon.
       implementation = "broker";
     };
-    fwupd.enable = false;   # firmware updater — run manually when needed
+    fwupd.enable = false; # firmware updater — run manually when needed
     udisks2.enable = true;
     gvfs.enable = true;
     upower.enable = true;
+    mongodb = {
+      enable = true;
+      bind_ip = "127.0.0.1";
+      package = pkgs.mongodb;
+      mongoshPackage = pkgs.mongosh;
+    };
     printing.enable = false; # no printer — removes CUPS daemon
   };
 
@@ -97,9 +104,12 @@ in {
     enable = true;
     extraPortals = with pkgs; [
       xdg-desktop-portal-gtk
-      inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland
+      xdg-desktop-portal-hyprland
     ];
-    config.common.default = [ "hyprland" "gtk" ];
+    config.common.default = [
+      "hyprland"
+      "gtk"
+    ];
   };
 
   security.wrappers."gpu-screen-recorder" = {
@@ -114,12 +124,12 @@ in {
 
   # Enable accessibility services for vibeshell keyboard input
   services.gnome.at-spi2-core.enable = true;
-  
+
   # Compile GSettings schemas properly
-  services.dbus.packages = with pkgs; [ 
-    gsettings-desktop-schemas 
-    gtk3 
-    gtk4 
+  services.dbus.packages = with pkgs; [
+    gsettings-desktop-schemas
+    gtk3
+    gtk4
   ];
 
   # Systemd User Services
@@ -138,16 +148,16 @@ in {
   # wev removed — fan-boost keycode already discovered
 
   environment.etc."fan-boost/config".text = ''
-# Fan boost automation
-# Keycode for Fn+1 fan boost toggle (use `wev` to detect)
-KEYCODE=0
+    # Fan boost automation
+    # Keycode for Fn+1 fan boost toggle (use `wev` to detect)
+    KEYCODE=0
 
-# Temperature thresholds in °C
-CPU_HIGH=75
-CPU_LOW=65
-GPU_HIGH=70
-GPU_LOW=60
-'';
+    # Temperature thresholds in °C
+    CPU_HIGH=75
+    CPU_LOW=65
+    GPU_HIGH=70
+    GPU_LOW=60
+  '';
 
   systemd.services.fan-boost-auto = {
     description = "Auto fan boost on AC (Fn+1)";
@@ -161,7 +171,7 @@ GPU_LOW=60
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "30s";
-      OnUnitActiveSec = "30s";  # was 15s — temps don't change that fast
+      OnUnitActiveSec = "30s"; # was 15s — temps don't change that fast
       Unit = "fan-boost-auto.service";
     };
   };

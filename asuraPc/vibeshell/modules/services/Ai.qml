@@ -16,6 +16,7 @@ Singleton {
 
     property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/Vibeshell"
     property string chatDir: dataDir + "/chats"
+    property string memoryDbPath: dataDir + "/ai-memory.sqlite"
     property string tmpDir: "/tmp/vibeshell-ai"
 
     property list<AiModel> models: []
@@ -25,6 +26,8 @@ Singleton {
     property string savedModelId: ""
     property bool isRestored: false
     property bool suppressModelPersist: false
+    property bool memoryDbReady: false
+    property var memoryCache: []
 
     onCurrentModelChanged: {
         if (persistenceReady && currentModel && isRestored && !suppressModelPersist) {
@@ -117,6 +120,9 @@ Singleton {
         // Light model refresh (local/LiteLLM) without heavy remote calls
         fetchAvailableModels();
 
+        // Initialize lightweight SQLite-backed memory store for local RAG.
+        initMemoryDb();
+
         // Initialize chat
         reloadHistory();
         createNewChat();
@@ -153,7 +159,6 @@ Singleton {
     property bool fallbackUsed: false
     property double lastModelFetchMs: 0
     property int minFetchIntervalMs: 300000
-    property int maxContextMessages: Config.ai && Config.ai.memory && Config.ai.memory.maxContextMessages ? Config.ai.memory.maxContextMessages : 16
     property int maxMemorySnippets: Config.ai && Config.ai.memory && Config.ai.memory.maxSnippets ? Config.ai.memory.maxSnippets : 5
     property int maxMemoryItems: Config.ai && Config.ai.memory && Config.ai.memory.maxItems ? Config.ai.memory.maxItems : 120
     property int maxMemoryChars: Config.ai && Config.ai.memory && Config.ai.memory.maxSnippetChars ? Config.ai.memory.maxSnippetChars : 900
@@ -502,7 +507,7 @@ Singleton {
             }
 
             if (target.toLowerCase() === "core") {
-                startModelPull(["qwen3:1.7b", "nomic-embed-text"]);
+                startModelPull(["qwen3:1.7b", "gemma4:e2b"]);
             } else {
                 startModelPull(target.split(/\s+/));
             }
@@ -513,19 +518,16 @@ Singleton {
             pushSystemMessage("Refreshing local and configured model list.");
             return true;
         case "/memory": {
-            let memories = StateService.initialized ? StateService.get("aiMemories", []) : [];
-            let count = Array.isArray(memories) ? memories.length : 0;
-            pushSystemMessage("Local memory/RAG is **" + (aiMemoryEnabled() ? "on" : "off") + "** with **" + count + "** saved snippets. Use `/forget` to clear it.");
+            let count = Array.isArray(memoryCache) ? memoryCache.length : 0;
+            pushSystemMessage("Local memory/RAG is **" + (aiMemoryEnabled() ? "on" : "off") + "** with **" + count + "** SQLite snippets. Dynamic context is currently **" + dynamicContextLimit() + "** messages. Use `/forget` to clear it.");
             return true;
         }
         case "/forget":
-            if (StateService.initialized) {
-                StateService.set("aiMemories", []);
-            }
+            clearMemoryStore();
             pushSystemMessage("Cleared local AI memory snippets.");
             return true;
         case "/help":
-            pushSystemMessage("**Assistant Commands**\n\n" + "**`/new`**\n" + "Starts a fresh conversation context.\n\n" + "**`/model [name]`**\n" + "Switches the active AI model. Type `/model` without arguments to open the selector.\n\n" + "**`/pull [model|core]`**\n" + "Downloads one local Ollama model, or the light core set: `qwen3:1.7b` plus `nomic-embed-text`.\n\n" + "**`/models`**\n" + "Refreshes the local/configured model list.\n\n" + "**`/memory`**\n" + "Shows local memory/RAG status.\n\n" + "**`/forget`**\n" + "Clears local memory snippets.\n\n" + "**`/key <provider> <key>`**\n" + "Saves an API key, e.g. `/key openai sk-...`.\n\n" + "**`/help`**\n" + "Shows this help message.");
+            pushSystemMessage("**Assistant Commands**\n\n" + "**`/new`**\n" + "Starts a fresh conversation context.\n\n" + "**`/model [name]`**\n" + "Switches the active AI model. Type `/model` without arguments to open the selector.\n\n" + "**`/pull [model|core]`**\n" + "Downloads one local Ollama model, or the light core set: `qwen3:1.7b` plus `gemma4:e2b`.\n\n" + "**`/models`**\n" + "Refreshes the local/configured model list.\n\n" + "**`/memory`**\n" + "Shows local SQLite memory/RAG status.\n\n" + "**`/forget`**\n" + "Clears local memory snippets.\n\n" + "**`/key <provider> <key>`**\n" + "Saves an API key, e.g. `/key openai sk-...`.\n\n" + "**`/help`**\n" + "Shows this help message.");
             return true;
         }
 
@@ -544,6 +546,75 @@ Singleton {
 
     function shellQuote(value) {
         return "'" + String(value).replace(/'/g, "'\\''") + "'";
+    }
+
+    function sqlQuote(value) {
+        return "'" + String(value || "").replace(/'/g, "''") + "'";
+    }
+
+    function configuredContextLimit() {
+        if (Config.ai && Config.ai.memory && Config.ai.memory.maxContextMessages)
+            return Config.ai.memory.maxContextMessages;
+        return 16;
+    }
+
+    function dynamicContextLimit() {
+        let limit = Math.max(6, configuredContextLimit());
+        let modelId = currentModel ? String(currentModel.model || "").toLowerCase() : "";
+
+        if (modelId.includes("qwen3:1.7b"))
+            limit = Math.min(limit, 10);
+        else if (modelId.includes("gemma4:e2b"))
+            limit = Math.min(limit, 12);
+
+        let totalChars = 0;
+        let start = Math.max(0, currentChat.length - limit);
+        for (let i = start; i < currentChat.length; i++) {
+            let msg = currentChat[i];
+            totalChars += String(msg && msg.content ? msg.content : "").length;
+        }
+
+        if (totalChars > 14000)
+            limit = Math.max(6, Math.floor(limit * 0.55));
+        else if (totalChars > 9000)
+            limit = Math.max(8, Math.floor(limit * 0.75));
+
+        return limit;
+    }
+
+    function initMemoryDb() {
+        initMemoryDbProcess.command = ["bash", "-lc", "mkdir -p " + shellQuote(dataDir) + " && sqlite3 " + shellQuote(memoryDbPath) + " <<'EOSQL'\nPRAGMA journal_mode=WAL;\nCREATE TABLE IF NOT EXISTS memories (\n  ts INTEGER NOT NULL,\n  user TEXT NOT NULL,\n  assistant TEXT NOT NULL\n);\nCREATE INDEX IF NOT EXISTS idx_memories_ts ON memories(ts DESC);\nEOSQL"];
+        initMemoryDbProcess.running = true;
+    }
+
+    function loadMemoryCache() {
+        if (!memoryDbReady)
+            return;
+        loadMemoryProcess.command = ["bash", "-lc", "sqlite3 " + shellQuote(memoryDbPath) + " <<'EOSQL'\n.timeout 5000\n.mode json\nSELECT ts, user, assistant FROM memories ORDER BY ts DESC LIMIT " + maxMemoryItems + ";\nEOSQL"];
+        loadMemoryProcess.running = true;
+    }
+
+    function persistMemoryCache() {
+        if (!memoryDbReady || saveMemoryProcess.running)
+            return;
+
+        let sql = "sqlite3 " + shellQuote(memoryDbPath) + " <<'EOSQL'\nBEGIN IMMEDIATE;\nDELETE FROM memories;\n";
+        for (let i = 0; i < memoryCache.length; i++) {
+            let item = memoryCache[i];
+            sql += "INSERT INTO memories (ts, user, assistant) VALUES (" + parseInt(item.ts || Date.now(), 10) + ", " + sqlQuote(item.user) + ", " + sqlQuote(item.assistant) + ");\n";
+        }
+        sql += "COMMIT;\nEOSQL";
+
+        saveMemoryProcess.command = ["bash", "-lc", sql];
+        saveMemoryProcess.running = true;
+    }
+
+    function clearMemoryStore() {
+        memoryCache = [];
+        if (!memoryDbReady)
+            return;
+        clearMemoryProcess.command = ["bash", "-lc", "sqlite3 " + shellQuote(memoryDbPath) + " 'DELETE FROM memories;'"];
+        clearMemoryProcess.running = true;
     }
 
     function startModelPull(modelIds) {
@@ -566,6 +637,11 @@ Singleton {
             return;
 
         let script = "set -euo pipefail\n" +
+            "systemctl --user start ollama-local.service >/dev/null 2>&1 || true\n" +
+            "for _ in $(seq 1 40); do\n" +
+            "  curl -fsS --max-time 1 http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && break\n" +
+            "  sleep 0.25\n" +
+            "done\n" +
             "for model in " + quoted.join(" ") + "; do\n" +
             "  echo \"Pulling $model...\"\n" +
             "  nice -n 15 ionice -c 3 ollama pull \"$model\"\n" +
@@ -629,10 +705,10 @@ Singleton {
     }
 
     function buildMemoryContext(query) {
-        if (!aiMemoryEnabled() || !StateService.initialized)
+        if (!aiMemoryEnabled())
             return "";
 
-        let memories = StateService.get("aiMemories", []);
+        let memories = memoryCache;
         if (!Array.isArray(memories) || memories.length === 0)
             return "";
 
@@ -668,7 +744,7 @@ Singleton {
     }
 
     function rememberExchange(userText, assistantText) {
-        if (!aiMemoryEnabled() || !StateService.initialized)
+        if (!aiMemoryEnabled())
             return;
 
         let user = trimForMemory(userText || "", maxMemoryChars);
@@ -676,7 +752,7 @@ Singleton {
         if (user.length < 3 || assistant.length < 3)
             return;
 
-        let memories = StateService.get("aiMemories", []);
+        let memories = memoryCache;
         if (!Array.isArray(memories))
             memories = [];
 
@@ -695,7 +771,8 @@ Singleton {
             assistant: assistant
         });
 
-        StateService.set("aiMemories", filtered.slice(0, maxMemoryItems));
+        memoryCache = filtered.slice(0, maxMemoryItems);
+        persistMemoryCache();
     }
 
     // Function Call Handling
@@ -834,7 +911,7 @@ Singleton {
             });
         }
 
-        let historyLimit = Math.max(4, maxContextMessages);
+        let historyLimit = Math.max(4, dynamicContextLimit());
         let startIndex = Math.max(0, currentChat.length - historyLimit);
         for (let i = startIndex; i < currentChat.length; i++) {
             let msg = currentChat[i];
@@ -1059,8 +1136,16 @@ Singleton {
     function runCurl(payload) {
         let bodyPath = tmpDir + "/body.json";
         let headerArgs = payload.headers.map(h => "-H \"" + h + "\"").join(" ");
+        let localPrep = "";
+        if (payload.endpoint.indexOf("127.0.0.1:11434") !== -1) {
+            localPrep = "systemctl --user start ollama-local.service >/dev/null 2>&1 || true; " +
+                "for _ in $(seq 1 40); do " +
+                "curl -fsS --max-time 1 http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && break; " +
+                "sleep 0.25; " +
+                "done; ";
+        }
 
-        let curlCmd = "curl -sS --connect-timeout 10 --max-time 600 -X POST \"" + payload.endpoint + "\" " + headerArgs + " -d @" + bodyPath;
+        let curlCmd = localPrep + "curl -sS --connect-timeout 10 --max-time 600 -X POST \"" + payload.endpoint + "\" " + headerArgs + " -d @" + bodyPath;
 
         curlProcess.command = ["bash", "-c", curlCmd];
         curlProcess.running = true;
@@ -1322,6 +1407,67 @@ Singleton {
         }
     }
 
+    Process {
+        id: initMemoryDbProcess
+        stderr: StdioCollector {
+            id: initMemoryDbErr
+        }
+        onExited: exitCode => {
+            memoryDbReady = exitCode === 0;
+            if (memoryDbReady) {
+                loadMemoryCache();
+            } else {
+                console.warn("Ai memory DB init failed:", initMemoryDbErr.text);
+            }
+        }
+    }
+
+    Process {
+        id: loadMemoryProcess
+        stdout: StdioCollector {
+            id: loadMemoryOut
+        }
+        stderr: StdioCollector {
+            id: loadMemoryErr
+        }
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.warn("Ai memory DB load failed:", loadMemoryErr.text);
+                return;
+            }
+
+            try {
+                let data = loadMemoryOut.text.trim();
+                memoryCache = data.length > 0 ? JSON.parse(data) : [];
+            } catch (e) {
+                console.warn("Ai memory DB parse failed:", e);
+                memoryCache = [];
+            }
+        }
+    }
+
+    Process {
+        id: saveMemoryProcess
+        stderr: StdioCollector {
+            id: saveMemoryErr
+        }
+        onExited: exitCode => {
+            if (exitCode !== 0)
+                console.warn("Ai memory DB save failed:", saveMemoryErr.text);
+        }
+    }
+
+    Process {
+        id: clearMemoryProcess
+        stderr: StdioCollector {
+            id: clearMemoryErr
+        }
+        onExited: exitCode => {
+            if (exitCode !== 0)
+                console.warn("Ai memory DB clear failed:", clearMemoryErr.text);
+        }
+    }
+
     // ============================================
     // CHAT STORAGE
     // ============================================
@@ -1424,8 +1570,6 @@ Singleton {
         // so a fresh install starts with a local model instead of a cloud key prompt.
         let ollamaModels = [
             { model: "qwen3:1.7b" },
-            { model: "qwen3:4b" },
-            { model: "qwen3:8b" },
             { model: "gemma4:e2b" }
         ];
 
@@ -1570,7 +1714,7 @@ Singleton {
 
         // Ollama (Local)
         pendingFetches++;
-        fetchProcessOllama.command = ["bash", "-c", "curl -s --max-time 1 http://127.0.0.1:11434/api/tags"];
+        fetchProcessOllama.command = ["bash", "-c", "systemctl --user is-active --quiet ollama-local.service && curl -s --connect-timeout 1 --max-time 1 http://127.0.0.1:11434/api/tags"];
         fetchProcessOllama.running = true;
 
         // LiteLLM is opt-in for faster boot and local-first defaults.
