@@ -14,7 +14,7 @@
         "modifiers": [
           "SUPER"
         ],
-        "key": "V",
+        "key": "C",
         "dispatcher": "exec",
         "argument": "vibeshell run dashboard-clipboard",
         "flags": ""
@@ -173,7 +173,7 @@
           "modifiers": [
             "SUPER"
           ],
-          "key": "C"
+          "key": "Q"
         }
       ],
       "actions": [

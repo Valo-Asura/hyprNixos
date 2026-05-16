@@ -9,18 +9,16 @@ DATA_DIR="$4"
 
 LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/vibeshell-clipboard-watch.lock"
 exec 9>"$LOCK_FILE"
-flock -n 9 || exit 0
+flock -n 9 || exit 75
 
-# Function to check clipboard
-check_clipboard() {
-    if "$CHECK_SCRIPT" "$DB_PATH" "$INSERT_SCRIPT" "$DATA_DIR" 2>&1; then
-        echo "REFRESH_LIST"
-    fi
-}
+# Keep wl-paste in the foreground so Quickshell tracks one long-lived watcher.
+exec wl-paste --watch bash -c '
+    check_script="$1"
+    db_path="$2"
+    insert_script="$3"
+    data_dir="$4"
 
-# Watch clipboard and check on every change
-wl-paste --watch sh -c "echo 'CLIPBOARD_CHANGE'" | while IFS= read -r line; do
-    if [ "$line" = "CLIPBOARD_CHANGE" ]; then
-        check_clipboard
+    if "$check_script" "$db_path" "$insert_script" "$data_dir" >/dev/null 2>&1; then
+        printf "%s\n" "REFRESH_LIST"
     fi
-done
+' _ "$CHECK_SCRIPT" "$DB_PATH" "$INSERT_SCRIPT" "$DATA_DIR"

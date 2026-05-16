@@ -1,11 +1,11 @@
 # Programs Configuration
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 
 {
   programs = {
     # Enable direnv system-wide
     direnv.enable = true;
-    
+
     # Fish shell (detailed config in home-manager)
     fish.enable = true;
 
@@ -13,8 +13,8 @@
     # the main configuration lives in Home Manager.
     hyprland = {
       enable = true;
-      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-      portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
+      package = pkgs.hyprland;
+      portalPackage = pkgs.xdg-desktop-portal-hyprland;
       xwayland.enable = true;
     };
 

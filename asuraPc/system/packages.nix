@@ -81,6 +81,7 @@
 
     # IDE & Editor
     neovim
+    vscode
     antigravity
     (pkgs.callPackage ./cursor.nix { })
 

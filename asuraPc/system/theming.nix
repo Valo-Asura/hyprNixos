@@ -8,7 +8,7 @@
     polarity = "dark";
 
     # Gruvbox Dark theme for that warm, cozy dark aesthetic
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-dark-hard.yaml";
+    base16Scheme = ../assets/gruvbox-dark-hard.yaml;
 
     # Solid Gruvbox background (minimal and clean)
     image = pkgs.runCommand "gruvbox-wallpaper" {} ''

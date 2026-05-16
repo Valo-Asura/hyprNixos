@@ -1,15 +1,11 @@
 # Login Manager Configuration
-{ pkgs, inputs, ... }:
-
-let
-  hyprlandPkg = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-in
+{ pkgs, ... }:
 
 {
   services.greetd = {
     enable = true;
     settings.default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --remember --asterisks --container-padding 2 --time --time-format '%I:%M %p | %a • %h | %F' --cmd ${hyprlandPkg}/bin/start-hyprland";
+      command = "${pkgs.tuigreet}/bin/tuigreet --remember --asterisks --container-padding 2 --time --time-format '%I:%M %p | %a • %h | %F' --cmd ${pkgs.hyprland}/bin/start-hyprland";
       user = "greeter";
     };
   };

@@ -1433,7 +1433,7 @@ Singleton {
                     }
                     property JsonObject clipboard: JsonObject {
                         property list<string> modifiers: ["SUPER"]
-                        property string key: "V"
+                        property string key: "C"
                         property string dispatcher: "exec"
                         property string argument: "vibeshell run dashboard-clipboard"
                     }
@@ -1546,7 +1546,7 @@ Singleton {
             readonly property var defaultVibeshellBinds: {
                 "dashboard": {
                     "assistant": { "modifiers": ["SUPER"], "key": "A", "dispatcher": "exec", "argument": "vibeshell run dashboard-assistant", "flags": "" },
-                    "clipboard": { "modifiers": ["SUPER"], "key": "V", "dispatcher": "exec", "argument": "vibeshell run dashboard-clipboard", "flags": "" },
+                    "clipboard": { "modifiers": ["SUPER"], "key": "C", "dispatcher": "exec", "argument": "vibeshell run dashboard-clipboard", "flags": "" },
                     "emoji": { "modifiers": ["SUPER"], "key": "PERIOD", "dispatcher": "exec", "argument": "vibeshell run dashboard-emoji", "flags": "" },
                     "notes": { "modifiers": ["SUPER"], "key": "N", "dispatcher": "exec", "argument": "vibeshell run dashboard-notes", "flags": "" },
                     "tmux": { "modifiers": ["SUPER"], "key": "T", "dispatcher": "exec", "argument": "vibeshell run dashboard-tmux", "flags": "" },
@@ -1588,7 +1588,7 @@ Singleton {
                     "keys": [
                         {
                             "modifiers": ["SUPER"],
-                            "key": "C"
+                            "key": "Q"
                         }
                     ],
                     "actions": [

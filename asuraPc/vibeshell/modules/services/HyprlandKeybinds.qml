@@ -126,50 +126,113 @@ QtObject {
         function formatModifiers(modifiers) {
             if (!modifiers || modifiers.length === 0)
                 return "";
-            return modifiers.join(" ");
+            return modifiers.join(" + ");
         }
 
-        // Helper function para crear un bind command (old format for vibeshell binds)
-        function createBindCommand(keybind, flags) {
+        function luaString(value) {
+            return JSON.stringify(value || "");
+        }
+
+        function luaKeyString(keybind) {
             const mods = formatModifiers(keybind.modifiers);
-            const key = keybind.key;
+            return mods ? `${mods} + ${keybind.key}` : keybind.key;
+        }
+
+        function directionName(direction) {
+            const directions = {
+                l: "left",
+                r: "right",
+                u: "up",
+                d: "down"
+            };
+            return directions[direction] || direction;
+        }
+
+        function parseDelta(argument) {
+            const parts = (argument || "0 0").trim().split(/\s+/);
+            const x = Number(parts[0] || 0);
+            const y = Number(parts[1] || 0);
+            return {
+                x: isNaN(x) ? 0 : x,
+                y: isNaN(y) ? 0 : y
+            };
+        }
+
+        function luaBindOptions(flags) {
+            let options = [];
+
+            if (flags && flags.indexOf("l") !== -1)
+                options.push("locked = true");
+            if (flags && flags.indexOf("e") !== -1)
+                options.push("repeating = true");
+            if (flags && flags.indexOf("r") !== -1)
+                options.push("release = true");
+            if (flags && flags.indexOf("m") !== -1)
+                options.push("mouse = true");
+
+            return options.length > 0 ? `, { ${options.join(", ")} }` : "";
+        }
+
+        function luaDispatcher(dispatcher, argument, flags) {
+            switch (dispatcher) {
+            case "exec":
+                return `hl.dsp.exec_cmd(${luaString(argument)})`;
+            case "killactive":
+                return "hl.dsp.window.close()";
+            case "workspace":
+                return `hl.dsp.focus({ workspace = ${luaString(argument)} })`;
+            case "movetoworkspace":
+                return `hl.dsp.window.move({ workspace = ${luaString(argument)} })`;
+            case "movefocus":
+                return `hl.dsp.focus({ direction = ${luaString(directionName(argument))} })`;
+            case "movewindow":
+                if (flags && flags.indexOf("m") !== -1 && !argument)
+                    return "hl.dsp.window.drag()";
+                return `hl.dsp.window.move({ direction = ${luaString(directionName(argument))} })`;
+            case "resizewindow":
+                if (flags && flags.indexOf("m") !== -1 && !argument)
+                    return "hl.dsp.window.resize()";
+                {
+                    const delta = parseDelta(argument);
+                    return `hl.dsp.window.resize({ x = ${delta.x}, y = ${delta.y}, relative = true })`;
+                }
+            case "resizeactive":
+                {
+                    const delta = parseDelta(argument);
+                    return `hl.dsp.window.resize({ x = ${delta.x}, y = ${delta.y}, relative = true })`;
+                }
+            case "layoutmsg":
+                return `hl.dsp.layout(${luaString(argument)})`;
+            case "togglespecialworkspace":
+                return `hl.dsp.workspace.toggle_special(${luaString(argument)})`;
+            default:
+                return `hl.dsp.exec_cmd(${luaString(`hyprctl dispatch ${dispatcher}${argument ? " " + argument : ""}`)})`;
+            }
+        }
+
+        // Helper function para crear un bind command for Hyprland's Lua parser
+        function createBindCommand(keybind, flags) {
             const dispatcher = keybind.dispatcher;
             const argument = keybind.argument || "";
-            const bindKeyword = flags ? `bind${flags}` : "bind";
-            // Para bindm no se incluye argumento si está vacío
-            if (flags === "m" && !argument) {
-                return `keyword ${bindKeyword} ${mods},${key},${dispatcher}`;
-            }
-            return `keyword ${bindKeyword} ${mods},${key},${dispatcher},${argument}`;
+            return `eval hl.bind(${luaString(luaKeyString(keybind))}, ${luaDispatcher(dispatcher, argument, flags)}${luaBindOptions(flags)})`;
         }
 
-        // Helper function para crear un unbind command (old format)
+        // Helper function para crear un unbind command
         function createUnbindCommand(keybind) {
-            const mods = formatModifiers(keybind.modifiers);
-            const key = keybind.key;
-            return `keyword unbind ${mods},${key}`;
+            return `eval hl.unbind(${luaString(luaKeyString(keybind))})`;
         }
 
         // Helper function para crear unbind command desde key object (new format)
         function createUnbindFromKey(keyObj) {
-            const mods = formatModifiers(keyObj.modifiers);
-            const key = keyObj.key;
-            return `keyword unbind ${mods},${key}`;
+            return `eval hl.unbind(${luaString(luaKeyString(keyObj))})`;
         }
 
         // Helper function para crear bind command desde key + action (new format)
         function createBindFromKeyAction(keyObj, action) {
-            const mods = formatModifiers(keyObj.modifiers);
-            const key = keyObj.key;
             const dispatcher = action.dispatcher;
             const argument = action.argument || "";
             const flags = action.flags || "";
-            const bindKeyword = flags ? `bind${flags}` : "bind";
-            // Para bindm no se incluye argumento si está vacío
-            if (flags === "m" && !argument) {
-                return `keyword ${bindKeyword} ${mods},${key},${dispatcher}`;
-            }
-            return `keyword ${bindKeyword} ${mods},${key},${dispatcher},${argument}`;
+            return `eval hl.bind(${luaString(luaKeyString(keyObj))}, ${luaDispatcher(dispatcher, argument, flags)}${luaBindOptions(flags)})`;
         }
 
         // Construir batch command con todos los binds
@@ -303,7 +366,7 @@ QtObject {
         const fullBatchCommand = unbindCommands.join("; ") + "; " + batchCommands.join("; ");
 
         console.log("HyprlandKeybinds: Ejecutando batch command");
-        hyprctlProcess.command = ["sh", "-c", `hyprctl --batch "${fullBatchCommand}"`];
+        hyprctlProcess.command = ["hyprctl", "--batch", fullBatchCommand];
         hyprctlProcess.running = true;
     }
 

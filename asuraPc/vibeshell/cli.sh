@@ -82,12 +82,35 @@ cleanup_vibeshell_helpers() {
 		"dbus-monitor --system.*PrepareForSleep"
 		"dbus-monitor --system.*member=.*Lock"
 		"wl-paste --watch.*CLIPBOARD_CHANGE"
+		"wl-paste --watch.*clipboard_check.sh"
 		"tail -f /tmp/vibeshell_ipc.pipe"
+		"mpvpaper -o .* ALL "
+		"Vibeshell-env/bin/mpvpaper"
+		"systemd-inhibit --what=idle:sleep:handle-lid-switch --who=Vibeshell"
 	)
 
 	for pattern in "${patterns[@]}"; do
 		pkill -f "$pattern" 2>/dev/null || true
 	done
+}
+
+prepare_launch_log() {
+	local state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/Vibeshell"
+	local log_file="$state_dir/quickshell-launch.log"
+	local max_size=$((5 * 1024 * 1024))
+	local size=0
+
+	mkdir -p "$state_dir"
+
+	if [ -f "$log_file" ]; then
+		size=$(wc -c <"$log_file" 2>/dev/null || echo 0)
+		if [ "$size" -gt "$max_size" ]; then
+			mv -f "$log_file" "$log_file.old" 2>/dev/null || true
+		fi
+	fi
+
+	printf '%s\n' "---- Vibeshell launch $(date -Is) ----" >>"$log_file"
+	printf '%s\n' "$log_file"
 }
 
 acquire_vibeshell_lock() {
@@ -187,12 +210,11 @@ reload)
 	if [ -z "$launcher" ]; then
 		launcher="$0"
 	fi
-	state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/Vibeshell"
-	mkdir -p "$state_dir"
+	log_file="$(prepare_launch_log)"
 	if command -v setsid >/dev/null 2>&1; then
-		setsid -f "$launcher" >>"$state_dir/quickshell-launch.log" 2>&1
+		setsid -f "$launcher" >>"$log_file" 2>&1
 	else
-		nohup "$launcher" >>"$state_dir/quickshell-launch.log" 2>&1 &
+		nohup "$launcher" >>"$log_file" 2>&1 &
 	fi
 	;;
 quit)

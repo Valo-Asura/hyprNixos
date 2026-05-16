@@ -38,7 +38,7 @@ in
       (mkBind "${superKey} + W" (exec "${pkgs.wofi}/bin/wofi") null)
       (mkBind "${ctrlKey} + L" (exec "/run/current-system/sw/bin/vibeshell-safe-lock") null)
       (mkBind "${superKey} + L" (exec "/run/current-system/sw/bin/vibeshell-safe-lock") null)
-      (mkBind "${superShift} + C" (exec "clipboard") null)
+      (mkBind "${superKey} + C" (exec "vibeshell run dashboard-clipboard") null)
       (mkBind "${superKey} + P" (exec "wallpaper-switch static") null)
       (mkBind "${superShift} + P" (exec "wallpaper-switch animated") null)
       (mkBind "${superAlt} + P" (exec "sync-lock-wallpaper") null)

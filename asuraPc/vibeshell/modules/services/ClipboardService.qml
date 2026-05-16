@@ -22,8 +22,19 @@ QtObject {
     readonly property string linkPreviewScriptPath: Qt.resolvedUrl("../../scripts/link_preview.py").toString().replace("file://", "")
 
     property bool _initialized: false
+    property int _watcherRestartAttempts: 0
 
     signal listCompleted()
+
+    property Timer clipboardWatcherRestartTimer: Timer {
+        interval: Math.min(30000, 1000 * Math.pow(2, Math.min(root._watcherRestartAttempts, 5)))
+        repeat: false
+        onTriggered: {
+            if (root._initialized) {
+                clipboardWatcher.running = true;
+            }
+        }
+    }
 
     // Clipboard watcher using custom script that monitors changes
     property Process clipboardWatcher: Process {
@@ -53,12 +64,9 @@ QtObject {
         onExited: function(code) {
             // Watcher should keep running, restart if it exits
             if (root._initialized) {
-                console.warn("ClipboardService: watcher exited with code:", code, "- restarting...");
-                Qt.callLater(function() {
-                    if (root._initialized) {
-                        clipboardWatcher.running = true;
-                    }
-                });
+                root._watcherRestartAttempts++;
+                console.warn("ClipboardService: watcher exited with code:", code, "- restarting after", clipboardWatcherRestartTimer.interval, "ms");
+                clipboardWatcherRestartTimer.restart();
             }
         }
     }

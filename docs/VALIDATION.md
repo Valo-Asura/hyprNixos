@@ -47,7 +47,7 @@ nix build --no-link --print-out-paths ./asuraPc/vibeshell
 
 ## Editors
 
-- VS Code, VSCodium, and Kiro have the OpenAI extension installed
+- VS Code and Kiro have the OpenAI extension installed
 - The broken `chatgpt.cliExecutable=/run/current-system/sw/bin/codex` override was the reason Codex failed
 - The Home Manager module now removes that bad override during activation
 - Restart the editor after switching so Codex uses the bundled CLI again

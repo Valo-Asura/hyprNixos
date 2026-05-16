@@ -8,16 +8,16 @@
 
   home.packages = with pkgs; [
     home-manager
-    eza        # Better ls replacement
-    bat        # Better cat replacement
-    fd         # Better find replacement
-    direnv     # Environment management
-    fastfetch  # System info tool (used by `ff` alias)
-    atuin      # Shell history management
-    zoxide     # Smart cd replacement
-    fzf        # Fuzzy finder
-    starship   # Prompt (managed separately)
-    bottom     # System monitor (used by `btm` alias and monitor function)
+    eza # Better ls replacement
+    bat # Better cat replacement
+    fd # Better find replacement
+    direnv # Environment management
+    fastfetch # System info tool (used by `ff` alias)
+    atuin # Shell history management
+    zoxide # Smart cd replacement
+    fzf # Fuzzy finder
+    starship # Prompt (managed separately)
+    bottom # System monitor (used by `btm` alias and monitor function)
   ];
 
   home.sessionPath = [
@@ -105,48 +105,47 @@
 
     shellAliases = {
       # ── ls / directory ─────────────────────────────────────────────────────
-      ls   = "eza --icons --group-directories-first --classify=always";
-      ll   = "eza -lh --icons --group-directories-first --git --time-style=relative";
-      la   = "eza -lah --icons --group-directories-first --git --time-style=relative";
+      ls = "eza --icons --group-directories-first --classify=always";
+      ll = "eza -lh --icons --group-directories-first --git --time-style=relative";
+      la = "eza -lah --icons --group-directories-first --git --time-style=relative";
       tree = "eza --tree --icons --level=3";
 
       # ── Better core utils ──────────────────────────────────────────────────
-      cat  = "bat --style=auto";
+      cat = "bat --style=auto";
       grep = "rg";
       find = "fd";
-      cd   = "z";
+      cd = "z";
 
       # ── Git ────────────────────────────────────────────────────────────────
-      g    = "git";
-      gs   = "git status";
-      ga   = "git add";
-      gc   = "git commit";
-      gp   = "git push";
-      gl   = "git log --oneline --graph";
+      g = "git";
+      gs = "git status";
+      ga = "git add";
+      gc = "git commit";
+      gp = "git push";
+      gl = "git log --oneline --graph";
 
       # ── System monitoring ──────────────────────────────────────────────────
-      btm  = "bottom";        # TUI system monitor
-      htop = "btop";          # btop is installed system-wide
+      btm = "bottom"; # TUI system monitor
+      htop = "btop"; # btop is installed system-wide
       temp = "sensors | grep -E '(Core|Package)' | head -4";
 
       # ── NixOS ──────────────────────────────────────────────────────────────
       rebuild = "sudo nixos-rebuild switch --flake .";
-      update  = "nix flake update";
-      clean   = "sudo nix-collect-garbage -d";
+      update = "nix flake update";
+      clean = "sudo nix-collect-garbage -d";
       clean-store = "nix-storage-clean";
 
       # ── Terminal / misc ────────────────────────────────────────────────────
-      ff      = "fastfetch";
-      quote   = "random-quote";
-      qotd    = "quote-of-the-day";
+      ff = "fastfetch-smart";
+      quote = "random-quote";
+      qotd = "quote-of-the-day";
       weather = "curl -s 'wttr.in/?format=3'";
-      ports   = "ss -tuln";
-      ping    = "ping -c 5";
-      code    = "kiro";
-      cursor  = "cursor";
-      zed     = "zeditor";
-      c       = "clear";
-      e       = "exit";
+      ports = "ss -tuln";
+      ping = "ping -c 5";
+      cursor = "cursor";
+      zed = "zeditor";
+      c = "clear";
+      e = "exit";
 
       # ── Safety ─────────────────────────────────────────────────────────────
       cp = "cp -i";
@@ -154,7 +153,7 @@
       rm = "rm -i";
 
       # ── Dev ────────────────────────────────────────────────────────────────
-      y = "yazi";   # fast TUI file manager
+      y = "yazi"; # fast TUI file manager
     };
 
     functions = {
@@ -294,57 +293,57 @@
     enableFishIntegration = true;
     settings = {
       add_newline = true;
-      command_timeout = 1000;   # ms — raised slightly to avoid false timeouts
+      command_timeout = 1000; # ms — raised slightly to avoid false timeouts
 
       format = "$username$hostname$directory$git_branch$git_status$direnv$cmd_duration$line_break$character";
 
       username = {
         show_always = true;
-        style_user  = "bold fg:81";
-        format      = "[$user]($style)";
+        style_user = "bold fg:81";
+        format = "[$user]($style)";
       };
 
       hostname = {
         ssh_only = false;
-        style    = "bold fg:45";
-        format   = "[@$hostname]($style) ";
+        style = "bold fg:45";
+        format = "[@$hostname]($style) ";
       };
 
       directory = {
-        truncation_length  = 3;
-        truncation_symbol  = "…/";
-        style              = "bold fg:33";
-        format             = "[$path]($style) ";
+        truncation_length = 3;
+        truncation_symbol = "…/";
+        style = "bold fg:33";
+        format = "[$path]($style) ";
       };
 
       git_branch = {
         symbol = " ";
-        style  = "bold fg:135";
+        style = "bold fg:135";
         format = "[$symbol$branch]($style) ";
       };
 
       git_status = {
-        style  = "fg:135";
+        style = "fg:135";
         format = "[$all_status$ahead_behind]($style) ";
       };
 
       direnv = {
-        format   = "[$symbol$loaded/$allowed]($style) ";
-        symbol   = "📁 ";
-        style    = "bold fg:208";
+        format = "[$symbol$loaded/$allowed]($style) ";
+        symbol = "📁 ";
+        style = "bold fg:208";
         disabled = false;
       };
 
       cmd_duration = {
         min_time = 500;
-        style    = "fg:250";
-        format   = "[$duration]($style) ";
+        style = "fg:250";
+        format = "[$duration]($style) ";
       };
 
       character = {
         success_symbol = "[❯](bold fg:82)";
-        error_symbol   = "[❯](bold fg:196)";
-        vicmd_symbol   = "[❮](bold fg:214)";
+        error_symbol = "[❯](bold fg:196)";
+        vicmd_symbol = "[❮](bold fg:214)";
       };
     };
   };

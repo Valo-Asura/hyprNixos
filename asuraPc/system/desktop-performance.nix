@@ -45,22 +45,58 @@ in
       }
     ];
     extraRules = [
-      { name = "brave"; type = "InteractiveDesktop"; }
-      { name = "brave-browser"; type = "InteractiveDesktop"; }
-      { name = "firefox"; type = "InteractiveDesktop"; }
-      { name = "firefox-bin"; type = "InteractiveDesktop"; }
-      { name = "google-chrome"; type = "InteractiveDesktop"; }
-      { name = "google-chrome-stable"; type = "InteractiveDesktop"; }
-      { name = "chrome"; type = "InteractiveDesktop"; }
-      { name = "code"; type = "InteractiveDesktop"; }
-      { name = "code-oss"; type = "InteractiveDesktop"; }
-      { name = "code-insiders"; type = "InteractiveDesktop"; }
-      { name = "code.js"; type = "InteractiveDesktop"; }
-      { name = "kiro"; type = "InteractiveDesktop"; }
-      { name = ".kiro-wrapped"; type = "InteractiveDesktop"; }
-      { name = "chrome_crashpad_handler"; type = "DesktopHelper"; }
-      { name = "copilot-agent-linux"; type = "DesktopHelper"; }
-      { name = "ollama"; type = "Heavy_CPU"; }
+      {
+        name = "brave";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "brave-browser";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "firefox";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "firefox-bin";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "google-chrome";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "google-chrome-stable";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "chrome";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "code";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "kiro";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = ".kiro-wrapped";
+        type = "InteractiveDesktop";
+      }
+      {
+        name = "chrome_crashpad_handler";
+        type = "DesktopHelper";
+      }
+      {
+        name = "copilot-agent-linux";
+        type = "DesktopHelper";
+      }
+      {
+        name = "ollama";
+        type = "Heavy_CPU";
+      }
     ];
   };
 

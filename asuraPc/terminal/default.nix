@@ -9,8 +9,15 @@ let
   # Local assets (committed under asuraPc/assets) — used as Kitty background.
   kittyWallpaper = ../assets/sans.png;
   kittyWallpaperAlt = ../assets/ax.png;
+  fastfetchSmart = pkgs.writeShellScriptBin "fastfetch-smart" ''
+    if [ -n "''${KITTY_WINDOW_ID:-}" ] || [ "''${TERM:-}" = "xterm-kitty" ]; then
+      exec ${pkgs.fastfetch}/bin/fastfetch "$@"
+    fi
 
-  colors = config.lib.stylix.colors.withHashtag or {
+    exec ${pkgs.fastfetch}/bin/fastfetch --logo none "$@"
+  '';
+
+  colors = {
     base00 = "#282828";
     base01 = "#32302f";
     base02 = "#3c3836";
@@ -180,6 +187,8 @@ in
   };
 
   home.packages = with pkgs; [
+    fastfetchSmart
+
     # Enhanced terminal tools
     eza # Better ls with icons and colors
     bat # Better cat with syntax highlighting
@@ -219,7 +228,7 @@ in
     fish_prompt = {
       body = ''
         set -l last_status $status
-        
+
         # Top line: user in dir
         set_color yellow
         echo -n "$USER "
@@ -228,7 +237,7 @@ in
         set_color red
         echo -n (pwd | string replace -r "^$HOME" "~")
         echo ""
-        
+
         # Bottom line: ╰─λ
         set_color red
         echo -n " ╰─λ "
@@ -239,12 +248,14 @@ in
     # Automatically load fastfetch and fortune on startup
     fish_greeting = {
       body = ''
-        fastfetch
-        echo ""
-        set_color cyan
-        fortune -s
-        set_color normal
-        echo ""
+        if test "$ASURA_SHOW_SHELL_BANNER" = "1"
+          fastfetch-smart
+          echo ""
+          set_color cyan
+          fortune -s
+          set_color normal
+          echo ""
+        end
       '';
     };
 
