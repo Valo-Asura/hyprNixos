@@ -1,46 +1,53 @@
-# Validation Notes
+# Validation
 
-Checked on 2026-05-11.
+Checked locally on 2026-05-16.
 
-## Build Checks
+## Hyprland
+
+- Hyprland version: `0.55.0`
+- Active config: [hyprland.lua](/home/asura/.config/hypr/hyprland.lua)
+- Lua migration status: working
+- Validation command:
+
+```bash
+hyprctl reload
+hyprctl configerrors
+```
+
+- Result: `hyprctl reload` returns `ok`
+- Result: `hyprctl configerrors` returns no errors
+- Known upstream bug: `hyprland --verify-config` can segfault on Lua configs in `0.55.0`
+
+## Build
 
 ```bash
 git diff --check
-nix eval .#nixosConfigurations.nixos.config.system.build.toplevel.drvPath
-nix build --no-link .#nixosConfigurations.nixos.config.system.build.toplevel
+nix build --dry-run --no-link .#nixosConfigurations.nixos.config.system.build.toplevel
 nix build --no-link --print-out-paths ./asuraPc/vibeshell
-nix flake check --no-build
 ```
 
-Results:
+- Result: evaluation passes
+- Result: dry-run succeeds
+- Result: standalone Vibeshell build succeeds
 
-- `git diff --check`: not available in `/etc/nixos` because this checkout has no `.git` metadata.
-- NixOS toplevel eval/build: passed.
+## Lockscreen
 
-```bash
-pgrep -a quickshell
-newest_qs_log="$(ls -td /run/user/1000/quickshell/by-id/* | head -n 1)/log.qslog"
-strings "$newest_qs_log" | rg 'Could not load icon|Failed to parse state|GameModeService: Failed|Vibeshell launch already|GeminiException|AuthenticationError'
-jq . /home/asura/.local/state/Vibeshell/states.json
+- Primary lock path: Quickshell / Vibeshell
+- Fallback lock path: `hyprlock`
+- Shared image: [lockscreen.png](/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png)
 
-## Hardware and Storage
+## Local AI
 
-- CPU: AMD Ryzen 5 5600G, 6 cores / 12 threads, boost enabled.
-- GPU: NVIDIA GeForce GTX 1070 8 GB, driver 580.142.
-- RAM: 16 GB class system memory.
-- Root/Nix store before the Steam build: 108 GB total, 61 GB used, 42 GB available.
-- After building and preserving the new toplevel at `/tmp/asura-nixos-toplevel`: 108 GB total, 63 GB used, 40 GB available.
-- User-level Nix GC deleted 19,400 dead store paths and freed 1.2 GiB after the first build. A final build-debris GC deleted another 19,092 dead build-time paths and freed 180.7 MiB.
-- `nix-store --gc --print-dead` reports 0 remaining dead paths.
-- Steam's Counter-Strike 2 page currently lists 85 GB available storage as the Linux minimum, so the hardware is suitable but the current root filesystem is too small for the CS2 game files unless a larger Steam library is used.
+- `services.ollama.enable = false`
+- `services.ollama.loadModels = [ ]`
+- `ollama-model-loader` is disabled
+- Start Ollama only when needed with `ai-local-start`
+- Pull local models only when needed with `ai-models-pull-core`
+- Check local memory/RAG status with `/memory`
 
-## Screenshots
+## Editors
 
-- Power menu UEFI hover text: `screenshots/validation/vibeshell-powermenu-icons-hover-2026-05-10.png`
-- Power menu after Quickshell lock/UEFI validation: `screenshots/validation/vibeshell-powermenu-icons-lock-uefi-2026-05-10.png`
-- Settings keybind tab: `screenshots/validation/vibeshell-settings-keybinds-2026-05-09.png`
-
-## Notes
-
-- `sudo nixos-rebuild switch --flake /etc/nixos#nixos` still requires an interactive sudo password in this session, so the running system was verified by building and launching the rebuilt Vibeshell package directly.
-- Open the keybinding editor with `SUPER+SHIFT+C`, then select `Keybinds`.
+- VS Code, VSCodium, and Kiro have the OpenAI extension installed
+- The broken `chatgpt.cliExecutable=/run/current-system/sw/bin/codex` override was the reason Codex failed
+- The Home Manager module now removes that bad override during activation
+- Restart the editor after switching so Codex uses the bundled CLI again
