@@ -33,7 +33,7 @@
         mkdir -p "$(dirname "$performance_config")"
         if [ -f "$performance_config" ]; then
           tmp="$(mktemp)"
-          ${pkgs.jq}/bin/jq '.wavyLine = true | .blurTransition = false | .windowPreview = false' "$performance_config" > "$tmp" \
+          ${pkgs.jq}/bin/jq '.wavyLine = false | .blurTransition = false | .windowPreview = false' "$performance_config" > "$tmp" \
             && install -m 0644 "$tmp" "$performance_config"
           rm -f "$tmp"
         else
@@ -42,7 +42,7 @@
     {
         "blurTransition": false,
         "windowPreview": false,
-        "wavyLine": true
+        "wavyLine": false
     }
     EOF
           rm -f "$performance_config.js"

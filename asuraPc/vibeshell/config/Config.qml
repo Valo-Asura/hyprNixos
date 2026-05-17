@@ -834,7 +834,7 @@ Singleton {
         adapter: JsonAdapter {
             property bool blurTransition: false
             property bool windowPreview: false
-            property bool wavyLine: true
+            property bool wavyLine: false
         }
     }
 

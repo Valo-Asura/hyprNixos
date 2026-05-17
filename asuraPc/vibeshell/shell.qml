@@ -27,6 +27,12 @@ import "modules/tools"
 ShellRoot {
     id: root
 
+    Component.onCompleted: {
+        // The packaged shell lives in the immutable Nix store, so hot reloads
+        // only add startup churn unless explicitly requested for development.
+        Quickshell.watchFiles = Quickshell.env("VIBESHELL_ENABLE_HOT_RELOAD") === "1"
+    }
+
     ContextMenu {
         id: contextMenu
         screen: Quickshell.screens[0]

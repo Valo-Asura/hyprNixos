@@ -1,105 +1,117 @@
 # System Packages Configuration
-{ lib, pkgs, inputs, ... }:
+{
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
-  environment.systemPackages = (with pkgs; [
-    # System Info & Terminal
-    microfetch
-    zsh
-    fish
+  environment.systemPackages =
+    (with pkgs; [
+      # System Info & Terminal
+      microfetch
+      zsh
+      fish
 
-    # System Tools
-    polkit
-    udisks2
-    udiskie
+      # System Tools
+      polkit
+      udisks2
+      udiskie
 
-    # Screenshot and Screen Recording
-    grimblast
-    hyprshot
-    swappy # Screenshot editor
+      # Screenshot and Screen Recording
+      grimblast
+      hyprshot
+      swappy # Screenshot editor
 
-    # Polkit Agent
-    inputs.hyprpolkitagent.packages.${pkgs.stdenv.hostPlatform.system}.default
+      # Polkit Agent
+      inputs.hyprpolkitagent.packages.${pkgs.stdenv.hostPlatform.system}.default
 
-    # File Management & NTFS Support
-    thunar # Lightweight GTK file manager (replaces nemo + cinnamon-common)
-    xarchiver
-    gvfs
-    ntfs3g
-    exfat # Windows filesystem support
+      # File Management & NTFS Support
+      thunar # Lightweight GTK file manager (replaces nemo + cinnamon-common)
+      xarchiver
+      gvfs
+      ntfs3g
+      exfat # Windows filesystem support
 
-    # Desktop Environment
-    xdg-utils
-    networkmanager
-    tuigreet # removed swaylock (using hyprlock)
-    xdg-user-dirs # xdg-desktop-portals in services.nix
+      # Desktop Environment
+      xdg-utils
+      networkmanager
+      tuigreet # removed swaylock (using hyprlock)
+      xdg-user-dirs # xdg-desktop-portals in services.nix
 
-    # Vibeshell required packages (system-level integration; core deps come from Vibeshell package)
-    (writeShellScriptBin "internet-unblock" ''
-    '')
-    dconf
-    gtk3
-    gtk4
-    adwaita-icon-theme
-    gsettings-desktop-schemas
-    at-spi2-atk
-    at-spi2-core
-    libgtop
+      # Vibeshell required packages (system-level integration; core deps come from Vibeshell package)
+      (writeShellScriptBin "internet-unblock" "")
+      dconf
+      gtk3
+      gtk4
+      adwaita-icon-theme
+      gsettings-desktop-schemas
+      at-spi2-atk
+      at-spi2-core
+      libgtop
 
-    # Multimedia
-    vlc
+      # Multimedia
+      vlc
+      freetube
 
-    # Hyprland Panel Dependencies
-    bluez
-    hyprsunset
-    hypridle
+      # Hyprland Panel Dependencies
+      bluez
+      hyprsunset
+      hypridle
 
-    # Development
-    wget
-    git
-    jq
-    eza
-    bat
-    fd
-    ripgrep
-    direnv
-    nix-direnv
-    nixfmt
-    nil
-    nixd
-    uv
-    inter
-    sops
-    docker
-    docker-compose
-    nodejs
-    playwright
-    playwright-driver
-    chromium
-    mongosh
-    mongodb-tools
+      # Development
+      wget
+      git
+      jq
+      eza
+      bat
+      fd
+      ripgrep
+      direnv
+      nix-direnv
+      nixfmt
+      nil
+      nixd
+      uv
+      inter
+      sops
+      docker
+      docker-compose
+      nodejs
+      playwright
+      playwright-driver
+      chromium
+      mongosh
+      mongodb-tools
 
-    # IDE & Editor
-    neovim
-    vscode
-    antigravity
-    (pkgs.callPackage ./cursor.nix { })
+      # IDE & Editor
+      neovim
+      vscode
+      antigravity
+      (pkgs.callPackage ./cursor.nix { })
 
-    # Terminal enhancements
-    btop
-    tree
-    fzf
-    curl
-    yq
+      # Desktop apps
+      karere
+      telegram-desktop
+      ani-cli
 
-    # Python Environment
-    (python3.withPackages (
-      ps: with ps; [
-        pip
-        requests
-      ]
-    ))
-  ]) ++ lib.optionals (builtins.hasAttr "windsurf" pkgs) [
-    pkgs.windsurf
-  ];
+      # Terminal enhancements
+      btop
+      tree
+      fzf
+      curl
+      yq
+
+      # Python Environment
+      (python3.withPackages (
+        ps: with ps; [
+          pip
+          requests
+        ]
+      ))
+    ])
+    ++ lib.optionals (builtins.hasAttr "windsurf" pkgs) [
+      pkgs.windsurf
+    ];
 }
