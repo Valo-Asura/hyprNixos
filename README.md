@@ -65,6 +65,13 @@ sudo nixos-install --flake /mnt/etc/nixos#nixos
 - Both lock paths use [asuraPc/hyprland/lock-images/lockscreen.png](/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png).
 - More checks live in [docs/VALIDATION.md](/etc/nixos/docs/VALIDATION.md).
 
+## Desktop
+
+- Vibeshell includes clickable notch-to-dashboard behavior, grouped settings, Night Light intensity control, resilient video wallpaper restarts, and stale browser-player filtering.
+- Night Light uses `hyprsunset`; right-click its dashboard button to adjust intensity.
+- Desktop apps include Kdenlive, OBS Studio, DaVinci Resolve, MongoDB Compass, Telegram, FreeTube, `ani-cli`, and a Chrome-based WhatsApp launcher.
+- VS Code/Kiro are kept lean: `GitHub Theme` is the theme, and `Catppuccin Icons for VSCode` is the icon pack.
+
 ## Local AI
 
 - Vibeshell memory/RAG stays enabled in config.

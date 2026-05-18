@@ -1,6 +1,6 @@
 # Validation
 
-Checked locally on 2026-05-16.
+Checked locally on 2026-05-18.
 
 ## Hyprland
 
@@ -51,3 +51,11 @@ nix build --no-link --print-out-paths ./asuraPc/vibeshell
 - The broken `chatgpt.cliExecutable=/run/current-system/sw/bin/codex` override was the reason Codex failed
 - The Home Manager module now removes that bad override during activation
 - Restart the editor after switching so Codex uses the bundled CLI again
+- Editor theme set is intentionally small: `GitHub Theme` plus `Catppuccin Icons for VSCode`
+
+## Vibeshell
+
+- Closed notch opens the dashboard on left click
+- Night Light uses `hyprsunset`; right click its button for intensity control
+- Empty stopped browser MPRIS sessions are ignored, so stale Chrome players do not stay in the notch
+- Video wallpaper restart no longer deadlocks on the `mpvpaper` lock after reloads
