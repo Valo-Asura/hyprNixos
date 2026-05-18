@@ -232,6 +232,22 @@ FloatingWindow {
                         Repeater {
                             model: [
                                 {
+                                    name: "Network",
+                                    icon: Icons.wifiHigh
+                                },
+                                {
+                                    name: "Bluetooth",
+                                    icon: Icons.bluetooth
+                                },
+                                {
+                                    name: "Audio",
+                                    icon: Icons.faders
+                                },
+                                {
+                                    name: "Effects",
+                                    icon: Icons.waveform
+                                },
+                                {
                                     name: "Theme",
                                     icon: Icons.cube
                                 },
@@ -242,6 +258,10 @@ FloatingWindow {
                                 {
                                     name: "Keybinds",
                                     icon: Icons.shortcut
+                                },
+                                {
+                                    name: "System & AI",
+                                    icon: Icons.circuitry
                                 },
                                 {
                                     name: "Hyprland",
@@ -309,6 +329,26 @@ FloatingWindow {
                     Layout.fillHeight: true
                     currentIndex: 0
 
+                    // Network tab
+                    WifiPanel {
+                        id: networkTab
+                    }
+
+                    // Bluetooth tab
+                    BluetoothPanel {
+                        id: bluetoothTab
+                    }
+
+                    // Audio tab
+                    AudioMixerPanel {
+                        id: audioTab
+                    }
+
+                    // Effects tab
+                    EasyEffectsPanel {
+                        id: effectsTab
+                    }
+
                     // Theme tab
                     ThemePanel {
                         id: themeTab
@@ -322,6 +362,11 @@ FloatingWindow {
                     // Keybinds tab
                     BindsPanel {
                         id: keybindsTab
+                    }
+
+                    // System and AI tab
+                    SystemPanel {
+                        id: systemTab
                     }
 
                     // Hyprland compositor tab

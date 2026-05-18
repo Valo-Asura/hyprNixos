@@ -25,6 +25,7 @@ Rectangle {
 
     property int currentTab: GlobalStates.widgetsTabCurrentIndex  // 0=launcher, 1=clip, 2=emoji, 3=tmux, 4=notes
     property bool prefixDisabled: false  // Flag to prevent re-activation after backspace
+    property bool nightLightIntensityMenuOpen: false
 
     // Sync with GlobalStates
     onCurrentTabChanged: {
@@ -1269,6 +1270,7 @@ Rectangle {
                                     isActive: NightLightService.active
                                     tooltipText: NightLightService.active ? "Night Light: On" : "Night Light: Off"
                                     onClicked: NightLightService.toggle()
+                                    onRightClicked: nightLightIntensityMenuOpen = !nightLightIntensityMenuOpen
                                 }
 
                                 ControlButton {
@@ -1287,6 +1289,55 @@ Rectangle {
                                     isActive: GameModeService.toggled
                                     tooltipText: GameModeService.toggled ? "Game Mode: On" : "Game Mode: Off"
                                     onClicked: GameModeService.toggle()
+                                }
+                            }
+                        }
+                    }
+
+                    StyledRect {
+                        variant: "pane"
+                        Layout.fillWidth: true
+                        implicitHeight: nightLightControls.implicitHeight + 24
+                        visible: nightLightIntensityMenuOpen
+                        radius: Styling.radius(4)
+
+                        ColumnLayout {
+                            id: nightLightControls
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 8
+
+                            RowLayout {
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Night Light Intensity"
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                    color: Colors.overBackground
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: `${Math.round(NightLightService.intensity * 100)}%`
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(-1)
+                                    color: Colors.overSurfaceVariant
+                                }
+                            }
+
+                            StyledSlider {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 20
+                                value: NightLightService.intensity
+                                progressColor: Styling.srItem("overprimary")
+                                tooltipText: `${NightLightService.temperature}K`
+                                stepSize: 0.05
+                                snapMode: "always"
+                                scroll: true
+
+                                onValueChanged: {
+                                    NightLightService.setIntensity(value);
                                 }
                             }
                         }

@@ -8,48 +8,51 @@ Singleton {
     id: root
 
     property bool active: StateService.get("nightLight", false)
+    property real intensity: StateService.get("nightLightIntensity", 0.5)
+    property bool restartPending: false
+    readonly property int coolestTemperature: 6500
+    readonly property int warmestTemperature: 2500
+    readonly property int temperature: Math.round(coolestTemperature - (Math.max(0, Math.min(1, intensity)) * (coolestTemperature - warmestTemperature)))
     
-    property Process wlsunsetProcess: Process {
-        command: ["wlsunset"]
+    property Process hyprsunsetProcess: Process {
+        command: ["hyprsunset", "-t", root.temperature.toString()]
         running: false
-        stdout: SplitParser {
-            onRead: (data) => {
-                // wlsunset output cuando está corriendo
-                if (data) {
-                    root.active = true
-                }
-            }
-        }
         onStarted: {
             root.active = true
         }
-        onExited: (code) => {
-            root.active = false
+        onExited: code => {
+            if (!root.restartPending) {
+                root.active = false
+            }
         }
     }
     
     property Process killProcess: Process {
-        command: ["pkill", "wlsunset"]
+        command: ["pkill", "hyprsunset"]
         running: false
-        onExited: (code) => {
-            root.active = false
+        onExited: code => {
+            if (root.restartPending) {
+                restartStartTimer.restart();
+            } else {
+                root.active = false
+            }
         }
     }
     
     property Process checkRunningProcess: Process {
-        command: ["pgrep", "wlsunset"]
+        command: ["pgrep", "hyprsunset"]
         running: false
-        onExited: (code) => {
+        onExited: code => {
             const isRunning = code === 0
             
             // If state says active but not running, start it
             if (root.active && !isRunning) {
-                console.log("NightLightService: Starting wlsunset (state was active but not running)")
-                wlsunsetProcess.running = true
+                console.log("NightLightService: Starting hyprsunset (state was active but not running)")
+                hyprsunsetProcess.running = true
             } 
             // If state says inactive but running, kill it
             else if (!root.active && isRunning) {
-                console.log("NightLightService: Stopping wlsunset (state was inactive but running)")
+                console.log("NightLightService: Stopping hyprsunset (state was inactive but running)")
                 killProcess.running = true
             }
         }
@@ -59,7 +62,19 @@ Singleton {
         if (active) {
             killProcess.running = true
         } else {
-            wlsunsetProcess.running = true
+            hyprsunsetProcess.running = true
+        }
+    }
+
+    function setIntensity(value) {
+        const clamped = Math.max(0, Math.min(1, value));
+        if (Math.abs(clamped - intensity) < 0.001) {
+            return;
+        }
+
+        intensity = clamped;
+        if (active) {
+            restartTimer.restart();
         }
     }
     
@@ -73,10 +88,17 @@ Singleton {
         }
     }
 
+    onIntensityChanged: {
+        if (StateService.initialized) {
+            StateService.set("nightLightIntensity", intensity);
+        }
+    }
+
     Connections {
         target: StateService
         function onStateLoaded() {
             root.active = StateService.get("nightLight", false);
+            root.intensity = StateService.get("nightLightIntensity", 0.5);
             root.syncState();
         }
     }
@@ -89,7 +111,35 @@ Singleton {
         onTriggered: {
             if (StateService.initialized) {
                 root.active = StateService.get("nightLight", false);
+                root.intensity = StateService.get("nightLightIntensity", 0.5);
                 root.syncState();
+            }
+        }
+    }
+
+    Timer {
+        id: restartTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (!root.active) {
+                return;
+            }
+
+            root.restartPending = true;
+            root.killProcess.running = true;
+        }
+    }
+
+    Timer {
+        id: restartStartTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (root.restartPending) {
+                root.hyprsunsetProcess.command = ["hyprsunset", "-t", root.temperature.toString()];
+                root.hyprsunsetProcess.running = true;
+                root.restartPending = false;
             }
         }
     }

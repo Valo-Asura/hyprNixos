@@ -11,17 +11,28 @@ import qs.config
 Singleton {
     id: root
     property MprisPlayer trackedPlayer: null
-    property var filteredPlayers: {
-        const filtered = Mpris.players.values.filter(player => {
-            const dbusName = (player.dbusName || "").toLowerCase();
-            if (!Config.bar.enableFirefoxPlayer && dbusName.includes("firefox")) {
-                return false;
-            }
-            return true;
-        });
-        return filtered;
+    function isUsablePlayer(player) {
+        if (!player)
+            return false;
+
+        const dbusName = (player.dbusName || "").toLowerCase();
+        if (!Config.bar.enableFirefoxPlayer && dbusName.includes("firefox"))
+            return false;
+
+        const hasTrackMetadata = (player.trackTitle || "").trim().length > 0
+            || (player.trackArtist || "").trim().length > 0
+            || (player.trackArtUrl || "").trim().length > 0
+            || (player.length ?? 0) > 0;
+
+        // Browsers commonly keep an empty stopped MPRIS endpoint alive after
+        // media closes. It is not a usable player and should not occupy the notch.
+        return player.isPlaying || hasTrackMetadata;
     }
-    property MprisPlayer activePlayer: trackedPlayer ?? filteredPlayers[0] ?? null
+
+    property var filteredPlayers: {
+        return Mpris.players.values.filter(player => root.isUsablePlayer(player));
+    }
+    property MprisPlayer activePlayer: filteredPlayers.indexOf(trackedPlayer) !== -1 ? trackedPlayer : filteredPlayers[0] ?? null
 
     property string cacheFilePath: Quickshell.dataPath("lastPlayer.json")
     property bool isInitializing: true
@@ -45,6 +56,10 @@ Singleton {
     }
 
     onFilteredPlayersChanged: {
+        if (root.trackedPlayer && root.filteredPlayers.indexOf(root.trackedPlayer) === -1) {
+            root.trackedPlayer = root.filteredPlayers[0] ?? null;
+        }
+
         if (root.isInitializing && root.cachedDbusName && root.filteredPlayers.length > 0) {
             for (const player of root.filteredPlayers) {
                 if (player.dbusName === root.cachedDbusName) {
@@ -109,10 +124,7 @@ Singleton {
             target: modelData
 
             Component.onCompleted: {
-                const dbusName = (modelData.dbusName || "").toLowerCase();
-                const shouldIgnore = !Config.bar.enableFirefoxPlayer && dbusName.includes("firefox");
-
-                if (!shouldIgnore && (root.trackedPlayer == null || modelData.isPlaying)) {
+                if (root.isUsablePlayer(modelData) && (root.trackedPlayer == null || modelData.isPlaying)) {
                     root.trackedPlayer = modelData;
                 }
             }
@@ -120,7 +132,7 @@ Singleton {
             Component.onDestruction: {
                 if (root.trackedPlayer == null || !root.trackedPlayer.isPlaying) {
                     for (const player of root.filteredPlayers) {
-                        if (player.playbackState.isPlaying) {
+                        if (player.isPlaying) {
                             root.trackedPlayer = player;
                             break;
                         }

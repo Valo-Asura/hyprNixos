@@ -23,4 +23,6 @@ for _ in $(seq 1 20); do
 	sleep 0.05
 done
 
-nohup mpvpaper -o "no-audio loop hwdec=auto scale=bilinear interpolation=no video-sync=display-resample panscan=1.0 video-scale-x=1.0 video-scale-y=1.0 load-scripts=no" ALL "$WALLPAPER" >/dev/null 2>&1 &
+# Close the lock fd in the detached player. If mpvpaper inherits it, later
+# restarts block forever on flock after a Vibeshell reload.
+nohup mpvpaper -o "no-audio loop hwdec=auto scale=bilinear interpolation=no video-sync=display-resample panscan=1.0 video-scale-x=1.0 video-scale-y=1.0 load-scripts=no" ALL "$WALLPAPER" >/dev/null 2>&1 9>&- &

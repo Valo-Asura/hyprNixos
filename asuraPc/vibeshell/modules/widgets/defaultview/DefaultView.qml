@@ -4,12 +4,24 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.notch
 import qs.modules.components
+import qs.modules.globals
 import qs.config
 
 Item {
     id: root
     anchors.top: parent.top
     focus: false
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        gesturePolicy: TapHandler.ReleaseWithinBounds
+        onTapped: {
+            GlobalStates.dashboardCurrentTab = 0;
+            GlobalStates.launcherSearchText = "";
+            GlobalStates.launcherSelectedIndex = -1;
+            Visibilities.setActiveModule("dashboard");
+        }
+    }
 
     // Layout constants
     readonly property int notificationPadding: 16

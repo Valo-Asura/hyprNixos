@@ -596,32 +596,6 @@ Item {
                 }
             }
 
-            // Tabs Switch
-            Item {
-                visible: root.currentSection === ""
-                Layout.fillWidth: true
-                Layout.preferredHeight: 40
-
-                RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 8
-
-                    CompositorTabButton {
-                        label: "Hyprland"
-                        image: "../../../../assets/compositors/hyprland.svg"
-                        isSelected: stackLayout.currentIndex === 0
-                        onClicked: stackLayout.currentIndex = 0
-                    }
-
-                    CompositorTabButton {
-                        label: "Coming Soon"
-                        icon: Icons.clock
-                        isSelected: stackLayout.currentIndex === 1
-                        onClicked: stackLayout.currentIndex = 1
-                    }
-                }
-            }
-
             // Stack for content
             Item {
                 Layout.fillWidth: true
@@ -631,7 +605,7 @@ Item {
                     id: stackLayout
                     width: root.contentWidth
                     anchors.horizontalCenter: parent.horizontalCenter
-                    height: currentIndex === 0 ? hyprlandPage.implicitHeight : placeholderPage.implicitHeight
+                    height: hyprlandPage.implicitHeight
                     currentIndex: 0
 
                     // ═══════════════════════════════════════════════════════════════
@@ -1118,45 +1092,6 @@ Item {
                         }
                     }
 
-                    // ═══════════════════════════════════════════════════════════════
-                    // COMING SOON TAB
-                    // ═══════════════════════════════════════════════════════════════
-                    Item {
-                        id: placeholderPage
-                        Layout.fillWidth: true
-                        implicitHeight: 300
-
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            spacing: 16
-
-                            Text {
-                                text: Icons.clock
-                                font.family: Icons.font
-                                font.pixelSize: 64
-                                color: Colors.surfaceVariant
-                                Layout.alignment: Qt.AlignHCenter
-                            }
-
-                            Text {
-                                text: "Coming Soon"
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(2)
-                                font.bold: true
-                                color: Colors.overBackground
-                                Layout.alignment: Qt.AlignHCenter
-                            }
-
-                            Text {
-                                text: "Support for more compositors\nis planned for future updates."
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(0)
-                                color: Colors.overSurfaceVariant
-                                horizontalAlignment: Text.AlignHCenter
-                                Layout.alignment: Qt.AlignHCenter
-                            }
-                        }
-                    }
                 }
             }
         }
