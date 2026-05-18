@@ -6,6 +6,43 @@
   ...
 }:
 
+let
+  davinciResolveClean = pkgs.symlinkJoin {
+    name = "davinci-resolve-clean";
+    paths = [ pkgs.davinci-resolve ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      rm "$out/bin/davinci-resolve"
+      makeWrapper ${pkgs.davinci-resolve}/bin/davinci-resolve "$out/bin/davinci-resolve" \
+        --unset QML2_IMPORT_PATH \
+        --unset QML_IMPORT_PATH \
+        --unset NIXPKGS_QT6_QML_IMPORT_PATH \
+        --unset QT_PLUGIN_PATH \
+        --set QT_QPA_PLATFORM xcb
+    '';
+  };
+
+  whatsappWeb = pkgs.writeShellScriptBin "whatsapp-web" ''
+    exec ${pkgs.google-chrome}/bin/google-chrome-stable \
+      --app=https://web.whatsapp.com \
+      --class=whatsapp-web \
+      "$@"
+  '';
+
+  whatsappWebDesktop = pkgs.makeDesktopItem {
+    name = "whatsapp-web";
+    desktopName = "WhatsApp";
+    genericName = "Messaging";
+    comment = "Open WhatsApp Web";
+    exec = "whatsapp-web";
+    icon = "whatsapp";
+    categories = [
+      "Network"
+      "InstantMessaging"
+    ];
+    startupWMClass = "whatsapp-web";
+  };
+in
 {
   environment.systemPackages =
     (with pkgs; [
@@ -54,6 +91,9 @@
       # Multimedia
       vlc
       freetube
+      kdePackages.kdenlive
+      obs-studio
+      davinciResolveClean
 
       # Hyprland Panel Dependencies
       bluez
@@ -92,7 +132,9 @@
       (pkgs.callPackage ./cursor.nix { })
 
       # Desktop apps
-      karere
+      whatsappWeb
+      whatsappWebDesktop
+      mongodb-compass
       telegram-desktop
       ani-cli
 

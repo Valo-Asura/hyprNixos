@@ -12,22 +12,14 @@ let
       jnoortheen.nix-ide
 
       # General development
-      redhat.vscode-yaml
       ms-python.python
-      rust-lang.rust-analyzer
 
       # Git integration
       eamodio.gitlens
 
-      # Productivity
-      vscodevim.vim
-
       # Themes and UI
-      pkief.material-icon-theme
       github.github-vscode-theme
-      catppuccin.catppuccin-vsc
       catppuccin.catppuccin-vsc-icons
-      dracula-theme.theme-dracula
     ];
 
     keybindings = [
@@ -59,10 +51,6 @@ in
         ${pkgs.jq}/bin/jq 'del(.["chatgpt.cliExecutable"])' "$settings" > "$tmp"
         ${pkgs.coreutils}/bin/mv "$tmp" "$settings"
       fi
-
-      registers_dir="$HOME/.config/$editor/User/globalStorage/vscodevim.vim"
-      ${pkgs.coreutils}/bin/mkdir -p "$registers_dir"
-      ${pkgs.coreutils}/bin/touch "$registers_dir/.registers"
 
       # Some bundled extensions copy helper files from the immutable Nix store,
       # then update them in place later. Keep their mutable storage writable.
