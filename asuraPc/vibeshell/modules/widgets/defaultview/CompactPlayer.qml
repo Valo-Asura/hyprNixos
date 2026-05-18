@@ -48,7 +48,8 @@ Item {
         return appId;
     }
     readonly property bool hasActiveAppTitle: activeToplevel && activeToplevel.activated && appTitle.length > 0
-    readonly property bool showIdleWave: player === null && !hasActiveAppTitle
+    readonly property string idleTitle: Quickshell.env("USER") || "user"
+    readonly property bool showIdleTitle: player === null && !hasActiveAppTitle
     readonly property bool showAppTitle: player === null && hasActiveAppTitle
     readonly property bool showPlayerTitle: player !== null && showPlayerTitleIntro
     readonly property bool showPlayerControls: player !== null && !showPlayerTitleIntro
@@ -154,32 +155,6 @@ Item {
         anchors.fill: parent
         radius: Styling.radius(-4)
 
-        WavyLine {
-            id: noPlayerWavyLine
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.margins: -4
-            frequency: 4
-            color: Colors.surfaceBright
-            amplitudeMultiplier: 4
-            height: 24
-            lineWidth: 2
-            fullLength: width
-            visible: compactPlayer.showIdleWave
-            opacity: 1.0
-            Behavior on color {
-                enabled: Config.animDuration > 0
-                ColorAnimation {
-                    duration: Config.animDuration
-                    easing.type: Easing.OutQuart
-                }
-            }
-            FrameAnimation {
-                running: noPlayerWavyLine.visible
-            }
-        }
-
         Text {
             id: appTitleText
             anchors.fill: parent
@@ -187,6 +162,33 @@ Item {
             anchors.rightMargin: 12
             text: compactPlayer.appTitle
             visible: compactPlayer.showAppTitle
+            opacity: visible ? 1 : 0
+            color: Colors.overBackground
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-1)
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+            layer.enabled: true
+            layer.effect: BgShadow {}
+
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+            }
+        }
+
+        Text {
+            id: idleTitleText
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            text: compactPlayer.idleTitle
+            visible: compactPlayer.showIdleTitle
             opacity: visible ? 1 : 0
             color: Colors.overBackground
             font.family: Config.theme.font

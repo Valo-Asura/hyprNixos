@@ -1,15 +1,19 @@
 {
   config,
   pkgs,
-  lib,
   ...
 }:
 
 let
-  # Local assets (committed under asuraPc/assets) — used as Kitty background.
-  kittyWallpaper = ../assets/sans.png;
-  kittyWallpaperAlt = ../assets/ax.png;
   fastfetchSmart = pkgs.writeShellScriptBin "fastfetch-smart" ''
+    cols="$(${pkgs.ncurses}/bin/tput cols 2>/dev/null || printf 120)"
+
+    if [ "$#" -eq 0 ] && [ "$cols" -lt 88 ]; then
+      exec ${pkgs.fastfetch}/bin/fastfetch \
+        --logo none \
+        --structure "os:kernel:wm:shell:terminal:memory:colors"
+    fi
+
     if [ -n "''${KITTY_WINDOW_ID:-}" ] || [ "''${TERM:-}" = "xterm-kitty" ]; then
       exec ${pkgs.fastfetch}/bin/fastfetch "$@"
     fi
@@ -86,12 +90,12 @@ in
 
       # Tab bar - enhanced powerline style
       tab_bar_min_tabs = 1;
-      tab_bar_style = "powerline";
+      tab_bar_style = "custom";
       tab_bar_edge = "bottom";
-      tab_powerline_style = "round";
+      tab_bar_align = "left";
       tab_bar_margin_width = "0.0";
       tab_bar_margin_height = "5.0 0.0";
-      tab_title_template = " {fmt.fg.red}{bell_symbol}{activity_symbol}{fmt.fg.tab}{title} ";
+      tab_title_template = config.home.username;
 
       # Scrollback and history
       scrollback_lines = 10000;
@@ -162,6 +166,7 @@ in
       "ctrl+shift+right" = "next_tab";
       "ctrl+shift+left" = "previous_tab";
       "ctrl+shift+q" = "close_tab";
+      "ctrl+shift+alt+t" = "no_op";
 
       # Window management
       "ctrl+shift+enter" = "new_window";
@@ -182,40 +187,52 @@ in
     };
   };
 
+  xdg.configFile."kitty/tab_bar.py".text = ''
+    import os
+
+    from kitty.fast_data_types import Screen, get_boss
+    from kitty.tab_bar import DrawData, ExtraData, TabAccessor, TabBarData
+
+
+    def draw_tab(
+        draw_data: DrawData,
+        screen: Screen,
+        tab: TabBarData,
+        before: int,
+        max_tab_length: int,
+        index: int,
+        is_last: bool,
+        extra_data: ExtraData,
+    ) -> int:
+        # Render one compact status strip:
+        # active working directory at the left, with tab dots centered.
+        if index == 1:
+            cwd = TabAccessor(tab.tab_id).active_wd or tab.title
+            label = cwd if cwd else os.environ.get("USER", "user")
+            screen.cursor.fg = int(draw_data.active_fg)
+            screen.cursor.bg = int(draw_data.default_bg)
+            screen.draw(f" {label}")
+
+        kitty_tab = get_boss().tab_for_id(tab.tab_id)
+        manager = kitty_tab.tab_manager_ref() if kitty_tab else None
+        tab_count = len(manager.tabs) if manager else 1
+        dots_width = max(1, (2 * tab_count) - 1)
+        center_start = max(screen.cursor.x + 1, (screen.columns - dots_width) // 2)
+        if index == 1:
+            screen.cursor.x = center_start
+
+        screen.cursor.fg = int(draw_data.active_fg if tab.is_active else draw_data.inactive_fg)
+        screen.cursor.bg = int(draw_data.default_bg)
+        screen.draw("●" if tab.is_active else "•")
+
+        if not is_last:
+            screen.draw(" ")
+
+        return screen.cursor.x
+  '';
+
   home.packages = with pkgs; [
     fastfetchSmart
-
-    # Enhanced terminal tools
-    eza # Better ls with icons and colors
-    bat # Better cat with syntax highlighting
-    bottom # Better htop/top with graphs
-    tree # Directory tree visualization
-    fzf # Fuzzy finder
-    dialog # Terminal UI dialogs
-
-    # Fun terminal tools
-    fortune # Random quotes and jokes
-    pipes-rs # Animated pipes screensaver
-    sl # Steam locomotive (when you mistype 'ls')
-
-    # System monitoring
-    htop # Process viewer
-    btop # Beautiful system monitor
-    fastfetch # System info with style
-
-    # File management
-    ranger # Terminal file manager
-    mc # Midnight Commander
-
-    # Network tools
-    curl # For weather and fun APIs
-
-    # Development tools
-    jq # JSON processor
-    yq # YAML processor
-
-    # Fonts
-    inter # For Stylix sans-serif font
   ];
 
   # Custom shell functions for enhanced terminal experience
@@ -241,48 +258,19 @@ in
       '';
     };
 
-    # Automatically load fastfetch and fortune on startup
+    # Automatically load fastfetch on startup
     fish_greeting = {
       body = ''
-        fastfetch
-        echo ""
-        set_color cyan
-        fortune -s
-        set_color normal
+        fastfetch-smart
         echo ""
       '';
     };
 
-    # Clear terminal completely
     cls = {
-      description = "Clear terminal screen and scrollback history";
+      description = "Clear terminal contents and scrollback history";
       body = ''
         clear
         printf '\033[2J\033[3J\033[1;1H'
-      '';
-    };
-
-    # Interactive file explorer
-    explore = {
-      description = "Interactive file explorer with dialog";
-      body = ''
-        set choice (dialog --menu "File Explorer" 15 50 4 \
-          "1" "Ranger (Classic)" \
-          "2" "MC (Midnight Commander)" \
-          "3" "Tree View" \
-          "4" "Eza List" \
-          3>&1 1>&2 2>&3)
-
-        switch $choice
-          case 1
-            ranger
-          case 2
-            mc
-          case 3
-            tree -C -L 3
-          case 4
-            eza -la --tree --level=2 --icons
-        end
       '';
     };
   };

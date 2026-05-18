@@ -12,7 +12,7 @@ let
       height = 9;
       position = "left";
       padding = {
-        top = 0;
+        top = 3;
         left = 1;
         right = 2;
       };
