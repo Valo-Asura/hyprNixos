@@ -41,7 +41,12 @@ Item {
         return (player?.identity ?? "Media player").trim();
     }
     readonly property var activeToplevel: ToplevelManager.activeToplevel
-    property string idleStatus: Quickshell.env("USER") || "user"
+    readonly property string currentUser: (Quickshell.env("USER") || "user").trim()
+    readonly property string fallbackHost: (Quickshell.env("HOSTNAME") || "nixos").trim()
+    readonly property string displayName: currentUser.length > 0 ? currentUser.charAt(0).toUpperCase() + currentUser.slice(1) : "Asura"
+    property int awakeSeconds: 0
+    readonly property string awakeTime: Math.floor(awakeSeconds / 60) + ":" + String(awakeSeconds % 60).padStart(2, "0")
+    readonly property string idleStatus: displayName + " | Awake - " + awakeTime
     readonly property string appTitle: {
         const title = (activeToplevel?.title ?? "").trim();
         const appId = (activeToplevel?.appId ?? "").trim();
@@ -49,7 +54,11 @@ Item {
             return title;
         return appId;
     }
-    readonly property bool hasActiveAppTitle: activeToplevel && activeToplevel.activated && appTitle.length > 0
+    readonly property bool appTitleIsPlaceholder: {
+        const title = appTitle.toLowerCase();
+        return title === currentUser.toLowerCase() || title === displayName.toLowerCase() || title === fallbackHost.toLowerCase();
+    }
+    readonly property bool hasActiveAppTitle: activeToplevel && activeToplevel.activated && appTitle.length > 0 && !appTitleIsPlaceholder
     readonly property string idleTitle: idleStatus
     readonly property bool showIdleTitle: player === null && !hasActiveAppTitle
     readonly property bool showAppTitle: player === null && hasActiveAppTitle
@@ -99,16 +108,24 @@ Item {
 
     Process {
         id: idleStatusProcess
-        command: ["bash", "-lc", "host=$(hostname 2>/dev/null || printf nixos); up=$(uptime -p 2>/dev/null | sed 's/^up //'); [ -n \"$up\" ] || up=now; printf '%s | up %s' \"$host\" \"$up\""]
+        command: ["bash", "-lc", "cut -d. -f1 /proc/uptime 2>/dev/null || printf 0"]
 
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {
-                const value = text.trim();
-                if (value.length > 0)
-                    compactPlayer.idleStatus = value;
+                const seconds = parseInt(text.trim());
+                if (!isNaN(seconds))
+                    compactPlayer.awakeSeconds = seconds;
             }
         }
+    }
+
+    Timer {
+        id: awakeTickTimer
+        interval: 1000
+        repeat: true
+        running: true
+        onTriggered: compactPlayer.awakeSeconds += 1
     }
 
     Timer {
@@ -116,7 +133,7 @@ Item {
         repeat: true
         running: true
         triggeredOnStart: true
-        onTriggered: idleStatusProcess.running = true
+        onTriggered: if (!idleStatusProcess.running) idleStatusProcess.running = true
     }
 
     Timer {

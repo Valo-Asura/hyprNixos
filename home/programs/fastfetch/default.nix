@@ -2,12 +2,12 @@
 { ... }:
 
 let
-  logoImage = "/etc/nixos/asuraPc/assets/sans.png";
+  logoImage = ../../../asuraPc/assets/sans.png;
   cfg = {
     "$schema" = "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json";
     logo = {
       type = "kitty-direct";
-      source = logoImage;
+      source = "${logoImage}";
       width = 18;
       height = 9;
       position = "left";

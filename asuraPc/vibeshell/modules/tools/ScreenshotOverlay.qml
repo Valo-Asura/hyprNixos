@@ -34,22 +34,19 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-    // Timer to auto-hide after 5 seconds
-    Timer {
-        id: hideTimer
-        interval: 5000
-        repeat: false
-        running: root.visible && !mouseAreaHover.containsMouse
-        onTriggered: root.imagePath = ""
+    onImagePathChanged: {
+        if (imagePath !== "")
+            hideTimer.restart();
+        else
+            hideTimer.stop();
     }
 
-    // MouseArea to detect hover and prevent auto-hide
-    MouseArea {
-        id: mouseAreaHover
-        anchors.fill: parent
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton // Pass clicks through
-        propagateComposedEvents: true
+    // Auto-hide quickly so the preview controls do not stay over the desktop.
+    Timer {
+        id: hideTimer
+        interval: 3000
+        repeat: false
+        onTriggered: root.imagePath = ""
     }
 
     // Listen for the saved signal from Screenshot service

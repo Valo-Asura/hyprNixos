@@ -5,17 +5,27 @@
 }:
 
 let
+  logoImage = "${../assets/sans.png}";
   fastfetchSmart = pkgs.writeShellScriptBin "fastfetch-smart" ''
+    logo="${logoImage}"
     cols="$(${pkgs.ncurses}/bin/tput cols 2>/dev/null || printf 120)"
 
-    if [ "$#" -eq 0 ] && [ "$cols" -lt 88 ]; then
+    if [ "$#" -eq 0 ] && { [ "$cols" -lt 88 ] || [ ! -r "$logo" ]; }; then
       exec ${pkgs.fastfetch}/bin/fastfetch \
         --logo none \
         --structure "os:kernel:wm:shell:terminal:memory:colors"
     fi
 
     if [ -n "''${KITTY_WINDOW_ID:-}" ] || [ "''${TERM:-}" = "xterm-kitty" ]; then
-      exec ${pkgs.fastfetch}/bin/fastfetch --logo-recache true "$@"
+      exec ${pkgs.fastfetch}/bin/fastfetch \
+        --kitty-direct "$logo" \
+        --logo-width 18 \
+        --logo-height 9 \
+        --logo-padding-left 1 \
+        --logo-padding-right 2 \
+        --logo-padding-top 3 \
+        --logo-recache true \
+        "$@"
     fi
 
     exec ${pkgs.fastfetch}/bin/fastfetch --logo none "$@"
