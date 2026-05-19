@@ -189,6 +189,8 @@ QtObject {
                 root.items = [];
                 root.listCompleted();
                 root._operationInProgress = false;
+            } else {
+                cleanBinaryDataDirProcess.running = true;
             }
         }
     }
@@ -508,7 +510,7 @@ QtObject {
         // Use JSON mode for reliable parsing, with timeout to avoid locks
         // ORDER BY pinned DESC, display_index ASC to show pinned items first (ordered by index), then unpinned items (ordered by index)
         listProcess.command = ["sh", "-c", 
-            "sqlite3 '" + dbPath + "' <<'EOSQL'\n.timeout 5000\n.mode json\nSELECT id, mime_type, preview, is_image, binary_path, content_hash, size, created_at, pinned, alias, display_index FROM clipboard_items ORDER BY pinned DESC, display_index ASC, updated_at DESC, id DESC LIMIT 100;\nEOSQL"
+            "sqlite3 '" + dbPath + "' <<'EOSQL'\n.timeout 5000\nDELETE FROM clipboard_items WHERE pinned = 0 AND updated_at < (strftime('%s', 'now', '-2 days') * 1000);\nDELETE FROM clipboard_items WHERE pinned = 0 AND id NOT IN (SELECT id FROM clipboard_items WHERE pinned = 0 ORDER BY display_index ASC, updated_at DESC, id DESC LIMIT 10);\nWITH reindexed AS (SELECT id, ROW_NUMBER() OVER (ORDER BY updated_at DESC, id DESC) - 1 AS new_idx FROM clipboard_items WHERE pinned = 0) UPDATE clipboard_items SET display_index = (SELECT new_idx FROM reindexed WHERE reindexed.id = clipboard_items.id) WHERE pinned = 0;\n.mode json\nSELECT id, mime_type, preview, is_image, binary_path, content_hash, size, created_at, pinned, alias, display_index FROM clipboard_items ORDER BY pinned DESC, display_index ASC, updated_at DESC, id DESC LIMIT 100;\nEOSQL"
         ];
         listProcess.running = true;
     }

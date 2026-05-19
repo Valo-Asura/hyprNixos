@@ -15,7 +15,7 @@ let
     fi
 
     if [ -n "''${KITTY_WINDOW_ID:-}" ] || [ "''${TERM:-}" = "xterm-kitty" ]; then
-      exec ${pkgs.fastfetch}/bin/fastfetch "$@"
+      exec ${pkgs.fastfetch}/bin/fastfetch --logo-recache true "$@"
     fi
 
     exec ${pkgs.fastfetch}/bin/fastfetch --logo none "$@"
@@ -188,10 +188,8 @@ in
   };
 
   xdg.configFile."kitty/tab_bar.py".text = ''
-    import os
-
     from kitty.fast_data_types import Screen, get_boss
-    from kitty.tab_bar import DrawData, ExtraData, TabAccessor, TabBarData
+    from kitty.tab_bar import DrawData, ExtraData, TabBarData
 
 
     def draw_tab(
@@ -204,20 +202,12 @@ in
         is_last: bool,
         extra_data: ExtraData,
     ) -> int:
-        # Render one compact status strip:
-        # active working directory at the left, with tab dots centered.
-        if index == 1:
-            cwd = TabAccessor(tab.tab_id).active_wd or tab.title
-            label = cwd if cwd else os.environ.get("USER", "user")
-            screen.cursor.fg = int(draw_data.active_fg)
-            screen.cursor.bg = int(draw_data.default_bg)
-            screen.draw(f" {label}")
-
+        # Render only compact centered tab dots.
         kitty_tab = get_boss().tab_for_id(tab.tab_id)
         manager = kitty_tab.tab_manager_ref() if kitty_tab else None
         tab_count = len(manager.tabs) if manager else 1
         dots_width = max(1, (2 * tab_count) - 1)
-        center_start = max(screen.cursor.x + 1, (screen.columns - dots_width) // 2)
+        center_start = max(0, (screen.columns - dots_width) // 2)
         if index == 1:
             screen.cursor.x = center_start
 

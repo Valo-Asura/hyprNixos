@@ -14,7 +14,7 @@
         "modifiers": [
           "SUPER"
         ],
-        "key": "C",
+        "key": "V",
         "dispatcher": "exec",
         "argument": "vibeshell run dashboard-clipboard",
         "flags": ""
@@ -113,11 +113,8 @@
         "flags": ""
       },
       "screenshot": {
-        "modifiers": [
-          "SUPER",
-          "SHIFT"
-        ],
-        "key": "S",
+        "modifiers": [],
+        "key": "Print",
         "dispatcher": "exec",
         "argument": "vibeshell run screenshot",
         "flags": ""

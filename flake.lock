@@ -1437,8 +1437,8 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1779098233,
-        "narHash": "sha256-mv7PBaW4jUWtg9igCoZWx5ib1TcYe6rSk9xzm8xybo0=",
+        "lastModified": 1779192540,
+        "narHash": "sha256-M5BzF17Xx8xlu/AjMvD7IwC3Ec2sckjFTdvhp8I//Wg=",
         "path": "/etc/nixos/asuraPc/vibeshell",
         "type": "path"
       },

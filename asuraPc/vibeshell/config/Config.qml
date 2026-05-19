@@ -1433,7 +1433,7 @@ Singleton {
                     }
                     property JsonObject clipboard: JsonObject {
                         property list<string> modifiers: ["SUPER"]
-                        property string key: "C"
+                        property string key: "V"
                         property string dispatcher: "exec"
                         property string argument: "vibeshell run dashboard-clipboard"
                     }
@@ -1506,8 +1506,8 @@ Singleton {
                         property string flags: ""
                     }
                     property JsonObject screenshot: JsonObject {
-                        property list<string> modifiers: ["SUPER", "SHIFT"]
-                        property string key: "S"
+                        property list<string> modifiers: []
+                        property string key: "Print"
                         property string dispatcher: "exec"
                         property string argument: "vibeshell run screenshot"
                         property string flags: ""
@@ -1546,7 +1546,7 @@ Singleton {
             readonly property var defaultVibeshellBinds: {
                 "dashboard": {
                     "assistant": { "modifiers": ["SUPER"], "key": "A", "dispatcher": "exec", "argument": "vibeshell run dashboard-assistant", "flags": "" },
-                    "clipboard": { "modifiers": ["SUPER"], "key": "C", "dispatcher": "exec", "argument": "vibeshell run dashboard-clipboard", "flags": "" },
+                    "clipboard": { "modifiers": ["SUPER"], "key": "V", "dispatcher": "exec", "argument": "vibeshell run dashboard-clipboard", "flags": "" },
                     "emoji": { "modifiers": ["SUPER"], "key": "PERIOD", "dispatcher": "exec", "argument": "vibeshell run dashboard-emoji", "flags": "" },
                     "notes": { "modifiers": ["SUPER"], "key": "N", "dispatcher": "exec", "argument": "vibeshell run dashboard-notes", "flags": "" },
                     "tmux": { "modifiers": ["SUPER"], "key": "T", "dispatcher": "exec", "argument": "vibeshell run dashboard-tmux", "flags": "" },
@@ -1559,7 +1559,7 @@ Singleton {
                     "overview": { "modifiers": ["SUPER"], "key": "TAB", "dispatcher": "exec", "argument": "vibeshell run overview", "flags": "" },
                     "powermenu": { "modifiers": ["SUPER"], "key": "ESCAPE", "dispatcher": "exec", "argument": "vibeshell run powermenu", "flags": "" },
                     "tools": { "modifiers": ["SUPER"], "key": "S", "dispatcher": "exec", "argument": "vibeshell run tools", "flags": "" },
-                    "screenshot": { "modifiers": ["SUPER", "SHIFT"], "key": "S", "dispatcher": "exec", "argument": "vibeshell run screenshot", "flags": "" },
+                    "screenshot": { "modifiers": [], "key": "Print", "dispatcher": "exec", "argument": "vibeshell run screenshot", "flags": "" },
                     "screenrecord": { "modifiers": ["SUPER", "SHIFT"], "key": "R", "dispatcher": "exec", "argument": "vibeshell run screenrecord", "flags": "" },
                     "lens": { "modifiers": ["SUPER", "SHIFT"], "key": "A", "dispatcher": "exec", "argument": "vibeshell run lens", "flags": "" },
                     "reload": { "modifiers": ["SUPER", "ALT"], "key": "B", "dispatcher": "exec", "argument": "vibeshell reload", "flags": "" },

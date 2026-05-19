@@ -8,6 +8,8 @@ DB_PATH="$1"
 SCRIPT_PATH="$2"
 DATA_DIR="$3"
 
+mkdir -p "$(dirname "$DB_PATH")" "$DATA_DIR"
+
 # Check for files first (text/uri-list)
 if FILE_CONTENT=$(wl-paste --type text/uri-list 2>/dev/null); then
     HASH=$(echo -n "$FILE_CONTENT" | tr -d '\r' | md5sum | cut -d' ' -f1)

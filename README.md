@@ -65,9 +65,19 @@ sudo nixos-install --flake /mnt/etc/nixos#nixos
 - Both lock paths use [asuraPc/hyprland/lock-images/lockscreen.png](/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png).
 - More checks live in [docs/VALIDATION.md](/etc/nixos/docs/VALIDATION.md).
 
+## Showcase
+
+![Asura NixOS desktop](asuraPc/assets/NixOS.png)
+
+![Lockscreen](screenshots/lockscreen.png)
+
 ## Desktop
 
-- Vibeshell includes clickable notch-to-dashboard behavior, grouped settings, Night Light intensity control, resilient video wallpaper restarts, and stale browser-player filtering.
+- Hyprland `0.55.0` runs from generated Lua config.
+- Vibeshell includes clickable notch-to-dashboard behavior, grouped settings, Night Light intensity control, resilient video wallpaper restarts, stale browser-player filtering, and hostname plus uptime when no app title is active.
+- `SUPER+V` opens clipboard history. Unpinned clipboard entries older than 2 days are pruned, and unpinned history is capped at 10 entries.
+- `Print` opens the screenshot tool with quick copy/save/delete actions. Direct save binds remain on `SUPER+Print` and `SUPER+SHIFT+Print`.
+- Kitty uses a minimal bottom tab-dot strip, a `cls` shortcut to clear visible scrollback, and a responsive Fastfetch greeting.
 - Night Light uses `hyprsunset`; right-click its dashboard button to adjust intensity.
 - Desktop apps include Kdenlive, OBS Studio, DaVinci Resolve, MongoDB Compass, Telegram, FreeTube, `ani-cli`, and a Chrome-based WhatsApp launcher.
 - VS Code/Kiro are kept lean: `GitHub Theme` is the theme, and `Catppuccin Icons for VSCode` is the icon pack.

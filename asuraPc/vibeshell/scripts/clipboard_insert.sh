@@ -73,5 +73,23 @@ WITH reindexed AS (
   FROM clipboard_items WHERE pinned = 0
 )
 UPDATE clipboard_items SET display_index = (SELECT new_idx FROM reindexed WHERE reindexed.id = clipboard_items.id) WHERE pinned = 0;
+-- Keep clipboard history small and recent; pinned items are user-managed.
+DELETE FROM clipboard_items
+WHERE pinned = 0
+  AND updated_at < (strftime('%s', 'now', '-2 days') * 1000);
+DELETE FROM clipboard_items
+WHERE pinned = 0
+  AND id NOT IN (
+    SELECT id
+    FROM clipboard_items
+    WHERE pinned = 0
+    ORDER BY display_index ASC, updated_at DESC, id DESC
+    LIMIT 10
+  );
+WITH reindexed AS (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY updated_at DESC, id DESC) - 1 AS new_idx
+  FROM clipboard_items WHERE pinned = 0
+)
+UPDATE clipboard_items SET display_index = (SELECT new_idx FROM reindexed WHERE reindexed.id = clipboard_items.id) WHERE pinned = 0;
 COMMIT;
 EOSQL

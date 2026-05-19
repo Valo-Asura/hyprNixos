@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
@@ -40,6 +41,7 @@ Item {
         return (player?.identity ?? "Media player").trim();
     }
     readonly property var activeToplevel: ToplevelManager.activeToplevel
+    property string idleStatus: Quickshell.env("USER") || "user"
     readonly property string appTitle: {
         const title = (activeToplevel?.title ?? "").trim();
         const appId = (activeToplevel?.appId ?? "").trim();
@@ -48,7 +50,7 @@ Item {
         return appId;
     }
     readonly property bool hasActiveAppTitle: activeToplevel && activeToplevel.activated && appTitle.length > 0
-    readonly property string idleTitle: Quickshell.env("USER") || "user"
+    readonly property string idleTitle: idleStatus
     readonly property bool showIdleTitle: player === null && !hasActiveAppTitle
     readonly property bool showAppTitle: player === null && hasActiveAppTitle
     readonly property bool showPlayerTitle: player !== null && showPlayerTitleIntro
@@ -93,6 +95,28 @@ Item {
     onPlayerChanged: {
         lastIntroTrackKey = "";
         restartPlayerTitleIntro();
+    }
+
+    Process {
+        id: idleStatusProcess
+        command: ["bash", "-lc", "host=$(hostname 2>/dev/null || printf nixos); up=$(uptime -p 2>/dev/null | sed 's/^up //'); [ -n \"$up\" ] || up=now; printf '%s | up %s' \"$host\" \"$up\""]
+
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                const value = text.trim();
+                if (value.length > 0)
+                    compactPlayer.idleStatus = value;
+            }
+        }
+    }
+
+    Timer {
+        interval: 60000
+        repeat: true
+        running: true
+        triggeredOnStart: true
+        onTriggered: idleStatusProcess.running = true
     }
 
     Timer {

@@ -29,6 +29,19 @@
         install_mutable_config ${./binds.json} "$HOME/.config/Vibeshell/binds.json"
         install_mutable_config ${./system.json} "$HOME/.config/Vibeshell/config/system.json"
 
+        binds_config="$HOME/.config/Vibeshell/binds.json"
+        if [ -f "$binds_config" ]; then
+          tmp="$(mktemp)"
+          ${pkgs.jq}/bin/jq '
+            .vibeshell.dashboard.clipboard.modifiers = ["SUPER"]
+            | .vibeshell.dashboard.clipboard.key = "V"
+            | .vibeshell.system.screenshot.modifiers = []
+            | .vibeshell.system.screenshot.key = "Print"
+          ' "$binds_config" > "$tmp" \
+            && install -m 0644 "$tmp" "$binds_config"
+          rm -f "$tmp"
+        fi
+
         performance_config="$HOME/.config/Vibeshell/config/performance.json"
         mkdir -p "$(dirname "$performance_config")"
         if [ -f "$performance_config" ]; then
