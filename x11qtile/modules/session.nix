@@ -1,0 +1,86 @@
+# session.nix
+# Isolated display manager and session configuration for X11 Qtile
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
+
+let
+  qtileConfig = ../config/qtile;
+
+  qtileStart = pkgs.writeShellScriptBin "start-x11qtile" ''
+    set -uo pipefail
+
+    state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/x11qtile"
+    mkdir -p "$state_dir"
+    log_file="$state_dir/session.log"
+    exec >>"$log_file" 2>&1
+
+    echo "---- x11qtile session start: $(date -Is) ----"
+
+    export XDG_SESSION_TYPE=x11
+    export XDG_CURRENT_DESKTOP=Qtile
+    export XDG_SESSION_DESKTOP=Qtile
+    export XDG_CONFIG_HOME="''${XDG_CONFIG_HOME:-$HOME/.config}"
+
+    user_config="$HOME/.config/x11qtile/qtile/config.py"
+    store_config="${qtileConfig}/config.py"
+    config_file="$user_config"
+
+    if [ ! -r "$config_file" ]; then
+      echo "user config missing: $config_file"
+      config_file="$store_config"
+    fi
+
+    if ! ${pkgs.python3Packages.qtile}/bin/qtile check -c "$config_file"; then
+      echo "qtile check failed for $config_file"
+      if [ "$config_file" != "$store_config" ] && ${pkgs.python3Packages.qtile}/bin/qtile check -c "$store_config"; then
+        echo "falling back to store config: $store_config"
+        config_file="$store_config"
+      else
+        echo "store config also failed; starting qtile default config"
+        exec ${pkgs.python3Packages.qtile}/bin/qtile start -b x11
+      fi
+    fi
+
+    echo "starting qtile with config: $config_file"
+    exec ${pkgs.python3Packages.qtile}/bin/qtile start \
+      -b x11 \
+      -c "$config_file"
+  '';
+
+  # Declaratively define desktop session files in the Nix store
+  hyprlandSession = pkgs.writeTextDir "share/wayland-sessions/hyprland.desktop" ''
+    [Desktop Entry]
+    Name=Hyprland (Wayland)
+    Comment=An intelligent dynamic tiling Wayland compositor
+    Exec=${config.programs.hyprland.package}/bin/start-hyprland
+    Type=Application
+  '';
+
+  qtileSession = pkgs.writeTextDir "share/xsessions/qtile.desktop" ''
+    [Desktop Entry]
+    Name=Qtile (X11)
+    Comment=Qtile Tiling Window Manager
+    Exec=${qtileStart}/bin/start-x11qtile
+    Type=Application
+  '';
+
+  tuigreetCommand =
+    "${pkgs.tuigreet}/bin/tuigreet "
+    + "--remember "
+    + "--sessions ${hyprlandSession}/share/wayland-sessions "
+    + "--xsessions ${qtileSession}/share/xsessions "
+    + "--xsession-wrapper '${pkgs.xinit}/bin/startx ${pkgs.coreutils}/bin/env' "
+    + "--asterisks --container-padding 2 --time --time-format '%I:%M %p | %a • %h | %F' "
+    + "--cmd ${config.programs.hyprland.package}/bin/start-hyprland";
+in
+{
+  # Add session selection while preserving Hyprland as the default command.
+  services.greetd.settings.default_session.command = lib.mkOverride 90 tuigreetCommand;
+
+  # Preserve the existing OpenSSH agent from programs.ssh.startAgent.
+  services.gnome.gcr-ssh-agent.enable = false;
+}

@@ -63,6 +63,11 @@ Item {
     property string currentNoteContent: ""
     property string currentNoteTitle: ""
     property bool currentNoteIsMarkdown: false
+    property bool currentReminderEnabled: false
+    property string currentReminderAt: ""
+    property bool currentReminderSeen: true
+    property bool reminderPanelExpanded: false
+    property string reminderInputText: ""
     property bool loadingNote: false
     property bool editorDirty: false
 
@@ -465,16 +470,19 @@ Item {
         if (selectedIndex >= 0 && selectedIndex < filteredNotes.length) {
             let note = filteredNotes[selectedIndex];
             if (note && !note.isCreateButton) {
+                syncCurrentReminderFromNote(note.id);
                 loadNoteContent(note.id);
             } else {
                 currentNoteId = "";
                 currentNoteContent = "";
                 currentNoteTitle = "";
+                syncCurrentReminderFromNote("");
             }
         } else {
             currentNoteId = "";
             currentNoteContent = "";
             currentNoteTitle = "";
+            syncCurrentReminderFromNote("");
         }
     }
 
@@ -499,6 +507,85 @@ Item {
         }
         if (renameMode) {
             cancelRenameMode();
+        }
+    }
+
+    function syncCurrentReminderFromNote(noteId) {
+        currentReminderEnabled = false;
+        currentReminderAt = "";
+        currentReminderSeen = true;
+        reminderInputText = "";
+
+        if (!noteId)
+            return;
+
+        for (var i = 0; i < allNotes.length; i++) {
+            if (allNotes[i].id === noteId) {
+                currentReminderEnabled = allNotes[i].reminderEnabled || false;
+                currentReminderAt = allNotes[i].reminderAt || "";
+                currentReminderSeen = allNotes[i].reminderSeen !== false;
+                reminderInputText = currentReminderAt ? currentReminderAt.slice(0, 16).replace("T", " ") : "";
+                break;
+            }
+        }
+    }
+
+    function updateCurrentReminder(enabled, reminderAt, seen) {
+        if (!currentNoteId || currentNoteId === "__create__")
+            return;
+
+        var selectedNoteId = currentNoteId;
+        var normalizedAt = reminderAt || "";
+        var normalizedSeen = seen === true;
+
+        for (var i = 0; i < allNotes.length; i++) {
+            if (allNotes[i].id === currentNoteId) {
+                allNotes[i].reminderEnabled = enabled;
+                allNotes[i].reminderAt = normalizedAt;
+                allNotes[i].reminderSeen = normalizedSeen;
+                allNotes[i].modified = NotesUtils.getCurrentTimestamp();
+                break;
+            }
+        }
+
+        currentReminderEnabled = enabled;
+        currentReminderAt = normalizedAt;
+        currentReminderSeen = normalizedSeen;
+        reminderInputText = normalizedAt ? normalizedAt.slice(0, 16).replace("T", " ") : "";
+        saveNotesOrder();
+        updateFilteredNotes();
+        for (var j = 0; j < filteredNotes.length; j++) {
+            if (filteredNotes[j].id === selectedNoteId) {
+                selectedIndex = j;
+                resultsList.currentIndex = j;
+                break;
+            }
+        }
+        NotesService.reload();
+    }
+
+    function applyReminderInput() {
+        var parsed = NotesUtils.parseReminderInput(reminderInputText);
+        if (parsed) {
+            updateCurrentReminder(true, parsed, false);
+        }
+    }
+
+    function setQuickReminder(kind) {
+        var parsed = NotesUtils.quickReminderIso(kind);
+        if (parsed) {
+            updateCurrentReminder(true, parsed, false);
+        }
+    }
+
+    function clearCurrentReminder() {
+        updateCurrentReminder(false, "", true);
+    }
+
+    function markCurrentReminderSeen() {
+        if (currentNoteId && currentReminderEnabled && !currentReminderSeen) {
+            updateCurrentReminder(true, currentReminderAt, true);
+            NotesService.markSeen(currentNoteId);
         }
     }
 
@@ -693,6 +780,7 @@ Item {
         loadingNote = true;
         currentNoteId = noteId;
         currentNoteIsMarkdown = isMarkdown;
+        syncCurrentReminderFromNote(noteId);
 
         var extension = isMarkdown ? ".md" : noteExtension;
         readNoteProcess.command = ["cat", notesPath + "/" + noteId + extension];
@@ -751,6 +839,28 @@ Item {
                 noteEditor.forceActiveFocus();
             }
         });
+    }
+
+    function openRequestedNote(noteId) {
+        if (!noteId)
+            return;
+
+        for (var i = 0; i < filteredNotes.length; i++) {
+            if (filteredNotes[i].id === noteId) {
+                selectedIndex = i;
+                resultsList.currentIndex = i;
+                openNoteInEditor(noteId);
+                GlobalStates.notesRequestedId = "";
+                return;
+            }
+        }
+    }
+
+    Connections {
+        target: GlobalStates
+        function onNotesRequestedIdChanged() {
+            root.openRequestedNote(GlobalStates.notesRequestedId);
+        }
     }
 
     // Move note up/down in order
@@ -816,7 +926,10 @@ Item {
                 title: note.title,
                 created: note.created,
                 modified: note.modified,
-                isMarkdown: note.isMarkdown || false
+                isMarkdown: note.isMarkdown || false,
+                reminderEnabled: note.reminderEnabled || false,
+                reminderAt: note.reminderAt || "",
+                reminderSeen: note.reminderSeen !== false
             };
         }
         var jsonContent = NotesUtils.serializeIndex(indexData);
@@ -864,6 +977,9 @@ Item {
                         created: noteMeta.created || "",
                         modified: noteMeta.modified || "",
                         isMarkdown: noteMeta.isMarkdown || false,
+                        reminderEnabled: noteMeta.reminderEnabled || false,
+                        reminderAt: noteMeta.reminderAt || "",
+                        reminderSeen: noteMeta.reminderSeen !== false,
                         isCreateButton: false
                     });
                 }
@@ -890,6 +1006,9 @@ Item {
                     created: NotesUtils.getCurrentTimestamp(),
                     modified: NotesUtils.getCurrentTimestamp(),
                     isMarkdown: noteIsMarkdown,
+                    reminderEnabled: false,
+                    reminderAt: "",
+                    reminderSeen: true,
                     isCreateButton: false
                 };
                 allNotes.unshift(newNote);
@@ -1408,6 +1527,7 @@ Item {
                         }
                         return modelData.title || "Untitled";
                     }
+                    property bool reminderDueUnseen: modelData.reminderEnabled === true && !!modelData.reminderAt && modelData.reminderSeen === false && Date.parse(modelData.reminderAt) <= Date.now()
 
                     MouseArea {
                         id: mouseArea
@@ -1769,10 +1889,15 @@ Item {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: modelData.modified ? NotesUtils.formatTimestamp(modelData.modified) : ""
+                                text: {
+                                    if (modelData.reminderEnabled && modelData.reminderAt) {
+                                        return (reminderDueUnseen ? "Due: " : "Reminder: ") + NotesUtils.formatReminder(modelData.reminderAt);
+                                    }
+                                    return modelData.modified ? NotesUtils.formatTimestamp(modelData.modified) : "";
+                                }
                                 font.family: Config.theme.font
                                 font.pixelSize: Config.theme.fontSize - 2
-                                color: Qt.rgba(textColor.r, textColor.g, textColor.b, 0.6)
+                                color: reminderDueUnseen ? Styling.srItem("error") : Qt.rgba(textColor.r, textColor.g, textColor.b, 0.6)
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                                 visible: !modelData.isCreateButton && text !== "" && !isInRenameMode
@@ -3441,6 +3566,319 @@ Item {
                 font.family: Config.theme.font
                 font.pixelSize: Config.theme.fontSize
                 color: Colors.outline
+            }
+        }
+    }
+
+    StyledRect {
+        id: reminderDock
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: 14
+        anchors.bottomMargin: 14
+        width: Math.min(460, Math.max(300, root.width - root.leftPanelWidth - 48))
+        height: root.reminderPanelExpanded ? 218 : 72
+        visible: currentNoteId !== ""
+        z: 8
+        variant: "pane"
+        radius: Styling.radius(8)
+        enableShadow: true
+        backgroundOpacity: 0.92
+
+        Behavior on height {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration
+                easing.type: Easing.OutQuart
+            }
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 48
+                spacing: 10
+
+                StyledRect {
+                    Layout.preferredWidth: 44
+                    Layout.preferredHeight: 44
+                    variant: currentReminderEnabled ? "primary" : "surface"
+                    radius: 22
+                    enableShadow: currentReminderEnabled && !currentReminderSeen
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: currentReminderEnabled && !currentReminderSeen ? Icons.bellRinging : Icons.bell
+                        font.family: Icons.font
+                        font.pixelSize: 20
+                        color: currentReminderEnabled ? Colors.overPrimary : Colors.overSurface
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    spacing: 2
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: currentReminderEnabled ? NotesUtils.formatReminder(currentReminderAt) : "No reminder"
+                        font.family: Config.theme.font
+                        font.pixelSize: Config.theme.fontSize + 1
+                        font.weight: Font.Bold
+                        color: Colors.overSurface
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: currentReminderEnabled ? (currentReminderSeen ? "Seen reminder" : "Waiting for attention") : "Set a reminder for this note"
+                        font.family: Config.theme.font
+                        font.pixelSize: Config.theme.fontSize - 2
+                        color: currentReminderEnabled && !currentReminderSeen ? Styling.srItem("error") : Colors.outline
+                        elide: Text.ElideRight
+                    }
+                }
+
+                Button {
+                    Layout.preferredWidth: 82
+                    Layout.preferredHeight: 36
+                    visible: currentReminderEnabled && !currentReminderSeen
+
+                    background: StyledRect {
+                        variant: "primary"
+                        radius: Styling.radius(-4)
+                    }
+
+                    contentItem: Text {
+                        text: "Seen"
+                        font.family: Config.theme.font
+                        font.pixelSize: Config.theme.fontSize
+                        font.weight: Font.Bold
+                        color: Colors.overPrimary
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: root.markCurrentReminderSeen()
+                }
+
+                Button {
+                    Layout.preferredWidth: 36
+                    Layout.preferredHeight: 36
+
+                    background: StyledRect {
+                        variant: parent.hovered ? "surface" : "transparent"
+                        radius: Styling.radius(-4)
+                    }
+
+                    contentItem: Text {
+                        text: currentReminderEnabled ? Icons.trash : Icons.plus
+                        font.family: Icons.font
+                        font.pixelSize: 16
+                        color: Colors.overSurface
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: currentReminderEnabled ? root.clearCurrentReminder() : root.setQuickReminder("hour")
+                    ToolTip.visible: hovered
+                    ToolTip.text: currentReminderEnabled ? "Clear reminder" : "Remind in one hour"
+                    ToolTip.delay: 600
+                }
+
+                Button {
+                    Layout.preferredWidth: 36
+                    Layout.preferredHeight: 36
+
+                    background: StyledRect {
+                        variant: root.reminderPanelExpanded ? "primary" : "surface"
+                        radius: Styling.radius(-4)
+                    }
+
+                    contentItem: Text {
+                        text: root.reminderPanelExpanded ? Icons.caretDown : Icons.caretUp
+                        font.family: Icons.font
+                        font.pixelSize: 16
+                        color: root.reminderPanelExpanded ? Colors.overPrimary : Colors.overSurface
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: root.reminderPanelExpanded = !root.reminderPanelExpanded
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Reminder options"
+                    ToolTip.delay: 600
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 10
+                visible: root.reminderPanelExpanded
+                opacity: root.reminderPanelExpanded ? 1 : 0
+
+                Behavior on opacity {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Config.animDuration / 2
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    TextField {
+                        id: reminderInput
+                        Layout.fillWidth: true
+                        text: root.reminderInputText
+                        placeholderText: "YYYY-MM-DD HH:MM or +1h"
+                        color: Colors.overSurface
+                        selectionColor: Colors.primary
+                        selectedTextColor: Colors.overPrimary
+                        font.family: Config.theme.font
+                        font.pixelSize: Config.theme.fontSize
+                        background: StyledRect {
+                            variant: reminderInput.activeFocus ? "surface" : "common"
+                            radius: Styling.radius(-4)
+                        }
+                        onTextChanged: root.reminderInputText = text
+                        onAccepted: root.applyReminderInput()
+                    }
+
+                    Button {
+                        Layout.preferredWidth: 72
+                        Layout.preferredHeight: 36
+
+                        background: StyledRect {
+                            variant: "primary"
+                            radius: Styling.radius(-4)
+                        }
+
+                        contentItem: Text {
+                            text: "Apply"
+                            font.family: Config.theme.font
+                            font.pixelSize: Config.theme.fontSize
+                            font.weight: Font.Bold
+                            color: Colors.overPrimary
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: root.applyReminderInput()
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Repeater {
+                        model: [
+                            { label: "+1 hour", kind: "hour" },
+                            { label: "Today 6 PM", kind: "todayEvening" },
+                            { label: "Tomorrow 9 AM", kind: "tomorrowMorning" }
+                        ]
+
+                        Button {
+                            required property var modelData
+                            Layout.preferredHeight: 32
+                            Layout.fillWidth: true
+
+                            background: StyledRect {
+                                variant: parent.hovered ? "primary" : "surface"
+                                radius: Styling.radius(-4)
+                            }
+
+                            contentItem: Text {
+                                text: modelData.label
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize - 1
+                                color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            onClicked: root.setQuickReminder(modelData.kind)
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    spacing: 12
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        color: "transparent"
+
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: 8
+
+                            Text {
+                                text: Icons.disk
+                                font.family: Icons.font
+                                font.pixelSize: 16
+                                color: Colors.overSurface
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: "Persistent reminders"
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize - 1
+                                color: Colors.overSurface
+                                elide: Text.ElideRight
+                            }
+
+                            Switch {
+                                checked: NotesService.persistentStorage
+                                onToggled: NotesService.setPersistentStorage(checked)
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        color: "transparent"
+
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: 8
+
+                            Text {
+                                text: Icons.bell
+                                font.family: Icons.font
+                                font.pixelSize: 16
+                                color: Colors.overSurface
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: "Remind on login"
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize - 1
+                                color: Colors.overSurface
+                                elide: Text.ElideRight
+                            }
+
+                            Switch {
+                                checked: NotesService.remindOnLogin
+                                onToggled: NotesService.setRemindOnLogin(checked)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -41,7 +41,9 @@ Item {
             case "dashboard-clipboard": toggleDashboardWithPrefix(Config.prefix.clipboard + " "); break;
             case "dashboard-emoji": toggleDashboardWithPrefix(Config.prefix.emoji + " "); break;
             case "dashboard-tmux": toggleDashboardWithPrefix(Config.prefix.tmux + " "); break;
-            case "dashboard-notes": toggleDashboardWithPrefix(Config.prefix.notes + " "); break;
+            case "dashboard-notes":
+                GlobalStates.notesVisible = !GlobalStates.notesVisible;
+                break;
             
             // System
             case "overview": toggleSimpleModule("overview"); break;
@@ -260,9 +262,9 @@ Item {
     GlobalShortcut {
         appid: root.appId
         name: "dashboard-notes"
-        description: "Open dashboard notes (via prefix)"
+        description: "Open QuickShell Notes"
 
-        onPressed: toggleDashboardWithPrefix(Config.prefix.notes + " ")
+        onPressed: GlobalStates.notesVisible = !GlobalStates.notesVisible
     }
 
     GlobalShortcut {

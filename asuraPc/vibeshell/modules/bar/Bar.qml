@@ -500,6 +500,10 @@ PanelWindow {
                     id: toolsButton
                 }
 
+                Bar.NotesButton {
+                    id: notesButton
+                }
+
                 SysTray {
                    bar: panel
                    layer.enabled: Config.showBackground
@@ -557,6 +561,11 @@ PanelWindow {
 
                 ToolsButton {
                     id: toolsButtonVert
+                }
+
+                Bar.NotesButton {
+                    id: notesButtonVert
+                    Layout.preferredHeight: 36
                 }
 
                 PresetsButton {

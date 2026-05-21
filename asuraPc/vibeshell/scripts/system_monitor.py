@@ -200,12 +200,18 @@ class SystemMonitor:
 
     def get_disk_usage(self, disks):
         usage_map = {}
+        total_map = {}
+        used_map = {}
+        available_map = {}
         for mount in disks:
             try:
                 st = os.statvfs(mount)
                 total = st.f_blocks * st.f_frsize
                 free = st.f_bavail * st.f_frsize
                 used = total - free
+                total_map[mount] = total
+                used_map[mount] = used
+                available_map[mount] = free
                 # Use f_blocks (total) vs f_bavail (available to non-root)
                 # df usually does used / (used + avail) to account for reserved
                 # simple percentage:
@@ -216,11 +222,16 @@ class SystemMonitor:
                     usage_map[mount] = 0.0
             except:
                 usage_map[mount] = 0.0
-        return usage_map
+                total_map[mount] = 0
+                used_map[mount] = 0
+                available_map[mount] = 0
+        return usage_map, total_map, used_map, available_map
 
     def get_gpu_stats(self):
         usages = []
         temps = []
+        memory_used = []
+        memory_total = []
 
         if self.gpu_vendor == "nvidia" and self.gpu_count > 0:
             try:
@@ -228,23 +239,29 @@ class SystemMonitor:
                 out = subprocess.check_output(
                     [
                         "nvidia-smi",
-                        "--query-gpu=utilization.gpu,temperature.gpu",
+                        "--query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total",
                         "--format=csv,noheader,nounits",
                     ]
                 )
                 lines = out.decode("utf-8").strip().split("\n")
                 for line in lines:
                     parts = line.split(",")
-                    if len(parts) >= 2:
+                    if len(parts) >= 4:
                         try:
                             usages.append(float(parts[0].strip()))
                             temps.append(int(parts[1].strip()))
+                            memory_used.append(int(parts[2].strip()) * 1024 * 1024)
+                            memory_total.append(int(parts[3].strip()) * 1024 * 1024)
                         except:
                             usages.append(0.0)
                             temps.append(-1)
+                            memory_used.append(0)
+                            memory_total.append(0)
             except:
                 usages = [0.0] * self.gpu_count
                 temps = [-1] * self.gpu_count
+                memory_used = [0] * self.gpu_count
+                memory_total = [0] * self.gpu_count
 
         elif self.gpu_vendor == "amd" and self.gpu_count > 0:
             for card in self.amd_cards:
@@ -273,12 +290,25 @@ class SystemMonitor:
                         pass
                 temps.append(t_val)
 
+                # VRAM usage
+                try:
+                    device_path = f"/sys/class/drm/{card}/device"
+                    with open(os.path.join(device_path, "mem_info_vram_used"), "r") as f:
+                        memory_used.append(int(f.read().strip()))
+                    with open(os.path.join(device_path, "mem_info_vram_total"), "r") as f:
+                        memory_total.append(int(f.read().strip()))
+                except:
+                    memory_used.append(0)
+                    memory_total.append(0)
+
         elif self.gpu_vendor == "intel":
             # Intel stats are hard without sudo/tools. Returning dummy 0.
             usages = [0.0]
             temps = [-1]
+            memory_used = [0]
+            memory_total = [0]
 
-        return usages, temps
+        return usages, temps, memory_used, memory_total
 
     def update_disks_from_stdin(self):
         # Non-blocking read from stdin to update monitored disks if needed
@@ -324,10 +354,14 @@ if __name__ == "__main__":
             ram_usage, ram_total, ram_used, ram_avail = monitor.get_mem()
 
             # Disk
-            disk_usage = monitor.get_disk_usage(disks_to_monitor)
+            disk_usage, disk_total, disk_used, disk_available = monitor.get_disk_usage(
+                disks_to_monitor
+            )
 
             # GPU
-            gpu_usages, gpu_temps = monitor.get_gpu_stats()
+            gpu_usages, gpu_temps, gpu_memory_used, gpu_memory_total = (
+                monitor.get_gpu_stats()
+            )
 
             data = {
                 "cpu": {"usage": cpu_usage, "temp": cpu_temp},
@@ -337,13 +371,20 @@ if __name__ == "__main__":
                     "used": ram_used,
                     "available": ram_avail,
                 },
-                "disk": {"usage": disk_usage},
+                "disk": {
+                    "usage": disk_usage,
+                    "total": disk_total,
+                    "used": disk_used,
+                    "available": disk_available,
+                },
                 "gpu": {
                     "detected": monitor.gpu_vendor != "none",
                     "vendor": monitor.gpu_vendor,
                     "count": monitor.gpu_count,
                     "usages": gpu_usages,
                     "temps": gpu_temps,
+                    "memory_used": gpu_memory_used,
+                    "memory_total": gpu_memory_total,
                 },
             }
 

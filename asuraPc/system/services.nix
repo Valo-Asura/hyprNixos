@@ -91,6 +91,7 @@ in
     udisks2.enable = true;
     gvfs.enable = true;
     upower.enable = true;
+    ratbagd.enable = true;
     mongodb = {
       enable = true;
       bind_ip = "127.0.0.1";

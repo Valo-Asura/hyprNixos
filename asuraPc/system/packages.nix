@@ -94,6 +94,11 @@ in
       kdePackages.kdenlive
       obs-studio
       davinciResolveClean
+      alsa-utils
+      pavucontrol
+      pulseaudio
+      pwvucontrol
+      v4l-utils
 
       # Hyprland Panel Dependencies
       bluez
@@ -122,6 +127,8 @@ in
       playwright
       playwright-driver
       chromium
+      android-tools # adb / fastboot; udev access is handled by systemd uaccess
+      scrcpy # Android screen/control over adb
       mongosh
       mongodb-tools
 
@@ -134,6 +141,10 @@ in
       # Desktop apps
       whatsappWeb
       whatsappWebDesktop
+      piper # Linux GUI for Logitech G304/G305 DPI and button profiles
+      solaar # Logitech receiver and wireless device manager
+      simple-mtpfs
+      jmtpfs
       mongodb-compass
       telegram-desktop
       ani-cli

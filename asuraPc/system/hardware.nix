@@ -20,6 +20,10 @@
         libvdpau-va-gl
       ];
     };
+    logitech.wireless = {
+      enable = true;
+      enableGraphical = true;
+    };
     bluetooth.enable = true;
     nvidia = {
       modesetting.enable = lib.mkForce true;
@@ -39,7 +43,13 @@
   };
 
   # Broadcom BCM4360 requires proprietary wl (broadcom_sta), not b43/bcma.
-  boot.extraModulePackages = [ config.boot.kernelPackages.broadcom_sta ];
+  boot.extraModulePackages = [
+    config.boot.kernelPackages.broadcom_sta
+    config.boot.kernelPackages.v4l2loopback
+  ];
+  boot.extraModprobeConfig = ''
+    options v4l2loopback devices=1 video_nr=9 card_label="OBS Virtual Camera" exclusive_caps=1
+  '';
   # Load NVIDIA KMS early so the display stack starts at the panel's native mode
   # instead of briefly falling back to a low-resolution firmware mode.
   boot.initrd.kernelModules = [
@@ -47,6 +57,7 @@
     "nvidia_modeset"
     "nvidia_uvm"
     "nvidia_drm"
+    "v4l2loopback"
   ];
   boot.kernelModules = [
     "wl"

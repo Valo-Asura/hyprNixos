@@ -49,6 +49,100 @@ function formatTimestamp(isoTimestamp) {
 }
 
 /**
+ * Format a reminder timestamp for compact dashboard display.
+ * @param {string} isoTimestamp - ISO timestamp string
+ * @returns {string} Formatted reminder string
+ */
+function formatReminder(isoTimestamp) {
+    if (!isoTimestamp)
+        return "No reminder";
+    try {
+        var date = new Date(isoTimestamp);
+        if (isNaN(date.getTime()))
+            return "Invalid reminder";
+
+        var now = new Date();
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        var reminderDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        var diffDays = Math.round((reminderDay - today) / 86400000);
+        var time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (diffDays === 0)
+            return "Today, " + time;
+        if (diffDays === 1)
+            return "Tomorrow, " + time;
+        if (diffDays === -1)
+            return "Yesterday, " + time;
+
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ", " + time;
+    } catch (e) {
+        return "Invalid reminder";
+    }
+}
+
+/**
+ * Convert user input into an ISO reminder timestamp.
+ * Accepts ISO-like "YYYY-MM-DD HH:MM" text and quick values like "+1h".
+ * @param {string} input - User-entered reminder text
+ * @returns {string} ISO timestamp or empty string
+ */
+function parseReminderInput(input) {
+    if (!input)
+        return "";
+
+    var text = input.trim();
+    if (text.length === 0)
+        return "";
+
+    var now = new Date();
+    var relative = text.match(/^\+(\d+)\s*(m|min|h|hr|d|day)$/i);
+    if (relative) {
+        var amount = parseInt(relative[1], 10);
+        var unit = relative[2].toLowerCase();
+        var ms = 60000;
+        if (unit === "h" || unit === "hr")
+            ms = 3600000;
+        if (unit === "d" || unit === "day")
+            ms = 86400000;
+        return new Date(now.getTime() + amount * ms).toISOString();
+    }
+
+    var normalized = text.replace(" ", "T");
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized))
+        normalized += ":00";
+
+    var date = new Date(normalized);
+    if (isNaN(date.getTime()))
+        return "";
+    return date.toISOString();
+}
+
+function quickReminderIso(kind) {
+    var now = new Date();
+    var date = new Date(now.getTime());
+
+    if (kind === "hour") {
+        date.setHours(date.getHours() + 1);
+        return date.toISOString();
+    }
+
+    if (kind === "todayEvening") {
+        date.setHours(18, 0, 0, 0);
+        if (date.getTime() <= now.getTime())
+            date.setDate(date.getDate() + 1);
+        return date.toISOString();
+    }
+
+    if (kind === "tomorrowMorning") {
+        date.setDate(date.getDate() + 1);
+        date.setHours(9, 0, 0, 0);
+        return date.toISOString();
+    }
+
+    return "";
+}
+
+/**
  * Sanitize title for use as filename (not used currently, we use UUIDs)
  * @param {string} title - Note title
  * @returns {string} Sanitized filename
@@ -133,7 +227,10 @@ function createNoteEntry(title) {
     return {
         title: title || "Untitled Note",
         created: now,
-        modified: now
+        modified: now,
+        reminderEnabled: false,
+        reminderAt: "",
+        reminderSeen: true
     };
 }
 

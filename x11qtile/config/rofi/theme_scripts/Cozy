@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wallpaper="$HOME/.config/x11qtile/wallpapers/Aesthetic2.png"
+
+feh --bg-fill "$wallpaper"
+wal -b 282738 -i "$wallpaper" || true
+qtile cmd-obj -o cmd -f restart || true

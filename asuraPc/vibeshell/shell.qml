@@ -10,6 +10,7 @@ import qs.modules.bar
 import qs.modules.bar.workspaces
 import qs.modules.notifications
 import qs.modules.widgets.dashboard.wallpapers
+import qs.modules.widgets.notes
 import qs.modules.widgets.settings
 import qs.modules.notch
 import qs.modules.widgets.overview
@@ -220,6 +221,10 @@ ShellRoot {
         id: settingsWindow
     }
 
+    QuickShellNotes {
+        id: quickShellNotesWindow
+    }
+
     // Screenshot Tool
     Variants {
         model: Quickshell.screens
@@ -291,6 +296,13 @@ ShellRoot {
         target: ClipboardService
         function onListCompleted() {
             // Service initialized and ready
+        }
+    }
+
+    Connections {
+        target: NotesService
+        function onReminderPulse() {
+            // Service initialized; bar icon reacts to unseen reminders.
         }
     }
 

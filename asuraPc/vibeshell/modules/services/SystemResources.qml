@@ -7,7 +7,7 @@ pragma ComponentBehavior: Bound
 
 /**
  * System resource monitoring service
- * Tracks CPU, GPU, RAM and disk usage percentages
+ * Tracks CPU, GPU, RAM and disk usage.
  */
 Singleton {
     id: root
@@ -34,6 +34,8 @@ Singleton {
     
     // GPU temperature metrics - supports multiple GPUs
     property var gpuTemps: []            // Array of temperatures in Celsius, -1 if unavailable
+    property var gpuMemoryUsed: []       // Array of used VRAM values in bytes
+    property var gpuMemoryTotal: []      // Array of total VRAM values in bytes
     
     // Legacy single GPU properties (for backward compatibility)
     property real gpuUsage: gpuUsages.length > 0 ? gpuUsages[0] : 0.0
@@ -42,6 +44,9 @@ Singleton {
 
     // Disk metrics - map of mountpoint to usage percentage
     property var diskUsage: ({})
+    property var diskTotal: ({})
+    property var diskUsed: ({})
+    property var diskAvailable: ({})
 
     // Disk types - map of mountpoint to type ("ssd", "hdd", or "unknown")
     property var diskTypes: ({})
@@ -87,6 +92,9 @@ Singleton {
                     
                     // Update Disk
                     root.diskUsage = stats.disk.usage;
+                    root.diskTotal = stats.disk.total || {};
+                    root.diskUsed = stats.disk.used || {};
+                    root.diskAvailable = stats.disk.available || {};
                     
                     // Update GPU
                     root.gpuDetected = stats.gpu.detected;
@@ -98,6 +106,8 @@ Singleton {
                         }
                         root.gpuUsages = stats.gpu.usages;
                         root.gpuTemps = stats.gpu.temps;
+                        root.gpuMemoryUsed = stats.gpu.memory_used || [];
+                        root.gpuMemoryTotal = stats.gpu.memory_total || [];
                     }
                     
                     // Update History
@@ -345,6 +355,8 @@ Singleton {
                     root.gpuNames = [];
                     root.gpuUsages = [];
                     root.gpuTemps = [];
+                    root.gpuMemoryUsed = [];
+                    root.gpuMemoryTotal = [];
                     root.gpuCount = 0;
                     root.gpuDetected = false;
                 }

@@ -166,6 +166,10 @@ Singleton {
     // Vibeshell Settings state
     property bool settingsVisible: false
 
+    // QuickShell Notes app state
+    property bool notesVisible: false
+    property string notesRequestedId: ""
+
     // Screenshot Tool state
     property bool screenshotToolVisible: false
     // property string screenshotToolMode: "normal" // DEPRECATED

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wallpaper="$HOME/.config/x11qtile/wallpapers/a_road_going_through_a_desert.jpeg"
+scheme="$HOME/.config/x11qtile/wallpapers/e-ink.json"
+
+feh --bg-fill "$wallpaper"
+wal -i "$wallpaper" || true
+wal -f "$scheme" || true
+qtile cmd-obj -o cmd -f restart || true

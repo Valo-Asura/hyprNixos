@@ -4,12 +4,16 @@
 {
   imports = [
     ../asuraPc/system/default.nix
+    ../x11qtile
   ];
 
   networking.hostName = hostname;
 
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     max-substitution-jobs = 64;
     http-connections = 128;
   };
