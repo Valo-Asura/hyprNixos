@@ -10,6 +10,54 @@
 let
   qtileConfig = ../config/qtile;
 
+  xsessionWrapper = pkgs.writeShellScriptBin "start-x11qtile-xserver" ''
+    set -uo pipefail
+
+    state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/x11qtile"
+    mkdir -p "$state_dir"
+    log_file="$state_dir/xserver.log"
+    exec >>"$log_file" 2>&1
+
+    echo "---- x11qtile xserver wrapper: $(date -Is) ----"
+    echo "session command: $*"
+
+    display=""
+    for candidate in 1 2 3 4 5; do
+      lock="/tmp/.X''${candidate}-lock"
+      socket="/tmp/.X11-unix/X''${candidate}"
+
+      if [ -r "$lock" ]; then
+        lock_pid="$(tr -cd '0-9' < "$lock" || true)"
+        if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
+          echo "display :$candidate is active by pid $lock_pid"
+          continue
+        fi
+        echo "removing stale X lock for :$candidate"
+        rm -f "$lock" "$socket" 2>/dev/null || true
+      elif [ -S "$socket" ]; then
+        echo "removing stale X socket for :$candidate"
+        rm -f "$socket" 2>/dev/null || true
+      fi
+
+      if [ ! -e "$lock" ] && [ ! -S "$socket" ]; then
+        display="$candidate"
+        break
+      fi
+    done
+
+    if [ -z "$display" ]; then
+      echo "no free X display found"
+      exit 1
+    fi
+
+    if [ "$#" -eq 0 ]; then
+      set -- ${qtileStart}/bin/start-x11qtile
+    fi
+
+    echo "starting Xorg on :$display"
+    exec ${pkgs.xinit}/bin/startx "$@" -- ":$display" -nolisten tcp
+  '';
+
   qtileStart = pkgs.writeShellScriptBin "start-x11qtile" ''
     set -uo pipefail
 
@@ -45,6 +93,7 @@ let
       fi
     fi
 
+    export X11QTILE_CONFIG_DIR="$(dirname "$config_file")"
     echo "starting qtile with config: $config_file"
     exec ${pkgs.python3Packages.qtile}/bin/qtile start \
       -b x11 \
@@ -73,7 +122,7 @@ let
     + "--remember "
     + "--sessions ${hyprlandSession}/share/wayland-sessions "
     + "--xsessions ${qtileSession}/share/xsessions "
-    + "--xsession-wrapper '${pkgs.xinit}/bin/startx ${pkgs.coreutils}/bin/env' "
+    + "--xsession-wrapper ${xsessionWrapper}/bin/start-x11qtile-xserver "
     + "--asterisks --container-padding 2 --time --time-format '%I:%M %p | %a • %h | %F' "
     + "--cmd ${config.programs.hyprland.package}/bin/start-hyprland";
 in

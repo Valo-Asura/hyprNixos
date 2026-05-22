@@ -24,6 +24,7 @@
       NO_AT_BRIDGE = "0";
       PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+      ADB_MDNS_AUTO_CONNECT = "adb-tls-connect";
     };
 
     variables = {

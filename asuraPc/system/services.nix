@@ -123,6 +123,25 @@ in
 
   # Enable accessibility services for vibeshell keyboard input
   services.gnome.at-spi2-core.enable = true;
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+  };
+  services.udev.extraRules = ''
+    # Android Debug Bridge access for common phone vendors.
+    # Samsung, Google, Xiaomi, OnePlus/Oppo, Motorola/Lenovo, Huawei/Honor, Vivo.
+    SUBSYSTEM=="usb", ATTR{idVendor}=="04e8", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="2717", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="2a70", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="22b8", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="17ef", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="12d1", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="0bb4", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="0e8d", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="2d95", MODE="0660", GROUP="adbusers", TAG+="uaccess"
+  '';
 
   # Compile GSettings schemas properly
   services.dbus.packages = with pkgs; [

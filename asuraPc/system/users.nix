@@ -8,11 +8,20 @@
       description = "asura";
       group = "asura";
       shell = pkgs.fish;
-      extraGroups = [ 
-        "networkmanager" "wheel" "storage" "audio" 
-        "video" "input" "power" "ydotool" "docker"
+      extraGroups = [
+        "networkmanager"
+        "wheel"
+        "storage"
+        "audio"
+        "video"
+        "input"
+        "power"
+        "ydotool"
+        "docker"
+        "adbusers"
       ];
     };
-    groups.asura = {};
+    groups.asura = { };
+    groups.adbusers = { };
   };
 }

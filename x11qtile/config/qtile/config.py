@@ -55,7 +55,10 @@ screens = [
 # Startup hook
 @hook.subscribe.startup_once
 def autostart():
-    subprocess.call([os.path.expanduser("~/.config/x11qtile/qtile/autostart.sh")])
+    config_dir = os.environ.get("X11QTILE_CONFIG_DIR", os.path.dirname(__file__))
+    autostart_path = os.path.join(config_dir, "autostart.sh")
+    if os.path.isfile(autostart_path) and os.access(autostart_path, os.X_OK):
+        subprocess.Popen([autostart_path])
 
 # Miscellaneous settings
 dgroups_key_binder = None

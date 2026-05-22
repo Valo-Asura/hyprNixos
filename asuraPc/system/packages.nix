@@ -42,6 +42,37 @@ let
     ];
     startupWMClass = "whatsapp-web";
   };
+
+  adbReset = pkgs.writeShellScriptBin "adb-reset" ''
+    set -euo pipefail
+    export ADB_MDNS_AUTO_CONNECT="''${ADB_MDNS_AUTO_CONNECT:-adb-tls-connect}"
+
+    ${pkgs.android-tools}/bin/adb kill-server >/dev/null 2>&1 || true
+    ${pkgs.android-tools}/bin/adb start-server
+    ${pkgs.android-tools}/bin/adb reconnect offline >/dev/null 2>&1 || true
+    ${pkgs.android-tools}/bin/adb reconnect >/dev/null 2>&1 || true
+    ${pkgs.android-tools}/bin/adb devices -l
+  '';
+
+  adbWifiConnect = pkgs.writeShellScriptBin "adb-wifi-connect" ''
+    set -euo pipefail
+    export ADB_MDNS_AUTO_CONNECT="''${ADB_MDNS_AUTO_CONNECT:-adb-tls-connect}"
+
+    if [ "$#" -lt 1 ]; then
+      printf '%s\n' \
+        'Usage:' \
+        '  adb-wifi-connect PHONE_IP:CONNECT_PORT' \
+        "" \
+        'After pairing in Android Wireless debugging, use the separate "IP address & Port"' \
+        'connect port, not the pairing-code port.' >&2
+      exit 2
+    fi
+
+    ${pkgs.android-tools}/bin/adb start-server
+    ${pkgs.android-tools}/bin/adb disconnect "$1" >/dev/null 2>&1 || true
+    ${pkgs.android-tools}/bin/adb connect "$1"
+    ${pkgs.android-tools}/bin/adb devices -l
+  '';
 in
 {
   environment.systemPackages =
@@ -128,6 +159,8 @@ in
       playwright-driver
       chromium
       android-tools # adb / fastboot; udev access is handled by systemd uaccess
+      adbReset
+      adbWifiConnect
       scrcpy # Android screen/control over adb
       mongosh
       mongodb-tools
