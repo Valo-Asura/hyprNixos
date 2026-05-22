@@ -1,6 +1,12 @@
 # Environment Configuration
 { pkgs, ... }:
 
+let
+  playwrightBrowsers = pkgs.playwright-driver.browsers.override {
+    withFirefox = false;
+    withWebkit = false;
+  };
+in
 {
   environment = {
     sessionVariables = {
@@ -22,11 +28,12 @@
       # Accessibility support for keyboard input
       GTK_MODULES = "gail:atk-bridge";
       NO_AT_BRIDGE = "0";
-      PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+      PLAYWRIGHT_BROWSERS_PATH = "${playwrightBrowsers}";
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
       NODE_PATH = "${pkgs.playwright-test}/lib/node_modules";
       CHROME_BIN = "${pkgs.google-chrome}/bin/google-chrome-stable";
       CHROME_PATH = "${pkgs.google-chrome}/bin/google-chrome-stable";
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = "${pkgs.google-chrome}/bin/google-chrome-stable";
       ADB_MDNS_AUTO_CONNECT = "adb-tls-connect";
     };
 
