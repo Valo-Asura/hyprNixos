@@ -9,6 +9,13 @@
 
 let
   qtileConfig = ../config/qtile;
+  xorgConfig = pkgs.writeText "x11qtile-xorg.conf" config.services.xserver.config;
+  xorgModulePath = lib.concatStringsSep "," (
+    [ "${pkgs.xorg-server}/lib/xorg/modules" ]
+    ++ lib.concatMap (
+      driver: map (module: "${module}/lib/xorg/modules") driver.modules
+    ) config.services.xserver.drivers
+  );
 
   xsessionWrapper = pkgs.writeShellScriptBin "start-x11qtile-xserver" ''
     set -uo pipefail
@@ -54,8 +61,11 @@ let
       set -- ${qtileStart}/bin/start-x11qtile
     fi
 
-    echo "starting Xorg on :$display"
-    exec ${pkgs.xinit}/bin/startx "$@" -- ":$display" -nolisten tcp
+    echo "starting Xorg on :$display with NixOS Xorg config"
+    exec ${pkgs.xinit}/bin/startx "$@" -- ":$display" \
+      -config ${xorgConfig} \
+      -modulepath ${lib.escapeShellArg xorgModulePath} \
+      -nolisten tcp
   '';
 
   qtileStart = pkgs.writeShellScriptBin "start-x11qtile" ''
