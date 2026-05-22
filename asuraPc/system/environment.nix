@@ -24,6 +24,9 @@
       NO_AT_BRIDGE = "0";
       PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+      NODE_PATH = "${pkgs.playwright-test}/lib/node_modules";
+      CHROME_BIN = "${pkgs.google-chrome}/bin/google-chrome-stable";
+      CHROME_PATH = "${pkgs.google-chrome}/bin/google-chrome-stable";
       ADB_MDNS_AUTO_CONNECT = "adb-tls-connect";
     };
 
