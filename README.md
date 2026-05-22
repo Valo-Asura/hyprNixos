@@ -118,4 +118,4 @@ sudo nixos-install --flake /mnt/etc/nixos#nixos
 
 ## Thanks
 
-Thanks to the Hyprwm, Quickshell/Vibeshell, Home Manager, Stylix, Lanzaboote, nixos-hardware, sops-nix, and Caelestia-based module authors whose work and ideas were adapted here.
+Thanks to the Hyprland, Quickshell/Axenide-Ambxst shell and Caelestia shell module authors whose work and ideas were adapted here.
