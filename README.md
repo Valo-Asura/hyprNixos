@@ -77,6 +77,7 @@ sudo nixos-install --flake /mnt/etc/nixos#nixos
 - Vibeshell includes clickable notch-to-dashboard behavior, grouped settings, Night Light intensity control, resilient video wallpaper restarts, stale browser-player filtering, and hostname plus uptime when no app title is active.
 - `SUPER+V` opens clipboard history. Unpinned clipboard entries older than 2 days are pruned, and unpinned history is capped at 10 entries.
 - `Print` opens the screenshot tool with quick copy/save/delete actions. Direct save binds remain on `SUPER+Print` and `SUPER+SHIFT+Print`.
+- Vibeshell Notes stores notes and reminders locally. Reminder dates are color-coded: red when due or within 2 hours, yellow for later today, green for tomorrow, and muted for later dates.
 - Kitty uses a minimal bottom tab-dot strip, a `cls` shortcut to clear visible scrollback, and a responsive Fastfetch greeting.
 - Night Light uses `hyprsunset`; right-click its dashboard button to adjust intensity.
 - Desktop apps include Kdenlive, OBS Studio, DaVinci Resolve, MongoDB Compass, Telegram, FreeTube, `ani-cli`, and a Chrome-based WhatsApp launcher.
