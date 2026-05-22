@@ -15,26 +15,86 @@ FloatingWindow {
     id: root
 
     visible: GlobalStates.notesVisible
-    title: "QuickShell Notes"
+    title: "Vibeshell Notes"
     color: "transparent"
     minimumSize: Qt.size(1040, 700)
     maximumSize: Qt.size(1040, 700)
 
     property int currentSection: 0
+    property int sectionAfterCreate: 0
 
     onVisibleChanged: {
         if (visible)
             NotesService.reload();
     }
 
+    function createNoteFromHeader() {
+        sectionAfterCreate = 0;
+        NotesService.createQuickNote();
+    }
+
+    function createReminderFromHeader() {
+        sectionAfterCreate = 1;
+        NotesService.createQuickReminder();
+    }
+
+    function isSameLocalDay(left, right) {
+        return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate();
+    }
+
+    function reminderDateColor(reminderAt, fallbackColor) {
+        const reminderTime = Date.parse(reminderAt);
+        if (isNaN(reminderTime))
+            return fallbackColor;
+
+        const now = new Date();
+        const deltaMs = reminderTime - now.getTime();
+        if (deltaMs <= 2 * 60 * 60 * 1000)
+            return Colors.red;
+
+        const reminderDate = new Date(reminderTime);
+        if (isSameLocalDay(reminderDate, now))
+            return Colors.yellow;
+
+        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        if (isSameLocalDay(reminderDate, tomorrow))
+            return Colors.green;
+
+        return fallbackColor;
+    }
+
+    Connections {
+        target: NotesService
+
+        function onNoteCreated(noteId) {
+            NotesService.reload();
+            root.currentSection = root.sectionAfterCreate;
+            if (root.sectionAfterCreate === 0)
+                GlobalStates.notesRequestedId = noteId;
+        }
+    }
+
+    Connections {
+        target: GlobalStates
+
+        function onNotesRequestedSectionChanged() {
+            if (GlobalStates.notesRequestedSection < 0)
+                return;
+            root.sectionAfterCreate = GlobalStates.notesRequestedSection;
+            root.currentSection = GlobalStates.notesRequestedSection;
+            GlobalStates.notesRequestedSection = -1;
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
-        radius: Styling.radius(2)
+        radius: 0
         color: Qt.rgba(Colors.background.r, Colors.background.g, Colors.background.b, 0.92)
+        clip: true
 
         Rectangle {
             anchors.fill: parent
-            radius: parent.radius
+            radius: 0
             color: "transparent"
             border.width: 1
             border.color: Qt.rgba(Colors.outline.r, Colors.outline.g, Colors.outline.b, 0.38)
@@ -79,7 +139,7 @@ FloatingWindow {
                         spacing: 0
 
                         Text {
-                            text: "QuickShell Notes"
+                            text: "Vibeshell Notes"
                             font.family: Config.theme.font
                             font.pixelSize: Styling.fontSize(2)
                             font.weight: Font.Bold
@@ -92,6 +152,48 @@ FloatingWindow {
                             font.pixelSize: Styling.fontSize(-2)
                             color: Colors.outline
                         }
+                    }
+
+                    Button {
+                        Layout.preferredWidth: 92
+                        Layout.preferredHeight: 32
+
+                        background: StyledRect {
+                            variant: parent.hovered ? "primary" : "surface"
+                            radius: Styling.radius(-4)
+                        }
+
+                        contentItem: Text {
+                            text: "+ Note"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: root.createNoteFromHeader()
+                    }
+
+                    Button {
+                        Layout.preferredWidth: 116
+                        Layout.preferredHeight: 32
+
+                        background: StyledRect {
+                            variant: parent.hovered ? "primary" : "surface"
+                            radius: Styling.radius(-4)
+                        }
+
+                        contentItem: Text {
+                            text: "+ Reminder"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: root.createReminderFromHeader()
                     }
 
                     Button {
@@ -158,11 +260,26 @@ FloatingWindow {
 
                         Repeater {
                             model: [
-                                { icon: Icons.notepad, label: "Notes" },
-                                { icon: Icons.bell, label: "Reminders" },
-                                { icon: Icons.clip, label: "Tags" },
-                                { icon: Icons.folder, label: "Archive" },
-                                { icon: Icons.gear, label: "Settings" }
+                                {
+                                    icon: Icons.notepad,
+                                    label: "Notes"
+                                },
+                                {
+                                    icon: Icons.bell,
+                                    label: "Reminders"
+                                },
+                                {
+                                    icon: Icons.clip,
+                                    label: "Tags"
+                                },
+                                {
+                                    icon: Icons.folder,
+                                    label: "Archive"
+                                },
+                                {
+                                    icon: Icons.gear,
+                                    label: "Settings"
+                                }
                             ]
 
                             Button {
@@ -238,13 +355,54 @@ FloatingWindow {
     Component {
         id: notesComponent
 
-        NotesTab {
-            leftPanelWidth: 300
-            prefixIcon: Icons.notepad
+        ColumnLayout {
+            spacing: 10
 
-            Component.onCompleted: {
-                if (GlobalStates.notesRequestedId)
-                    openRequestedNote(GlobalStates.notesRequestedId);
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Notes"
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(3)
+                    font.weight: Font.Bold
+                    color: Colors.overSurface
+                }
+
+                Button {
+                    Layout.preferredWidth: 112
+                    Layout.preferredHeight: 34
+
+                    background: StyledRect {
+                        variant: parent.hovered ? "primary" : "surface"
+                        radius: Styling.radius(-4)
+                    }
+
+                    contentItem: Text {
+                        text: "+ Add note"
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: root.createNoteFromHeader()
+                }
+            }
+
+            NotesTab {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                leftPanelWidth: 300
+                prefixIcon: Icons.notepad
+
+                Component.onCompleted: {
+                    if (GlobalStates.notesRequestedId)
+                        openRequestedNote(GlobalStates.notesRequestedId);
+                }
             }
         }
     }
@@ -255,16 +413,43 @@ FloatingWindow {
         ColumnLayout {
             spacing: 12
 
-            Text {
-                text: "Reminders"
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(5)
-                font.weight: Font.Bold
-                color: Colors.overSurface
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Reminders"
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(5)
+                    font.weight: Font.Bold
+                    color: Colors.overSurface
+                }
+
+                Button {
+                    Layout.preferredWidth: 128
+                    Layout.preferredHeight: 34
+
+                    background: StyledRect {
+                        variant: parent.hovered ? "primary" : "surface"
+                        radius: Styling.radius(-4)
+                    }
+
+                    contentItem: Text {
+                        text: "+ Add reminder"
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: root.createReminderFromHeader()
+                }
             }
 
             Text {
-                text: NotesService.dueReminders.length > 0 ? "Unseen, seen, snoozed, and done states are stored locally." : "No reminders waiting."
+                text: NotesService.reminders.length > 0 ? "Future and due reminders are stored locally. Unseen due reminders glow on the bar." : "No reminders yet. Add one to test the reminder clock."
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-1)
                 color: Colors.outline
@@ -282,7 +467,7 @@ FloatingWindow {
                     spacing: 10
 
                     Repeater {
-                        model: NotesService.dueReminders
+                        model: NotesService.reminders
 
                         StyledRect {
                             id: reminderCard
@@ -291,9 +476,9 @@ FloatingWindow {
 
                             Layout.fillWidth: true
                             Layout.preferredHeight: 92
-                            variant: modelData.reminderSeen ? "surface" : "primary"
+                            variant: modelData.due && !modelData.reminderSeen ? "primary" : "surface"
                             radius: Styling.radius(0)
-                            backgroundOpacity: modelData.reminderSeen ? 0.55 : 0.82
+                            backgroundOpacity: modelData.due && !modelData.reminderSeen ? 0.82 : 0.55
 
                             RowLayout {
                                 anchors.fill: parent
@@ -301,10 +486,10 @@ FloatingWindow {
                                 spacing: 12
 
                                 Text {
-                                    text: modelData.reminderSeen ? Icons.bell : Icons.bellRinging
+                                    text: modelData.due && !modelData.reminderSeen ? Icons.bellRinging : Icons.bell
                                     font.family: Icons.font
                                     font.pixelSize: 20
-                                    color: modelData.reminderSeen ? Colors.overSurface : Colors.overPrimary
+                                    color: modelData.due && !modelData.reminderSeen ? Colors.overPrimary : Colors.overSurface
                                 }
 
                                 ColumnLayout {
@@ -317,16 +502,16 @@ FloatingWindow {
                                         font.family: Config.theme.font
                                         font.pixelSize: Styling.fontSize(1)
                                         font.weight: Font.Bold
-                                        color: modelData.reminderSeen ? Colors.overSurface : Colors.overPrimary
+                                        color: modelData.due && !modelData.reminderSeen ? Colors.overPrimary : Colors.overSurface
                                         elide: Text.ElideRight
                                     }
 
                                     Text {
-                                        text: new Date(modelData.reminderAt).toLocaleString()
+                                        text: (modelData.due ? (modelData.reminderSeen ? "Seen · " : "Due now · ") : "Scheduled · ") + new Date(modelData.reminderAt).toLocaleString()
                                         font.family: Config.theme.font
                                         font.pixelSize: Styling.fontSize(-2)
-                                        color: modelData.reminderSeen ? Colors.outline : Colors.overPrimary
-                                        opacity: 0.82
+                                        color: root.reminderDateColor(modelData.reminderAt, Colors.outline)
+                                        opacity: color === Colors.outline ? 0.82 : 1.0
                                     }
                                 }
 
@@ -335,10 +520,22 @@ FloatingWindow {
 
                                     Repeater {
                                         model: [
-                                            { label: "Open", action: "open" },
-                                            { label: "Snooze", action: "snooze" },
-                                            { label: "Seen", action: "seen" },
-                                            { label: "Done", action: "done" }
+                                            {
+                                                label: "Open",
+                                                action: "open"
+                                            },
+                                            {
+                                                label: "Snooze",
+                                                action: "snooze"
+                                            },
+                                            {
+                                                label: "Seen",
+                                                action: "seen"
+                                            },
+                                            {
+                                                label: "Done",
+                                                action: "done"
+                                            }
                                         ]
 
                                         Button {

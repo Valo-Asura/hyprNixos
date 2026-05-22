@@ -52,7 +52,7 @@ Item {
     ToggleButton {
         anchors.fill: parent
         buttonIcon: NotesService.hasUnseenReminders ? Icons.bellRinging : Icons.notepad
-        tooltipText: NotesService.hasUnseenReminders ? "QuickShell Notes - " + NotesService.unseenCount + " unseen reminder(s)" : "QuickShell Notes"
+        tooltipText: NotesService.hasUnseenReminders ? "Vibeshell Notes - " + NotesService.unseenCount + " unseen reminder(s)" : "Vibeshell Notes"
         enableShadow: true
 
         onToggle: function () {

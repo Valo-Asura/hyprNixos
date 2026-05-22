@@ -513,10 +513,6 @@ Rectangle {
                                     Text {
                                         text: {
                                             const name = SystemResources.gpuNames[index] || "";
-                                            const used = SystemResources.gpuMemoryUsed[index] || 0;
-                                            const total = SystemResources.gpuMemoryTotal[index] || 0;
-                                            if (total > 0)
-                                                return `${name || "GPU"} · ${root.formatBytesAsGB(used)} / ${root.formatBytesAsGB(total)}`;
                                             return name || "GPU";
                                         }
                                         font.family: Config.theme.font

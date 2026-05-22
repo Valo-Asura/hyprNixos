@@ -18,7 +18,7 @@ Item {
         id: pipeListener
         command: ["bash", "-c", "rm -f " + root.ipcPipe + "; mkfifo " + root.ipcPipe + "; tail -f " + root.ipcPipe]
         running: true
-        
+
         stdout: SplitParser {
             onRead: data => {
                 const cmd = data.trim();
@@ -32,42 +32,91 @@ Item {
     function run(command) {
         console.log("IPC run command received:", command);
         switch (command) {
-            // Dashboard
-            case "dashboard-widgets": toggleDashboardTab(0); break;
-            case "dashboard-wallpapers": toggleDashboardTab(1); break;
-            case "dashboard-kanban": toggleDashboardTab(2); break;
-            case "dashboard-assistant": toggleDashboardTab(3); break;
-            case "dashboard-controls": toggleDashboardTab(4); break;
-            case "dashboard-clipboard": toggleDashboardWithPrefix(Config.prefix.clipboard + " "); break;
-            case "dashboard-emoji": toggleDashboardWithPrefix(Config.prefix.emoji + " "); break;
-            case "dashboard-tmux": toggleDashboardWithPrefix(Config.prefix.tmux + " "); break;
-            case "dashboard-notes":
-                GlobalStates.notesVisible = !GlobalStates.notesVisible;
-                break;
-            
-            // System
-            case "overview": toggleSimpleModule("overview"); break;
-            case "powermenu": toggleSimpleModule("powermenu"); break;
-            case "tools": toggleSimpleModule("tools"); break;
-            case "config": GlobalStates.settingsVisible = !GlobalStates.settingsVisible; break;
-            case "screenshot": GlobalStates.screenshotToolVisible = true; break;
-            case "screenrecord": GlobalStates.screenRecordToolVisible = true; break;
-            case "lens": 
-                Screenshot.captureMode = "lens";
-                GlobalStates.screenshotToolVisible = true;
-                break;
-            case "lockscreen": GlobalStates.lockscreenVisible = true; break;
-            
-            // Media
-            case "media-seek-backward": seekActivePlayer(-mediaSeekStepMs); break;
-            case "media-seek-forward": seekActivePlayer(mediaSeekStepMs); break;
-            case "media-play-pause": 
-                if (MprisController.canTogglePlaying) MprisController.togglePlaying();
-                break;
-            case "media-next": MprisController.next(); break;
-            case "media-prev": MprisController.previous(); break;
-                
-            default: console.warn("Unknown IPC command:", command);
+        // Dashboard
+        case "dashboard-widgets":
+            toggleDashboardTab(0);
+            break;
+        case "dashboard-wallpapers":
+            toggleDashboardTab(1);
+            break;
+        case "dashboard-kanban":
+            toggleDashboardTab(2);
+            break;
+        case "dashboard-assistant":
+            toggleDashboardTab(3);
+            break;
+        case "dashboard-controls":
+            toggleDashboardTab(4);
+            break;
+        case "dashboard-clipboard":
+            toggleDashboardWithPrefix(Config.prefix.clipboard + " ");
+            break;
+        case "dashboard-emoji":
+            toggleDashboardWithPrefix(Config.prefix.emoji + " ");
+            break;
+        case "dashboard-tmux":
+            toggleDashboardWithPrefix(Config.prefix.tmux + " ");
+            break;
+        case "dashboard-notes":
+            GlobalStates.notesVisible = !GlobalStates.notesVisible;
+            break;
+        case "notes-new":
+            GlobalStates.notesVisible = true;
+            GlobalStates.notesRequestedSection = 0;
+            GlobalStates.notesRequestedId = NotesService.createQuickNote();
+            break;
+        case "reminder-new":
+            GlobalStates.notesVisible = true;
+            GlobalStates.notesRequestedSection = 1;
+            NotesService.createQuickReminder();
+            break;
+
+        // System
+        case "overview":
+            toggleSimpleModule("overview");
+            break;
+        case "powermenu":
+            toggleSimpleModule("powermenu");
+            break;
+        case "tools":
+            toggleSimpleModule("tools");
+            break;
+        case "config":
+            GlobalStates.settingsVisible = !GlobalStates.settingsVisible;
+            break;
+        case "screenshot":
+            GlobalStates.screenshotToolVisible = true;
+            break;
+        case "screenrecord":
+            GlobalStates.screenRecordToolVisible = true;
+            break;
+        case "lens":
+            Screenshot.captureMode = "lens";
+            GlobalStates.screenshotToolVisible = true;
+            break;
+        case "lockscreen":
+            GlobalStates.lockscreenVisible = true;
+            break;
+
+        // Media
+        case "media-seek-backward":
+            seekActivePlayer(-mediaSeekStepMs);
+            break;
+        case "media-seek-forward":
+            seekActivePlayer(mediaSeekStepMs);
+            break;
+        case "media-play-pause":
+            if (MprisController.canTogglePlaying)
+                MprisController.togglePlaying();
+            break;
+        case "media-next":
+            MprisController.next();
+            break;
+        case "media-prev":
+            MprisController.previous();
+            break;
+        default:
+            console.warn("Unknown IPC command:", command);
         }
     }
 
@@ -89,7 +138,7 @@ Item {
 
     function toggleDashboardTab(tabIndex) {
         const isActive = Visibilities.currentActiveModule === "dashboard";
-        
+
         // Special handling for widgets tab (launcher)
         if (tabIndex === 0) {
             if (isActive && GlobalStates.dashboardCurrentTab === 0 && GlobalStates.launcherSearchText === "") {
@@ -97,7 +146,7 @@ Item {
                 Visibilities.setActiveModule("");
                 return;
             }
-            
+
             // Otherwise, always go to launcher (clear any prefix and ensure tab 0)
             GlobalStates.dashboardCurrentTab = 0;
             GlobalStates.launcherSearchText = "";
@@ -107,7 +156,7 @@ Item {
             }
             return;
         }
-        
+
         // For other tabs, normal toggle behavior
         if (isActive && GlobalStates.dashboardCurrentTab === tabIndex) {
             Visibilities.setActiveModule("");
@@ -122,7 +171,7 @@ Item {
 
     function toggleDashboardWithPrefix(prefix) {
         const isActive = Visibilities.currentActiveModule === "dashboard";
-        
+
         // Check if dashboard is already open with this prefix
         if (isActive && GlobalStates.dashboardCurrentTab === 0 && GlobalStates.launcherSearchText === prefix) {
             // Toggle off - close dashboard
@@ -133,7 +182,7 @@ Item {
 
         // Always go to widgets tab first
         GlobalStates.dashboardCurrentTab = 0;
-        
+
         if (!isActive) {
             // Open dashboard first, then set prefix after a brief delay
             Visibilities.setActiveModule("dashboard");
@@ -152,9 +201,7 @@ Item {
             return;
         }
 
-        const maxLength = typeof player.length === "number" && !isNaN(player.length)
-                ? player.length
-                : Number.MAX_SAFE_INTEGER;
+        const maxLength = typeof player.length === "number" && !isNaN(player.length) ? player.length : Number.MAX_SAFE_INTEGER;
         const clamped = Math.max(0, Math.min(maxLength, player.position + offset));
         player.position = clamped;
     }
@@ -262,7 +309,7 @@ Item {
     GlobalShortcut {
         appid: root.appId
         name: "dashboard-notes"
-        description: "Open QuickShell Notes"
+        description: "Open Vibeshell Notes"
 
         onPressed: GlobalStates.notesVisible = !GlobalStates.notesVisible
     }

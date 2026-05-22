@@ -71,6 +71,31 @@ Item {
     property bool loadingNote: false
     property bool editorDirty: false
 
+    function isSameLocalDay(left, right) {
+        return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate();
+    }
+
+    function reminderDateColor(reminderAt, fallbackColor) {
+        const reminderTime = Date.parse(reminderAt);
+        if (isNaN(reminderTime))
+            return fallbackColor;
+
+        const now = new Date();
+        const deltaMs = reminderTime - now.getTime();
+        if (deltaMs <= 2 * 60 * 60 * 1000)
+            return Colors.red;
+
+        const reminderDate = new Date(reminderTime);
+        if (isSameLocalDay(reminderDate, now))
+            return Colors.yellow;
+
+        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        if (isSameLocalDay(reminderDate, tomorrow))
+            return Colors.green;
+
+        return fallbackColor;
+    }
+
     // Create menu state
     property bool showCreateMenu: false
     property int createMenuSelectedIndex: 0
@@ -1897,7 +1922,7 @@ Item {
                                 }
                                 font.family: Config.theme.font
                                 font.pixelSize: Config.theme.fontSize - 2
-                                color: reminderDueUnseen ? Styling.srItem("error") : Qt.rgba(textColor.r, textColor.g, textColor.b, 0.6)
+                                color: modelData.reminderEnabled && modelData.reminderAt ? root.reminderDateColor(modelData.reminderAt, Qt.rgba(textColor.r, textColor.g, textColor.b, 0.6)) : Qt.rgba(textColor.r, textColor.g, textColor.b, 0.6)
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                                 visible: !modelData.isCreateButton && text !== "" && !isInRenameMode
@@ -3639,7 +3664,7 @@ Item {
                         text: currentReminderEnabled ? (currentReminderSeen ? "Seen reminder" : "Waiting for attention") : "Set a reminder for this note"
                         font.family: Config.theme.font
                         font.pixelSize: Config.theme.fontSize - 2
-                        color: currentReminderEnabled && !currentReminderSeen ? Styling.srItem("error") : Colors.outline
+                        color: currentReminderEnabled ? root.reminderDateColor(currentReminderAt, Colors.outline) : Colors.outline
                         elide: Text.ElideRight
                     }
                 }
@@ -3781,9 +3806,18 @@ Item {
 
                     Repeater {
                         model: [
-                            { label: "+1 hour", kind: "hour" },
-                            { label: "Today 6 PM", kind: "todayEvening" },
-                            { label: "Tomorrow 9 AM", kind: "tomorrowMorning" }
+                            {
+                                label: "+1 hour",
+                                kind: "hour"
+                            },
+                            {
+                                label: "Today 6 PM",
+                                kind: "todayEvening"
+                            },
+                            {
+                                label: "Tomorrow 9 AM",
+                                kind: "tomorrowMorning"
+                            }
                         ]
 
                         Button {

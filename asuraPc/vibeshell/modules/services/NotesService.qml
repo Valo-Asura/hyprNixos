@@ -16,6 +16,7 @@ Singleton {
     property bool persistentStorage: true
     property bool remindOnLogin: true
     property bool glowWhenUnseen: true
+    property var reminders: []
     property var dueReminders: []
     property int unseenCount: 0
     readonly property bool hasUnseenReminders: unseenCount > 0
@@ -23,8 +24,8 @@ Singleton {
     property bool loginReminderSent: false
     property int lastUnseenCount: 0
 
-    signal remindersChanged()
-    signal reminderPulse()
+    signal reminderPulse
+    signal noteCreated(string noteId)
 
     Process {
         id: ensureFilesProcess
@@ -70,6 +71,22 @@ Singleton {
         id: notifyProcess
         running: false
         command: []
+    }
+
+    Process {
+        id: createNoteProcess
+        running: false
+        command: []
+        property string noteId: ""
+
+        onExited: exitCode => {
+            if (exitCode !== 0)
+                console.warn("NotesService: create note failed with code " + exitCode);
+            root.reload();
+            if (exitCode === 0 && noteId)
+                root.noteCreated(noteId);
+            noteId = "";
+        }
     }
 
     function reload() {
@@ -123,27 +140,34 @@ Singleton {
         try {
             const raw = indexFile.text();
             if (!raw || raw.trim().length === "")
-                return { order: [], notes: {} };
+                return {
+                    order: [],
+                    notes: {}
+                };
             const data = JSON.parse(raw);
             return {
                 order: data.order || [],
                 notes: data.notes || {}
             };
         } catch (e) {
-            return { order: [], notes: {} };
+            return {
+                order: [],
+                notes: {}
+            };
         }
     }
 
     function loadIndex() {
         if (!persistentStorage) {
+            reminders = [];
             dueReminders = [];
             unseenCount = 0;
-            remindersChanged();
             return;
         }
 
         const now = Date.now();
         const data = parseIndex();
+        const all = [];
         const due = [];
 
         for (let i = 0; i < data.order.length; i++) {
@@ -153,21 +177,27 @@ Singleton {
                 continue;
 
             const reminderTime = Date.parse(note.reminderAt);
-            if (isNaN(reminderTime) || reminderTime > now)
+            if (isNaN(reminderTime))
                 continue;
 
-            due.push({
+            const entry = {
                 id: id,
                 title: note.title || "Untitled Note",
                 reminderAt: note.reminderAt,
-                reminderSeen: note.reminderSeen === true
-            });
+                reminderSeen: note.reminderSeen === true,
+                due: reminderTime <= now
+            };
+
+            all.push(entry);
+            if (entry.due)
+                due.push(entry);
         }
 
         const previousUnseen = unseenCount;
+        all.sort((a, b) => Date.parse(a.reminderAt) - Date.parse(b.reminderAt));
+        reminders = all;
         dueReminders = due;
         unseenCount = due.filter(note => !note.reminderSeen).length;
-        remindersChanged();
 
         if (unseenCount !== previousUnseen)
             reminderPulse();
@@ -186,21 +216,55 @@ Singleton {
         return "'" + String(value).replace(/'/g, "'\\''") + "'";
     }
 
+    function escapeHtml(value) {
+        return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function newNoteId() {
+        return "note-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8);
+    }
+
+    function createNote(title, htmlContent, reminderAt) {
+        if (!fileReady || createNoteProcess.running)
+            return "";
+
+        const noteId = newNoteId();
+        const now = new Date().toISOString();
+        const cleanTitle = title && String(title).trim().length > 0 ? String(title).trim() : "New note";
+        const content = htmlContent && String(htmlContent).length > 0 ? String(htmlContent) : "<h1>" + escapeHtml(cleanTitle) + "</h1><p></p>";
+        const reminder = reminderAt || "";
+        const reminderEnabled = reminder.length > 0 ? "true" : "false";
+
+        createNoteProcess.noteId = noteId;
+        createNoteProcess.command = ["bash", "-lc", ["set -euo pipefail", "notes_dir=" + shellQuote(notesDir), "index_path=" + shellQuote(indexPath), "note_id=" + shellQuote(noteId), "title=" + shellQuote(cleanTitle), "created=" + shellQuote(now), "reminder_at=" + shellQuote(reminder), "reminder_enabled=" + shellQuote(reminderEnabled), "mkdir -p \"$notes_dir/notes\"", "printf '%s' " + shellQuote(content) + " > \"$notes_dir/notes/$note_id.html\"", "if [ ! -s \"$index_path\" ]; then printf '%s\\n' '{\"order\":[],\"notes\":{}}' > \"$index_path\"; fi", "tmp=\"$(mktemp)\"", "jq --arg id \"$note_id\" --arg title \"$title\" --arg created \"$created\" --arg reminder \"$reminder_at\" --argjson enabled \"$reminder_enabled\" '", "  .order = ([ $id ] + ((.order // []) | map(select(. != $id)))) |", "  .notes[$id] = {", "    title: $title,", "    created: $created,", "    modified: $created,", "    isMarkdown: false,", "    reminderEnabled: $enabled,", "    reminderAt: $reminder,", "    reminderSeen: false", "  }", "' \"$index_path\" > \"$tmp\"", "mv \"$tmp\" \"$index_path\""].join("\n")];
+        createNoteProcess.running = true;
+        return noteId;
+    }
+
+    function createQuickNote() {
+        const title = "New note " + new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+        return createNote(title, "", "");
+    }
+
+    function createQuickReminder() {
+        const reminderAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        const title = "New reminder";
+        const content = "<h1>" + escapeHtml(title) + "</h1><p>Reminder created from Vibeshell Notes.</p>";
+        return createNote(title, content, reminderAt);
+    }
+
     function sendReminderNotification(fromLogin) {
         if (unseenCount <= 0)
             return;
 
         const unseen = dueReminders.filter(note => !note.reminderSeen);
         const summary = fromLogin ? "Notes waiting from last session" : "Note reminder";
-        const body = unseen.length === 1
-            ? unseen[0].title
-            : unseen.length + " notes need attention";
+        const body = unseen.length === 1 ? unseen[0].title : unseen.length + " notes need attention";
 
-        notifyProcess.command = [
-            "bash",
-            "-lc",
-            "command -v notify-send >/dev/null && notify-send " + shellQuote(summary) + " " + shellQuote(body) + " || true"
-        ];
+        notifyProcess.command = ["bash", "-lc", "command -v notify-send >/dev/null && notify-send " + shellQuote(summary) + " " + shellQuote(body) + " || true"];
         notifyProcess.running = true;
     }
 
