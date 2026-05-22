@@ -67,9 +67,20 @@ sudo nixos-install --flake /mnt/etc/nixos#nixos
 
 ## Showcase
 
-![Asura NixOS desktop](asuraPc/assets/NixOS.png)
+### Desktop Demo
 
-![Lockscreen](screenshots/lockscreen.png)
+![Asura NixOS desktop demo](screenshots/desktop-demo.png)
+
+### Lockscreen
+
+![Vibeshell lockscreen](screenshots/lockscreen.png)
+
+### Terminal Style
+
+<p>
+  <img src="asuraPc/assets/sans.png" alt="Kitty Fastfetch Sans theme" width="360">
+  <img src="asuraPc/assets/ax.png" alt="Kitty Fastfetch Ax theme" width="260">
+</p>
 
 ## Desktop
 
