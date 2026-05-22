@@ -85,8 +85,9 @@ sudo nixos-install --flake /mnt/etc/nixos#nixos
 - Vibeshell Notes stores notes and reminders locally. Reminder dates are color-coded: red when due or within 2 hours, yellow for later today, green for tomorrow, and muted for later dates.
 - Kitty uses a minimal bottom tab-dot strip, a `cls` shortcut to clear visible scrollback, and a responsive Fastfetch greeting.
 - Night Light uses `hyprsunset`; right-click its dashboard button to adjust intensity.
-- Desktop apps include Kdenlive, OBS Studio, DaVinci Resolve, MongoDB Compass, Telegram, FreeTube, `ani-cli`, and a Chrome-based WhatsApp launcher.
-- VS Code/Kiro are kept lean: `GitHub Theme` is the theme, and `Catppuccin Icons for VSCode` is the icon pack.
+- Desktop apps include Kdenlive, OBS Studio, DaVinci Resolve, MongoDB Compass, MySQL Workbench, Telegram, FreeTube, `ani-cli`, and a Chrome-based WhatsApp launcher.
+- MySQL 8.4 runs locally on `127.0.0.1:3306` with config at `/etc/my.cnf`, data at `/var/lib/mysql`, socket at `/run/mysqld/mysqld.sock`, and helper info via `mysql-local-info`.
+- VS Code-like IDEs are kept lean for theming: `GitHub Theme` is the theme, and `Catppuccin Icons for VSCode` is the icon pack.
 
 ## Local AI
 

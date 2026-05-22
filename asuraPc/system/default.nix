@@ -14,6 +14,7 @@
     ./hardware.nix
     ./audio.nix
     ./services.nix
+    ./mysql.nix
     ./local-ai.nix
     ./programs.nix
     ./gaming.nix
