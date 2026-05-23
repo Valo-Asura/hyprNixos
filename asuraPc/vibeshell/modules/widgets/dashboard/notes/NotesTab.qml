@@ -568,6 +568,8 @@ Item {
                 allNotes[i].reminderEnabled = enabled;
                 allNotes[i].reminderAt = normalizedAt;
                 allNotes[i].reminderSeen = normalizedSeen;
+                allNotes[i].googleCalendarSynced = false;
+                allNotes[i].googleCalendarSyncedAt = "";
                 allNotes[i].modified = NotesUtils.getCurrentTimestamp();
                 break;
             }
@@ -954,7 +956,9 @@ Item {
                 isMarkdown: note.isMarkdown || false,
                 reminderEnabled: note.reminderEnabled || false,
                 reminderAt: note.reminderAt || "",
-                reminderSeen: note.reminderSeen !== false
+                reminderSeen: note.reminderSeen !== false,
+                googleCalendarSynced: note.googleCalendarSynced === true,
+                googleCalendarSyncedAt: note.googleCalendarSyncedAt || ""
             };
         }
         var jsonContent = NotesUtils.serializeIndex(indexData);
@@ -1005,6 +1009,8 @@ Item {
                         reminderEnabled: noteMeta.reminderEnabled || false,
                         reminderAt: noteMeta.reminderAt || "",
                         reminderSeen: noteMeta.reminderSeen !== false,
+                        googleCalendarSynced: noteMeta.googleCalendarSynced === true,
+                        googleCalendarSyncedAt: noteMeta.googleCalendarSyncedAt || "",
                         isCreateButton: false
                     });
                 }
@@ -1034,6 +1040,8 @@ Item {
                     reminderEnabled: false,
                     reminderAt: "",
                     reminderSeen: true,
+                    googleCalendarSynced: false,
+                    googleCalendarSyncedAt: "",
                     isCreateButton: false
                 };
                 allNotes.unshift(newNote);

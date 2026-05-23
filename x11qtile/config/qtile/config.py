@@ -9,6 +9,7 @@ from libqtile.lazy import lazy
 # Import modular configurations
 from keybindings import keys, mouse
 from theme import lay_config, font
+from home_widget import close as close_home_widget, sync as sync_home_widget
 from widgets import init_widgets
 
 # Groups definition (Workspaces 1 to 9 matching Hyprland)
@@ -61,6 +62,37 @@ def autostart():
         env = os.environ.copy()
         env["X11QTILE_CONFIG_DIR"] = config_dir
         subprocess.Popen([autostart_path], env=env)
+
+
+def refresh_home_widget():
+    config_dir = os.environ.get("X11QTILE_CONFIG_DIR", os.path.dirname(__file__))
+    sync_home_widget(qtile, config_dir)
+
+
+@hook.subscribe.startup_complete
+def show_home_widget_on_empty_workspace():
+    refresh_home_widget()
+
+
+@hook.subscribe.setgroup
+def update_home_widget_on_group_change():
+    refresh_home_widget()
+
+
+@hook.subscribe.client_managed
+def hide_home_widget_when_window_opens(_client):
+    refresh_home_widget()
+
+
+@hook.subscribe.client_killed
+def show_home_widget_when_workspace_empties(_client):
+    refresh_home_widget()
+
+
+@hook.subscribe.shutdown
+def shutdown_home_widget():
+    config_dir = os.environ.get("X11QTILE_CONFIG_DIR", os.path.dirname(__file__))
+    close_home_widget(config_dir)
 
 # Miscellaneous settings
 dgroups_key_binder = None

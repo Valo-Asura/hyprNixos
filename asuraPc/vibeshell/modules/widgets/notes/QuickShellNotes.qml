@@ -269,6 +269,10 @@ FloatingWindow {
                                     label: "Reminders"
                                 },
                                 {
+                                    icon: Icons.google,
+                                    label: "Calendar"
+                                },
+                                {
                                     icon: Icons.clip,
                                     label: "Tags"
                                 },
@@ -342,7 +346,9 @@ FloatingWindow {
                                 return notesComponent;
                             if (root.currentSection === 1)
                                 return remindersComponent;
-                            if (root.currentSection === 4)
+                            if (root.currentSection === 2)
+                                return calendarComponent;
+                            if (root.currentSection === 5)
                                 return settingsComponent;
                             return placeholderComponent;
                         }
@@ -535,6 +541,10 @@ FloatingWindow {
                                             {
                                                 label: "Done",
                                                 action: "done"
+                                            },
+                                            {
+                                                label: "Google",
+                                                action: "google"
                                             }
                                         ]
 
@@ -542,6 +552,8 @@ FloatingWindow {
                                             required property var modelData
                                             Layout.preferredHeight: 30
                                             Layout.preferredWidth: 70
+                                            enabled: modelData.action !== "google" || (NotesService.googleCalendarEnabled && !reminderCard.modelData.googleCalendarSynced)
+                                            opacity: enabled ? 1 : 0.48
 
                                             background: Rectangle {
                                                 radius: Styling.radius(-4)
@@ -549,7 +561,7 @@ FloatingWindow {
                                             }
 
                                             contentItem: Text {
-                                                text: modelData.label
+                                                text: modelData.action === "google" && reminderCard.modelData.googleCalendarSynced ? "Synced" : modelData.label
                                                 font.family: Config.theme.font
                                                 font.pixelSize: Styling.fontSize(-2)
                                                 color: Colors.overSurface
@@ -567,9 +579,239 @@ FloatingWindow {
                                                     NotesService.markSeen(reminderCard.modelData.id);
                                                 } else if (modelData.action === "done") {
                                                     NotesService.done(reminderCard.modelData.id);
+                                                } else if (modelData.action === "google") {
+                                                    NotesService.syncReminderToGoogle(reminderCard.modelData.id);
                                                 }
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: calendarComponent
+
+        ColumnLayout {
+            spacing: 14
+
+            Text {
+                text: "Google Calendar"
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(5)
+                font.weight: Font.Bold
+                color: Colors.overSurface
+            }
+
+            StyledRect {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 116
+                variant: NotesService.googleCalendarConnected ? "primary" : "surface"
+                radius: Styling.radius(0)
+                backgroundOpacity: NotesService.googleCalendarConnected ? 0.45 : 0.62
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: 14
+
+                    Text {
+                        text: Icons.google
+                        font.family: Icons.font
+                        font.pixelSize: 32
+                        color: NotesService.googleCalendarConnected ? Colors.overPrimary : Colors.overSurface
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: NotesService.googleCalendarConnected ? "Connected to Google Calendar" : "Connect Google Calendar"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(2)
+                            font.weight: Font.Bold
+                            color: NotesService.googleCalendarConnected ? Colors.overPrimary : Colors.overSurface
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: NotesService.googleCalendarStatus
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-2)
+                            color: NotesService.googleCalendarConnected ? Colors.overPrimary : Colors.outline
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            visible: NotesService.googleCalendarLastSync.length > 0
+                            text: "Last agenda sync: " + NotesService.googleCalendarLastSync
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-3)
+                            color: Colors.outline
+                        }
+                    }
+
+                    Button {
+                        Layout.preferredWidth: 108
+                        Layout.preferredHeight: 34
+
+                        background: StyledRect {
+                            variant: parent.hovered ? "primary" : "surface"
+                            radius: Styling.radius(-4)
+                        }
+
+                        contentItem: Text {
+                            text: "Connect"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: NotesService.connectGoogleCalendar()
+                    }
+
+                    Button {
+                        Layout.preferredWidth: 108
+                        Layout.preferredHeight: 34
+
+                        background: StyledRect {
+                            variant: parent.hovered ? "primary" : "surface"
+                            radius: Styling.radius(-4)
+                        }
+
+                        contentItem: Text {
+                            text: NotesService.googleCalendarSyncing ? "Syncing" : "Refresh"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: NotesService.refreshGoogleCalendar()
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Button {
+                    Layout.preferredWidth: 180
+                    Layout.preferredHeight: 34
+
+                    background: StyledRect {
+                        variant: parent.hovered ? "primary" : "surface"
+                        radius: Styling.radius(-4)
+                    }
+
+                    contentItem: Text {
+                        text: "Sync local reminders"
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: NotesService.syncAllRemindersToGoogle()
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: NotesService.googleCalendarLastPushMessage.length > 0 ? NotesService.googleCalendarLastPushMessage : "Local reminders stay in Vibeshell; synced ones also create Google Calendar popup reminders."
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-2)
+                    color: Colors.outline
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            Text {
+                text: "Upcoming Google Calendar Events"
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(2)
+                font.weight: Font.Bold
+                color: Colors.overSurface
+            }
+
+            Flickable {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentHeight: googleEventList.height
+                clip: true
+
+                ColumnLayout {
+                    id: googleEventList
+                    width: parent.width
+                    spacing: 10
+
+                    Text {
+                        Layout.fillWidth: true
+                        visible: NotesService.googleCalendarEvents.length === 0
+                        text: NotesService.googleCalendarConnected ? "No Google Calendar events found for the next 7 days." : "Connect Google Calendar to load live events."
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        color: Colors.outline
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Repeater {
+                        model: NotesService.googleCalendarEvents
+
+                        StyledRect {
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 74
+                            variant: "surface"
+                            radius: Styling.radius(0)
+                            backgroundOpacity: 0.54
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 12
+
+                                Text {
+                                    text: Icons.google
+                                    font.family: Icons.font
+                                    font.pixelSize: 19
+                                    color: Colors.primary
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData.title || modelData.raw || "Untitled event"
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Styling.fontSize(1)
+                                        font.weight: Font.Bold
+                                        color: Colors.overSurface
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: [modelData.date, modelData.start, modelData.end].filter(v => v && String(v).length > 0).join(" · ")
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Styling.fontSize(-2)
+                                        color: Colors.outline
+                                        elide: Text.ElideRight
                                     }
                                 }
                             }
@@ -613,6 +855,84 @@ FloatingWindow {
                 description: "Pulse the top-bar notes icon while unseen reminders exist"
                 checked: NotesService.glowWhenUnseen
                 onToggled: checked => NotesService.setGlowWhenUnseen(checked)
+            }
+
+            SettingToggle {
+                label: "Google Calendar Sync"
+                description: "Enable live Google Calendar agenda and reminder export through gcalcli"
+                checked: NotesService.googleCalendarEnabled
+                onToggled: checked => NotesService.setGoogleCalendarEnabled(checked)
+            }
+
+            SettingToggle {
+                label: "Auto Sync New Reminders"
+                description: "Create a Google Calendar popup reminder when a new Vibeshell reminder is made"
+                checked: NotesService.googleCalendarSyncNewReminders
+                onToggled: checked => NotesService.setGoogleCalendarSyncNewReminders(checked)
+            }
+
+            StyledRect {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 82
+                variant: "surface"
+                radius: Styling.radius(0)
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 12
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Text {
+                            text: "Google Calendar Name"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(0)
+                            color: Colors.overSurface
+                        }
+
+                        TextField {
+                            Layout.fillWidth: true
+                            text: NotesService.googleCalendarName
+                            placeholderText: "primary"
+                            font.family: Config.theme.font
+                            color: Colors.overSurface
+                            selectionColor: Colors.primary
+                            selectedTextColor: Colors.overPrimary
+                            onEditingFinished: NotesService.setGoogleCalendarName(text)
+
+                            background: Rectangle {
+                                radius: Styling.radius(-4)
+                                color: Qt.rgba(Colors.background.r, Colors.background.g, Colors.background.b, 0.38)
+                                border.width: parent.activeFocus ? 1 : 0
+                                border.color: Colors.primary
+                            }
+                        }
+                    }
+
+                    Button {
+                        Layout.preferredWidth: 112
+                        Layout.preferredHeight: 34
+
+                        background: StyledRect {
+                            variant: parent.hovered ? "primary" : "surface"
+                            radius: Styling.radius(-4)
+                        }
+
+                        contentItem: Text {
+                            text: "Connect"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: parent.hovered ? Colors.overPrimary : Colors.overSurface
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: NotesService.connectGoogleCalendar()
+                    }
+                }
             }
 
             StyledRect {

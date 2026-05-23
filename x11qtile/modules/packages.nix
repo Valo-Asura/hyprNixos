@@ -8,6 +8,7 @@
     xsetroot # solid-color fallback wallpaper
     xinput # input debugging for the X11 session
     xmodmap # ensure SUPER maps to mod4 for Qtile binds
+    eww # empty-workspace desktop dashboard for Qtile
     picom # X11 compositor for transparency and shadows
     rofi # X11 application launcher and powermenu
     feh # X11 wallpaper setter

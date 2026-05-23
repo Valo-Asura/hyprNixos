@@ -16,6 +16,15 @@ Singleton {
     property bool persistentStorage: true
     property bool remindOnLogin: true
     property bool glowWhenUnseen: true
+    property bool googleCalendarEnabled: false
+    property bool googleCalendarConnected: false
+    property bool googleCalendarSyncNewReminders: false
+    property bool googleCalendarSyncing: false
+    property string googleCalendarName: "primary"
+    property string googleCalendarStatus: "Not connected"
+    property string googleCalendarLastSync: ""
+    property string googleCalendarLastPushMessage: ""
+    property var googleCalendarEvents: []
     property var reminders: []
     property var dueReminders: []
     property int unseenCount: 0
@@ -26,11 +35,12 @@ Singleton {
 
     signal reminderPulse
     signal noteCreated(string noteId)
+    signal googleCalendarChanged
 
     Process {
         id: ensureFilesProcess
         running: true
-        command: ["bash", "-c", "mkdir -p '" + root.notesDir + "/notes' && if [ ! -s '" + root.indexPath + "' ]; then printf '{\"order\":[],\"notes\":{}}\\n' > '" + root.indexPath + "'; fi && if [ ! -s '" + root.settingsPath + "' ]; then printf '{\"persistentStorage\":true,\"remindOnLogin\":true,\"glowWhenUnseen\":true}\\n' > '" + root.settingsPath + "'; fi"]
+        command: ["bash", "-c", "mkdir -p '" + root.notesDir + "/notes' && if [ ! -s '" + root.indexPath + "' ]; then printf '{\"order\":[],\"notes\":{}}\\n' > '" + root.indexPath + "'; fi && if [ ! -s '" + root.settingsPath + "' ]; then printf '{\"persistentStorage\":true,\"remindOnLogin\":true,\"glowWhenUnseen\":true,\"googleCalendarEnabled\":false,\"googleCalendarName\":\"primary\",\"googleCalendarSyncNewReminders\":false}\\n' > '" + root.settingsPath + "'; fi"]
         onExited: {
             root.fileReady = true;
             settingsFile.reload();
@@ -74,6 +84,59 @@ Singleton {
     }
 
     Process {
+        id: googleStatusProcess
+        running: false
+        command: []
+        stdout: StdioCollector {}
+        stderr: StdioCollector {}
+
+        onExited: exitCode => {
+            root.googleCalendarSyncing = false;
+            root.applyGoogleStatusOutput(googleStatusProcess.stdout.text, exitCode);
+        }
+    }
+
+    Process {
+        id: googleAgendaProcess
+        running: false
+        command: []
+        stdout: StdioCollector {}
+        stderr: StdioCollector {}
+
+        onExited: exitCode => {
+            root.googleCalendarSyncing = false;
+            root.applyGoogleAgendaOutput(googleAgendaProcess.stdout.text, exitCode);
+        }
+    }
+
+    Process {
+        id: googleConnectProcess
+        running: false
+        command: []
+        stdout: StdioCollector {}
+        stderr: StdioCollector {}
+
+        onExited: exitCode => {
+            root.applyGoogleConnectOutput(googleConnectProcess.stdout.text, exitCode);
+        }
+    }
+
+    Process {
+        id: googlePushProcess
+        running: false
+        command: []
+        property string noteId: ""
+        stdout: StdioCollector {}
+        stderr: StdioCollector {}
+
+        onExited: exitCode => {
+            root.googleCalendarSyncing = false;
+            root.applyGooglePushOutput(googlePushProcess.stdout.text, exitCode, googlePushProcess.noteId);
+            googlePushProcess.noteId = "";
+        }
+    }
+
+    Process {
         id: createNoteProcess
         running: false
         command: []
@@ -85,6 +148,8 @@ Singleton {
             root.reload();
             if (exitCode === 0 && noteId)
                 root.noteCreated(noteId);
+            if (exitCode === 0 && noteId && root.googleCalendarEnabled && root.googleCalendarSyncNewReminders)
+                root.syncReminderToGoogle(noteId);
             noteId = "";
         }
     }
@@ -103,10 +168,18 @@ Singleton {
             persistentStorage = data.persistentStorage !== false;
             remindOnLogin = data.remindOnLogin !== false;
             glowWhenUnseen = data.glowWhenUnseen !== false;
+            googleCalendarEnabled = data.googleCalendarEnabled === true;
+            googleCalendarName = data.googleCalendarName && String(data.googleCalendarName).length > 0 ? String(data.googleCalendarName) : "primary";
+            googleCalendarSyncNewReminders = data.googleCalendarSyncNewReminders === true;
+            if (googleCalendarEnabled)
+                refreshGoogleCalendar();
         } catch (e) {
             persistentStorage = true;
             remindOnLogin = true;
             glowWhenUnseen = true;
+            googleCalendarEnabled = false;
+            googleCalendarName = "primary";
+            googleCalendarSyncNewReminders = false;
         }
     }
 
@@ -116,7 +189,10 @@ Singleton {
         settingsFile.setText(JSON.stringify({
             persistentStorage: persistentStorage,
             remindOnLogin: remindOnLogin,
-            glowWhenUnseen: glowWhenUnseen
+            glowWhenUnseen: glowWhenUnseen,
+            googleCalendarEnabled: googleCalendarEnabled,
+            googleCalendarName: googleCalendarName,
+            googleCalendarSyncNewReminders: googleCalendarSyncNewReminders
         }, null, 2));
     }
 
@@ -133,6 +209,29 @@ Singleton {
 
     function setGlowWhenUnseen(enabled) {
         glowWhenUnseen = enabled;
+        saveSettings();
+    }
+
+    function setGoogleCalendarEnabled(enabled) {
+        googleCalendarEnabled = enabled;
+        saveSettings();
+        if (enabled)
+            refreshGoogleCalendar();
+        else {
+            googleCalendarConnected = false;
+            googleCalendarStatus = "Google Calendar sync disabled";
+            googleCalendarEvents = [];
+            googleCalendarChanged();
+        }
+    }
+
+    function setGoogleCalendarName(name) {
+        googleCalendarName = name && String(name).trim().length > 0 ? String(name).trim() : "primary";
+        saveSettings();
+    }
+
+    function setGoogleCalendarSyncNewReminders(enabled) {
+        googleCalendarSyncNewReminders = enabled;
         saveSettings();
     }
 
@@ -185,6 +284,8 @@ Singleton {
                 title: note.title || "Untitled Note",
                 reminderAt: note.reminderAt,
                 reminderSeen: note.reminderSeen === true,
+                googleCalendarSynced: note.googleCalendarSynced === true,
+                googleCalendarSyncedAt: note.googleCalendarSyncedAt || "",
                 due: reminderTime <= now
             };
 
@@ -220,6 +321,87 @@ Singleton {
         return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     }
 
+    function googleScriptPath() {
+        return decodeURIComponent(Qt.resolvedUrl("../../scripts/google_calendar.py").toString().replace("file://", ""));
+    }
+
+    function parseGoogleOutput(raw, fallbackMessage) {
+        try {
+            const text = raw && raw.trim().length > 0 ? raw.trim().split("\n").pop() : "";
+            return text.length > 0 ? JSON.parse(text) : {
+                ok: false,
+                connected: false,
+                message: fallbackMessage
+            };
+        } catch (e) {
+            return {
+                ok: false,
+                connected: false,
+                message: fallbackMessage + ": " + e
+            };
+        }
+    }
+
+    function refreshGoogleCalendar() {
+        if (!googleCalendarEnabled || googleStatusProcess.running)
+            return;
+        googleCalendarSyncing = true;
+        googleStatusProcess.command = ["python3", googleScriptPath(), "status"];
+        googleStatusProcess.running = true;
+    }
+
+    function refreshGoogleAgenda() {
+        if (!googleCalendarEnabled || googleAgendaProcess.running)
+            return;
+        googleCalendarSyncing = true;
+        googleAgendaProcess.command = ["python3", googleScriptPath(), "agenda", "--start", "now", "--end", "7d"];
+        googleAgendaProcess.running = true;
+    }
+
+    function connectGoogleCalendar() {
+        if (googleConnectProcess.running)
+            return;
+        googleCalendarStatus = "Opening Google Calendar OAuth flow";
+        googleConnectProcess.command = ["python3", googleScriptPath(), "connect"];
+        googleConnectProcess.running = true;
+    }
+
+    function applyGoogleStatusOutput(raw, exitCode) {
+        const data = parseGoogleOutput(raw, "Could not check Google Calendar");
+        googleCalendarConnected = data.connected === true;
+        googleCalendarStatus = data.message || (googleCalendarConnected ? "Connected" : "Not connected");
+        googleCalendarChanged();
+        if (googleCalendarConnected)
+            refreshGoogleAgenda();
+    }
+
+    function applyGoogleAgendaOutput(raw, exitCode) {
+        const data = parseGoogleOutput(raw, "Could not load Google Calendar agenda");
+        googleCalendarConnected = data.connected === true;
+        googleCalendarStatus = data.message || (googleCalendarConnected ? "Agenda loaded" : "Not connected");
+        googleCalendarEvents = data.events || [];
+        googleCalendarLastSync = new Date().toLocaleString();
+        googleCalendarChanged();
+    }
+
+    function applyGoogleConnectOutput(raw, exitCode) {
+        const data = parseGoogleOutput(raw, "Could not start Google Calendar connection");
+        googleCalendarStatus = data.message || "Google Calendar connection requested";
+        googleCalendarChanged();
+    }
+
+    function applyGooglePushOutput(raw, exitCode, noteId) {
+        const data = parseGoogleOutput(raw, "Could not create Google reminder");
+        googleCalendarConnected = data.connected === true || googleCalendarConnected;
+        googleCalendarLastPushMessage = data.message || "";
+        googleCalendarStatus = googleCalendarLastPushMessage;
+        if (data.ok === true && noteId)
+            markGoogleSynced(noteId);
+        googleCalendarChanged();
+        if (data.ok === true)
+            refreshGoogleAgenda();
+    }
+
     function newNoteId() {
         return "note-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8);
     }
@@ -236,7 +418,7 @@ Singleton {
         const reminderEnabled = reminder.length > 0 ? "true" : "false";
 
         createNoteProcess.noteId = noteId;
-        createNoteProcess.command = ["bash", "-lc", ["set -euo pipefail", "notes_dir=" + shellQuote(notesDir), "index_path=" + shellQuote(indexPath), "note_id=" + shellQuote(noteId), "title=" + shellQuote(cleanTitle), "created=" + shellQuote(now), "reminder_at=" + shellQuote(reminder), "reminder_enabled=" + shellQuote(reminderEnabled), "mkdir -p \"$notes_dir/notes\"", "printf '%s' " + shellQuote(content) + " > \"$notes_dir/notes/$note_id.html\"", "if [ ! -s \"$index_path\" ]; then printf '%s\\n' '{\"order\":[],\"notes\":{}}' > \"$index_path\"; fi", "tmp=\"$(mktemp)\"", "jq --arg id \"$note_id\" --arg title \"$title\" --arg created \"$created\" --arg reminder \"$reminder_at\" --argjson enabled \"$reminder_enabled\" '", "  .order = ([ $id ] + ((.order // []) | map(select(. != $id)))) |", "  .notes[$id] = {", "    title: $title,", "    created: $created,", "    modified: $created,", "    isMarkdown: false,", "    reminderEnabled: $enabled,", "    reminderAt: $reminder,", "    reminderSeen: false", "  }", "' \"$index_path\" > \"$tmp\"", "mv \"$tmp\" \"$index_path\""].join("\n")];
+        createNoteProcess.command = ["bash", "-lc", ["set -euo pipefail", "notes_dir=" + shellQuote(notesDir), "index_path=" + shellQuote(indexPath), "note_id=" + shellQuote(noteId), "title=" + shellQuote(cleanTitle), "created=" + shellQuote(now), "reminder_at=" + shellQuote(reminder), "reminder_enabled=" + shellQuote(reminderEnabled), "mkdir -p \"$notes_dir/notes\"", "printf '%s' " + shellQuote(content) + " > \"$notes_dir/notes/$note_id.html\"", "if [ ! -s \"$index_path\" ]; then printf '%s\\n' '{\"order\":[],\"notes\":{}}' > \"$index_path\"; fi", "tmp=\"$(mktemp)\"", "jq --arg id \"$note_id\" --arg title \"$title\" --arg created \"$created\" --arg reminder \"$reminder_at\" --argjson enabled \"$reminder_enabled\" '", "  .order = ([ $id ] + ((.order // []) | map(select(. != $id)))) |", "  .notes[$id] = {", "    title: $title,", "    created: $created,", "    modified: $created,", "    isMarkdown: false,", "    reminderEnabled: $enabled,", "    reminderAt: $reminder,", "    reminderSeen: false,", "    googleCalendarSynced: false,", "    googleCalendarSyncedAt: \"\"", "  }", "' \"$index_path\" > \"$tmp\"", "mv \"$tmp\" \"$index_path\""].join("\n")];
         createNoteProcess.running = true;
         return noteId;
     }
@@ -266,6 +448,67 @@ Singleton {
 
         notifyProcess.command = ["bash", "-lc", "command -v notify-send >/dev/null && notify-send " + shellQuote(summary) + " " + shellQuote(body) + " || true"];
         notifyProcess.running = true;
+    }
+
+    function syncReminderToGoogle(noteId) {
+        if (!fileReady || !googleCalendarEnabled || googlePushProcess.running || !noteId)
+            return;
+
+        const data = parseIndex();
+        const note = data.notes[noteId];
+        if (!note || note.reminderEnabled !== true || !note.reminderAt) {
+            googleCalendarLastPushMessage = "Selected note has no reminder to sync";
+            googleCalendarChanged();
+            return;
+        }
+
+        googleCalendarSyncing = true;
+        googlePushProcess.noteId = noteId;
+        googlePushProcess.command = [
+            "python3",
+            googleScriptPath(),
+            "add-reminder",
+            "--calendar",
+            googleCalendarName || "primary",
+            "--title",
+            note.title || "Vibeshell reminder",
+            "--when",
+            note.reminderAt,
+            "--description",
+            "Created from Vibeshell Notes: " + (note.title || "Untitled Note")
+        ];
+        googlePushProcess.running = true;
+    }
+
+    function syncAllRemindersToGoogle() {
+        if (!googleCalendarEnabled || googlePushProcess.running)
+            return;
+
+        const data = parseIndex();
+        for (let i = 0; i < data.order.length; i++) {
+            const id = data.order[i];
+            const note = data.notes[id];
+            if (note && note.reminderEnabled === true && note.reminderAt && note.googleCalendarSynced !== true) {
+                syncReminderToGoogle(id);
+                return;
+            }
+        }
+
+        googleCalendarLastPushMessage = "All local reminders are already synced";
+        googleCalendarChanged();
+    }
+
+    function markGoogleSynced(noteId) {
+        if (!fileReady || !noteId)
+            return;
+
+        const data = parseIndex();
+        if (data.notes[noteId]) {
+            data.notes[noteId].googleCalendarSynced = true;
+            data.notes[noteId].googleCalendarSyncedAt = new Date().toISOString();
+            indexFile.setText(JSON.stringify(data, null, 2));
+            indexFile.reload();
+        }
     }
 
     function markAllSeen() {
@@ -317,6 +560,8 @@ Singleton {
             data.notes[noteId].reminderEnabled = true;
             data.notes[noteId].reminderAt = new Date(Date.now() + delay * 60000).toISOString();
             data.notes[noteId].reminderSeen = false;
+            data.notes[noteId].googleCalendarSynced = false;
+            data.notes[noteId].googleCalendarSyncedAt = "";
             indexFile.setText(JSON.stringify(data, null, 2));
             indexFile.reload();
         }

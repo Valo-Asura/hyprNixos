@@ -6,6 +6,7 @@ with pkgs;
   brightnessctl
   ddcutil
   fontconfig
+  gcalcli
   glib
   grim
   imagemagick

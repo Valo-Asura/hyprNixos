@@ -26,6 +26,8 @@ x11qtile/
 - Qtile starts with `qtile start -b x11 -c ~/.config/x11qtile/qtile/config.py`.
 - Home Manager publishes only `~/.config/x11qtile/*`.
 - No files are read from `~/Downloads/Cozytile-main` at runtime.
+- Empty workspaces show a small `eww` desktop dashboard inspired by the referenced lock/home screen style.
+- The dashboard closes automatically when a normal app window opens and returns when the current workspace is empty.
 
 ## Keybindings
 
