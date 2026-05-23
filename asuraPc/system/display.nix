@@ -5,8 +5,8 @@
   services.xserver = {
     enable = true;
     xkb = {
-      layout = "in";
-      variant = "eng";
+      layout = "us";
+      options = "caps:escape";
     };
     videoDrivers = [ "nvidia" ];
   };

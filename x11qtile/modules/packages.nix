@@ -6,6 +6,8 @@
   environment.systemPackages = with pkgs; [
     xinit # tuigreet X11 session wrapper uses startx
     xsetroot # solid-color fallback wallpaper
+    xinput # input debugging for the X11 session
+    xmodmap # ensure SUPER maps to mod4 for Qtile binds
     picom # X11 compositor for transparency and shadows
     rofi # X11 application launcher and powermenu
     feh # X11 wallpaper setter

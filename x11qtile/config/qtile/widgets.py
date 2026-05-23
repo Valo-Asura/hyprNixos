@@ -1,17 +1,24 @@
 # widgets.py
 # Status bar widgets for Cozytile
 import os
+import subprocess
 from libqtile import widget
-from libqtile.lazy import lazy
 
 def get_asset(name):
     return os.path.expanduser(f"~/.config/x11qtile/qtile/Assets/{name}")
 
-def search(qtile):
-    qtile.spawn("rofi -show drun -theme " + os.path.expanduser("~/.config/x11qtile/rofi/settings/launcher/cozy.rasi"))
+def search():
+    subprocess.Popen(
+        "rofi -show drun -theme " + os.path.expanduser("~/.config/x11qtile/rofi/settings/launcher/cozy.rasi"),
+        shell=True,
+        start_new_session=True,
+    )
 
-def power(qtile):
-    qtile.spawn(os.path.expanduser("~/.config/x11qtile/rofi/scripts/power"))
+def power():
+    subprocess.Popen(
+        [os.path.expanduser("~/.config/x11qtile/rofi/scripts/power")],
+        start_new_session=True,
+    )
 
 def init_widgets():
     return [

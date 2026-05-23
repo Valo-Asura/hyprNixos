@@ -11,10 +11,7 @@ let
   qtileConfig = ../config/qtile;
   xorgConfig = pkgs.writeText "x11qtile-xorg.conf" config.services.xserver.config;
   xorgModulePath = lib.concatStringsSep "," (
-    [ "${pkgs.xorg-server}/lib/xorg/modules" ]
-    ++ lib.concatMap (
-      driver: map (module: "${module}/lib/xorg/modules") driver.modules
-    ) config.services.xserver.drivers
+    map (module: "${module}/lib/xorg/modules") config.services.xserver.modules
   );
 
   xsessionWrapper = pkgs.writeShellScriptBin "start-x11qtile-xserver" ''
