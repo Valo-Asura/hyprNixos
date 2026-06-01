@@ -32,6 +32,11 @@ x11qtile/
 - Home Manager publishes only `~/.config/x11qtile/*`.
 - **Compositor**: Picom is configured with GLX hardware acceleration and VSync to run cleanly at 165Hz (Nvidia GTX 1070).
 - **MIME Config**: System default applications are updated to Brave Browser for web (`.html`/schemes) and PDF files.
+- **System Packages Added**:
+  - **Helium Browser**: Privacy-focused browser installed via community flake.
+  - **Zed Editor**: Modern GPU-accelerated code editor (`zed-editor`).
+  - **Vim**: Pre-configured wrapped Vim custom package (`vimWrapped`) with customized `.vimrc` settings.
+  - **Brave**: Removed from system-wide package list; now managed user-wide via Home Manager.
 - **Low Memory Target**: Whole-system idle memory usage runs at **< 400MB RAM**:
   - Eww & Fabric bars are removed in favor of a native Qtile status bar (`widgets.py`).
   - Bar widgets parse memory and CPU metrics directly via `/proc` filesystem files (`/proc/loadavg` and `/proc/meminfo`) to avoid shell execution overhead.

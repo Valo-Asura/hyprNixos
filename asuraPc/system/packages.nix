@@ -120,6 +120,18 @@ let
       binary:  /run/current-system/sw/bin/mysql
     EOF
   '';
+
+  vimWrapped = pkgs.vim-full.customize {
+    name = "vim";
+    vimrcConfig.customRC = ''
+      set number
+      set relativenumber
+      set expandtab
+      set shiftwidth=2
+      set tabstop=2
+      syntax on
+    '';
+  };
 in
 {
   environment.systemPackages =
@@ -220,6 +232,9 @@ in
       vscode
       antigravityWithPlaywright
       (pkgs.callPackage ./cursor.nix { })
+      zed-editor
+      vimWrapped
+      inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
 
       # Desktop apps
       whatsappWeb

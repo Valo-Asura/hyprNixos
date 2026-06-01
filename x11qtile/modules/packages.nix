@@ -25,7 +25,6 @@
     fastfetch
     playerctl
     kitty
-    brave
     thunar
     telegram-desktop
   ];
