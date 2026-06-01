@@ -35,7 +35,7 @@ in
       (mkBind "${superKey} + T" (exec "${pkgs.kitty}/bin/kitty") null)
       (mkBind "${superKey} + I" (exec "code") null)
       (mkBind "${superKey} + E" (exec "${pkgs.telegram-desktop}/bin/telegram-desktop") null)
-      (mkBind "${superKey} + W" (exec "${pkgs.wofi}/bin/wofi") null)
+      (mkBind "${superKey} + A" (exec "${pkgs.wofi}/bin/wofi") null)
       (mkBind "${ctrlKey} + L" (exec "/run/current-system/sw/bin/vibeshell-safe-lock") null)
       (mkBind "${superKey} + L" (exec "/run/current-system/sw/bin/vibeshell-safe-lock") null)
       (mkBind "${superKey} + V" (exec "vibeshell run dashboard-clipboard") null)

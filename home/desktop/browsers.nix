@@ -79,20 +79,22 @@
 
   xdg.mimeApps = {
     defaultApplications = {
-      "application/xhtml+xml" = "google-chrome.desktop";
-      "text/html" = "google-chrome.desktop";
-      "x-scheme-handler/about" = "google-chrome.desktop";
-      "x-scheme-handler/http" = "google-chrome.desktop";
-      "x-scheme-handler/https" = "google-chrome.desktop";
-      "x-scheme-handler/unknown" = "google-chrome.desktop";
+      "application/xhtml+xml" = "brave-browser.desktop";
+      "text/html" = "brave-browser.desktop";
+      "x-scheme-handler/about" = "brave-browser.desktop";
+      "x-scheme-handler/http" = "brave-browser.desktop";
+      "x-scheme-handler/https" = "brave-browser.desktop";
+      "x-scheme-handler/unknown" = "brave-browser.desktop";
+      "application/pdf" = "brave-browser.desktop";
     };
     associations.added = {
-      "application/xhtml+xml" = "google-chrome.desktop";
-      "text/html" = "google-chrome.desktop";
-      "x-scheme-handler/about" = "google-chrome.desktop";
-      "x-scheme-handler/http" = "google-chrome.desktop";
-      "x-scheme-handler/https" = "google-chrome.desktop";
-      "x-scheme-handler/unknown" = "google-chrome.desktop";
+      "application/xhtml+xml" = "brave-browser.desktop";
+      "text/html" = "brave-browser.desktop";
+      "x-scheme-handler/about" = "brave-browser.desktop";
+      "x-scheme-handler/http" = "brave-browser.desktop";
+      "x-scheme-handler/https" = "brave-browser.desktop";
+      "x-scheme-handler/unknown" = "brave-browser.desktop";
+      "application/pdf" = "brave-browser.desktop";
     };
   };
 

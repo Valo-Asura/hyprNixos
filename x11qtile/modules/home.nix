@@ -11,7 +11,6 @@
   # Home Manager publishes only the isolated X11 Qtile namespace.
   home-manager.users.asura = {
     xdg.configFile."x11qtile/qtile".source = ../config/qtile;
-    xdg.configFile."x11qtile/eww".source = ../config/eww;
     xdg.configFile."x11qtile/rofi".source = ../config/rofi;
     xdg.configFile."x11qtile/picom.conf".source = ../config/picom.conf;
     xdg.configFile."x11qtile/wallpapers".source = ../config/wallpapers;

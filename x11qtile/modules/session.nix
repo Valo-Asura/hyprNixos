@@ -79,6 +79,21 @@ let
     export XDG_CURRENT_DESKTOP=Qtile
     export XDG_SESSION_DESKTOP=Qtile
     export XDG_CONFIG_HOME="''${XDG_CONFIG_HOME:-$HOME/.config}"
+    export GDK_BACKEND=x11
+    export QT_QPA_PLATFORM=xcb
+    export NIXOS_OZONE_WL=0
+
+    if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+      dbus-update-activation-environment --systemd \
+        DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
+        GDK_BACKEND QT_QPA_PLATFORM NIXOS_OZONE_WL
+    fi
+
+    if command -v systemctl >/dev/null 2>&1; then
+      systemctl --user import-environment \
+        DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
+        GDK_BACKEND QT_QPA_PLATFORM NIXOS_OZONE_WL || true
+    fi
 
     user_config="$HOME/.config/x11qtile/qtile/config.py"
     store_config="${qtileConfig}/config.py"

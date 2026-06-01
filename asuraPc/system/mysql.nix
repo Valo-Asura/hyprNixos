@@ -16,6 +16,15 @@
         bind-address = "127.0.0.1";
         socket = "/run/mysqld/mysqld.sock";
         mysqlx = 0;
+
+        # Low-memory optimizations for local development
+        performance_schema = 0;
+        innodb_buffer_pool_size = "16M";
+        innodb_log_buffer_size = "2M";
+        max_connections = 10;
+        key_buffer_size = "8M";
+        thread_cache_size = 0;
+        host_cache_size = 0;
       };
     };
 

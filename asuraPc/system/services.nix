@@ -99,14 +99,26 @@ in
       # pkgs.mongodb compiles from source (30-60min, OOM kills the desktop).
       package = pkgs.mongodb-ce;
       mongoshPackage = pkgs.mongosh;
+      extraConfig = ''
+        storage:
+          wiredTiger:
+            engineConfig:
+              cacheSizeGB: 0.25
+      '';
     };
     printing.enable = false; # no printer — removes CUPS daemon
   };
 
   xdg.portal = {
     enable = true;
+    extraPortals = [
+      pkgs.xdg-desktop-portal-gtk
+    ];
     config.common.default = [
       "hyprland"
+      "gtk"
+    ];
+    config.qtile.default = [
       "gtk"
     ];
   };

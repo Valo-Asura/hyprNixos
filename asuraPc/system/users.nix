@@ -19,6 +19,8 @@
         "ydotool"
         "docker"
         "adbusers"
+        "libvirtd"
+        "kvm"
       ];
     };
     groups.asura = { };

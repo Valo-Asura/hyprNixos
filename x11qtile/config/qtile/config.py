@@ -2,18 +2,16 @@
 # Main configuration file for Qtile under X11
 import os
 import subprocess
-from libqtile import bar, hook, layout, qtile
+from libqtile import bar, hook, layout
 from libqtile.config import Screen, Group, Key, Match, Drag, Click
 from libqtile.lazy import lazy
 
 # Import modular configurations
 from keybindings import keys, mouse
 from theme import lay_config, font
-from home_widget import close as close_home_widget, sync as sync_home_widget
-from widgets import init_widgets
 
 # Groups definition (Workspaces 1 to 9 matching Hyprland)
-groups = [Group(f"{i + 1}", label="") for i in range(9)]
+groups = [Group(f"{i + 1}", label="󰊠") for i in range(9)]
 
 # Bind keys to group actions
 for i in groups:
@@ -26,8 +24,8 @@ for i in groups:
 
 # Layouts definition
 layouts = [
-    layout.Bsp(**lay_config, fair=False, border_on_single=True),
-    layout.Columns(**lay_config, border_on_single=True, num_columns=2, split=False),
+    layout.Bsp(**lay_config, fair=False, border_on_single=False),
+    layout.Columns(**lay_config, border_on_single=False, num_columns=2, split=False),
     layout.Floating(**lay_config),
     layout.Max(**lay_config),
 ]
@@ -40,15 +38,16 @@ widget_defaults = dict(
 )
 extension_defaults = [widget_defaults.copy()]
 
-# Screens setup (single monitor bar mirroring Cozytile)
+from widgets import init_widgets
+
 screens = [
     Screen(
         top=bar.Bar(
             init_widgets(),
-            30,
-            border_color="#282738",
+            34,
+            border_color="#11111b",
             border_width=[0, 0, 0, 0],
-            margin=[15, 60, 6, 60],
+            margin=[8, 8, 0, 8],
         ),
     ),
 ]
@@ -62,37 +61,6 @@ def autostart():
         env = os.environ.copy()
         env["X11QTILE_CONFIG_DIR"] = config_dir
         subprocess.Popen([autostart_path], env=env)
-
-
-def refresh_home_widget():
-    config_dir = os.environ.get("X11QTILE_CONFIG_DIR", os.path.dirname(__file__))
-    sync_home_widget(qtile, config_dir)
-
-
-@hook.subscribe.startup_complete
-def show_home_widget_on_empty_workspace():
-    refresh_home_widget()
-
-
-@hook.subscribe.setgroup
-def update_home_widget_on_group_change():
-    refresh_home_widget()
-
-
-@hook.subscribe.client_managed
-def hide_home_widget_when_window_opens(_client):
-    refresh_home_widget()
-
-
-@hook.subscribe.client_killed
-def show_home_widget_when_workspace_empties(_client):
-    refresh_home_widget()
-
-
-@hook.subscribe.shutdown
-def shutdown_home_widget():
-    config_dir = os.environ.get("X11QTILE_CONFIG_DIR", os.path.dirname(__file__))
-    close_home_widget(config_dir)
 
 # Miscellaneous settings
 dgroups_key_binder = None

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export PATH="/run/current-system/sw/bin:/etc/profiles/per-user/${USER:-}/bin:$PATH"
+export PATH="/run/wrappers/bin:/run/current-system/sw/bin:/etc/profiles/per-user/${USER:-}/bin:$PATH"
 
 # Weather fetching script for Vibeshell
 # Usage: weather.sh [location]

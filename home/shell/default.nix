@@ -21,6 +21,7 @@
   ];
 
   home.sessionPath = [
+    "/run/wrappers/bin"
     "$HOME/.local/bin"
     "$HOME/.cargo/bin"
     "$HOME/go/bin"
@@ -67,6 +68,9 @@
     shellInit = ''
       # Suppress default greeting
       set -U fish_greeting
+
+      # Keep setuid wrappers before unwrapped system binaries.
+      fish_add_path --global --move --prepend /run/wrappers/bin
 
       # Direnv hook
       direnv hook fish | source
@@ -130,9 +134,9 @@
       temp = "sensors | grep -E '(Core|Package)' | head -4";
 
       # ── NixOS ──────────────────────────────────────────────────────────────
-      rebuild = "sudo nixos-rebuild switch --flake .";
+      rebuild = "/run/wrappers/bin/sudo nixos-rebuild switch --flake .";
       update = "nix flake update";
-      clean = "sudo nix-collect-garbage -d";
+      clean = "/run/wrappers/bin/sudo nix-collect-garbage -d";
       clean-store = "nix-storage-clean";
 
       # ── Terminal / misc ────────────────────────────────────────────────────
