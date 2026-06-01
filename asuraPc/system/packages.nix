@@ -132,6 +132,8 @@ let
       syntax on
     '';
   };
+
+  hyprmod = pkgs.callPackage ./hyprmod.nix { };
 in
 {
   environment.systemPackages =
@@ -235,6 +237,11 @@ in
       zed-editor
       vimWrapped
       inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+      # Hyprland Tools
+      hyprmod
+      hyprsysteminfo
+      hyprshutdown
 
       # Desktop apps
       whatsappWeb

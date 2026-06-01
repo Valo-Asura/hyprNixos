@@ -27,7 +27,7 @@ in
   wayland.windowManager.hyprland.settings = {
     bind = [
       (mkBind "${superKey} + Q" "hl.dsp.window.close()" null)
-      (mkBind "${superKey} + H" "hl.dsp.exit()" null)
+      (mkBind "${superKey} + H" (exec "hyprshutdown") null)
       (mkBind "${superKey} + F" (exec "${pkgs.thunar}/bin/thunar") null)
       (mkBind "${superKey} + G" "hl.dsp.window.float({ action = \"toggle\" })" null)
       (mkBind "${superKey} + J" "hl.dsp.layout(\"togglesplit\")" null)
