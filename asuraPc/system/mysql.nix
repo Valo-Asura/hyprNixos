@@ -1,7 +1,8 @@
 # Local MySQL 8.4 server and desktop tooling.
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
+  systemd.services.mysql.wantedBy = lib.mkForce [ ];
   services.mysql = {
     enable = true;
     package = pkgs.mysql84;

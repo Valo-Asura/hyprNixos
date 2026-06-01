@@ -1,5 +1,5 @@
 # System Services Configuration
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, lib, ... }:
 
 let
   configFile = "/etc/fan-boost/config";
@@ -75,6 +75,8 @@ let
   '';
 in
 {
+  systemd.services.mongodb.wantedBy = lib.mkForce [ ];
+
   services = {
     blueman = {
       enable = true;
