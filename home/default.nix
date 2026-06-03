@@ -23,7 +23,7 @@
     setSessionVariables = true;
   };
 
-  # Vibeshell owns the network tray/control surface. Keep nm-connection-editor
+  # Noctalia owns the network tray/control surface. Keep nm-connection-editor
   # available, but prevent nm-applet's legacy tray autostart warnings.
   xdg.configFile."autostart/nm-applet.desktop".text = ''
     [Desktop Entry]

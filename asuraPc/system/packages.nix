@@ -169,7 +169,7 @@ in
       tuigreet # removed swaylock (using hyprlock)
       xdg-user-dirs # xdg-desktop-portals in services.nix
 
-      # Vibeshell required packages (system-level integration; core deps come from Vibeshell package)
+      # Desktop shell support and rollback helpers.
       (writeShellScriptBin "internet-unblock" "")
       dconf
       gtk3

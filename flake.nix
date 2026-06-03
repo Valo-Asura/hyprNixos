@@ -28,8 +28,21 @@
     hyprpaper.url = "github:hyprwm/hyprpaper";
     hyprpolkitagent.url = "github:hyprwm/hyprpolkitagent";
 
-    vibeshell.url = "path:/etc/nixos/asuraPc/vibeshell";
+    # Vibeshell/Quickshell is disabled while testing Noctalia v5.
+    # vibeshell.url = "path:/etc/nixos/asuraPc/vibeshell";
 
+    # Noctalia v5 is flake-only. Do not follow nixpkgs here so the upstream
+    # Cachix binary cache can be used instead of compiling the shell locally.
+    noctalia.url = "github:noctalia-dev/noctalia-shell/v5";
+
+    skwd-wall = {
+      url = "github:liixini/skwd-wall";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Cached CachyOS kernels. Keep this input independent; upstream warns not
+    # to override its nixpkgs input when relying on its binary cache.
+    nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
 
     # Secrets management
     sops-nix = {

@@ -9,6 +9,19 @@
     # Fish shell (detailed config in home-manager)
     fish.enable = true;
 
+    # Zed downloads ACP agents such as codex-acp as generic Linux binaries.
+    # nix-ld provides the dynamic loader path those binaries expect on NixOS.
+    nix-ld = {
+      enable = true;
+      libraries = with pkgs; [
+        stdenv.cc.cc
+        zlib
+        openssl
+        curl
+        libxcrypt
+      ];
+    };
+
     # Hyprland NixOS module is required by upstream docs even when
     # the main configuration lives in Home Manager.
     hyprland = {

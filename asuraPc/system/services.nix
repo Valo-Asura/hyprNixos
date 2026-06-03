@@ -1,5 +1,10 @@
 # System Services Configuration
-{ pkgs, inputs, lib, ... }:
+{
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
 
 let
   configFile = "/etc/fan-boost/config";
@@ -80,7 +85,7 @@ in
   services = {
     blueman = {
       enable = true;
-      # Vibeshell provides Bluetooth controls; disabling the tray applet avoids
+      # Noctalia provides Bluetooth controls; disabling the tray applet avoids
       # a duplicate ExecStart merge in blueman-applet.service.
       withApplet = false;
     };
@@ -135,7 +140,7 @@ in
   # Enable dconf for GNOME applications
   programs.dconf.enable = true;
 
-  # Enable accessibility services for vibeshell keyboard input
+  # Enable accessibility services for desktop shell keyboard input.
   services.gnome.at-spi2-core.enable = true;
   services.avahi = {
     enable = true;

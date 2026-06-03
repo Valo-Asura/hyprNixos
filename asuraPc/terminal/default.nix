@@ -10,21 +10,39 @@ let
     logo="${logoImage}"
     cols="$(${pkgs.ncurses}/bin/tput cols 2>/dev/null || printf 120)"
 
-    if [ "$#" -eq 0 ] && { [ "$cols" -lt 88 ] || [ ! -r "$logo" ]; }; then
+    if [ "$#" -eq 0 ] && { [ "$cols" -lt 56 ] || [ ! -r "$logo" ]; }; then
       exec ${pkgs.fastfetch}/bin/fastfetch \
         --logo none \
         --structure "os:kernel:wm:shell:terminal:memory:colors"
     fi
 
     if [ -n "''${KITTY_WINDOW_ID:-}" ] || [ "''${TERM:-}" = "xterm-kitty" ]; then
+      logo_width=18
+      logo_height=9
+      logo_padding_right=2
+      logo_padding_top=3
+      extra_args=()
+
+      if [ "$cols" -lt 88 ]; then
+        logo_width=12
+        logo_height=6
+        logo_padding_right=1
+        logo_padding_top=1
+
+        if [ "$#" -eq 0 ]; then
+          extra_args+=(--structure "os:kernel:wm:shell:terminal:memory:colors")
+        fi
+      fi
+
       exec ${pkgs.fastfetch}/bin/fastfetch \
         --kitty-direct "$logo" \
-        --logo-width 18 \
-        --logo-height 9 \
+        --logo-width "$logo_width" \
+        --logo-height "$logo_height" \
         --logo-padding-left 1 \
-        --logo-padding-right 2 \
-        --logo-padding-top 3 \
+        --logo-padding-right "$logo_padding_right" \
+        --logo-padding-top "$logo_padding_top" \
         --logo-recache true \
+        "''${extra_args[@]}" \
         "$@"
     fi
 

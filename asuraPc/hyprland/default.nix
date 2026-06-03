@@ -21,8 +21,8 @@ let
   primaryMonitorDesc = "Guangxi Century Innovation Display Electronics Co. Ltd 24FHDMIQII2G 0000000000001";
   primaryMode = "1920x1080@165";
 
-  # Startup wrapper: shows a splash logo, launches vibeshell, then removes the
-  # temporary background once Quickshell is detected.
+  # Vibeshell/Quickshell startup is kept here for easy rollback, but disabled
+  # while testing Noctalia v5.
   vibeshellStart = pkgs.writeShellScriptBin "vibeshell-start" ''
     # Show splash background via swaybg while Quickshell loads
     ${pkgs.swaybg}/bin/swaybg -i ${../assets/vibeshell-loading.svg} -m fill &
@@ -59,7 +59,7 @@ in
     libva
     wayland-utils
     inputs.hyprpaper.packages.${pkgs.stdenv.hostPlatform.system}.default
-    vibeshellStart
+    # vibeshellStart
   ];
 
   wayland.windowManager.hyprland = {
@@ -222,7 +222,9 @@ in
             (lib.generators.mkLuaInline ''
               function()
                 hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP LANG LC_CTYPE LC_TIME LC_MONETARY LC_NUMERIC LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION")
-                hl.exec_cmd("${vibeshellStart}/bin/vibeshell-start")
+                hl.exec_cmd("systemctl --user start skwd-daemon.service")
+                -- Vibeshell/Quickshell is disabled while testing Noctalia v5.
+                -- hl.exec_cmd("${vibeshellStart}/bin/vibeshell-start")
                 local f = io.open(os.getenv("HOME") .. "/.config/hypr/hyprland-gui.conf", "r")
                 if f ~= nil then
                   io.close(f)

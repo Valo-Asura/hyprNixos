@@ -4,7 +4,8 @@
 {
   imports = [
     ../../../asuraPc/wofi/default.nix
-    ../../../asuraPc/vibeshell/home.nix
+    # Vibeshell/Quickshell is disabled while testing Noctalia v5.
+    # ../../../asuraPc/vibeshell/home.nix
   ];
 
   home.packages = [ pkgs.wofi ];

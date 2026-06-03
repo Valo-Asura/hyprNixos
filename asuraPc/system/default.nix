@@ -6,6 +6,7 @@
 
     # System Modules
     ./boot.nix
+    ./kernel-cachyos.nix
     ./networking.nix
     ./users.nix
     ./locale.nix
@@ -20,7 +21,10 @@
     ./local-ai.nix
     ./programs.nix
     ./gaming.nix
-    ./vibeshell.nix
+    # Vibeshell/Quickshell is disabled while testing Noctalia v5.
+    # ./vibeshell.nix
+    ./noctalia.nix
+    ./skwd-wall.nix
     ./packages.nix
     ./environment.nix
     ./theming.nix
