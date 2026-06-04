@@ -18,8 +18,6 @@
     ./android.nix
     ./mysql.nix
     ./virtual-machines.nix
-    # Local AI is disabled; VibeShell assistant runtime was removed for faster startup.
-    # ./local-ai.nix
     ./programs.nix
     ./gaming.nix
     ./vibeshell.nix
@@ -35,8 +33,6 @@
     ./filesystems.nix
     ./windows-mount-helper.nix
     ./thermal.nix
-    # AI API secrets are disabled with the VibeShell assistant.
-    # ./secrets.nix
     ./fan-control-tools.nix
     ./power-management-tools.nix
   ];

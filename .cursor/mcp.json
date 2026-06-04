@@ -9,11 +9,10 @@
       ]
     },
     "aiMemorySqlite": {
-      "command": "npx",
+      "command": "uvx",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-sqlite",
-        "--db",
+        "mcp-server-sqlite",
+        "--db-path",
         "/home/asura/.config/ai-unified-memory/memory/history.db"
       ]
     }
