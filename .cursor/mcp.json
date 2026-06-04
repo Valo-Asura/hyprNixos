@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "aiMemoryFiles": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/asura/.config/ai-unified-memory"
+      ]
+    },
+    "aiMemorySqlite": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "--db",
+        "/home/asura/.config/ai-unified-memory/memory/history.db"
+      ]
+    }
+  }
+}

@@ -1,0 +1,17 @@
+# Hand-authored defaults for the first native bar milestone.
+
+bar_position = "top"
+bar_height = 82
+surface_height = 260
+exclusive_zone = 82
+bar_margin = 0
+workspace_count = 10
+font_family = "Roboto Condensed"
+font_size = 14
+background = "#090d14ee"
+surface = "#24101bee"
+surface_dim = "#1a0a12cc"
+accent = "#ff7aa9ff"
+text = "#f6edf2ff"
+muted = "#a493a0ff"
+border = "#633044bb"

@@ -18,13 +18,13 @@
     ./android.nix
     ./mysql.nix
     ./virtual-machines.nix
-    ./local-ai.nix
+    # Local AI is disabled; VibeShell assistant runtime was removed for faster startup.
+    # ./local-ai.nix
     ./programs.nix
     ./gaming.nix
-    # Vibeshell/Quickshell is disabled while testing Noctalia v5.
-    # ./vibeshell.nix
-    ./noctalia.nix
-    ./skwd-wall.nix
+    ./vibeshell.nix
+    # Noctalia is disabled; current generated config is backed up outside HM.
+    # ./noctalia.nix
     ./packages.nix
     ./environment.nix
     ./theming.nix
@@ -35,7 +35,8 @@
     ./filesystems.nix
     ./windows-mount-helper.nix
     ./thermal.nix
-    ./secrets.nix
+    # AI API secrets are disabled with the VibeShell assistant.
+    # ./secrets.nix
     ./fan-control-tools.nix
     ./power-management-tools.nix
   ];

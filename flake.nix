@@ -17,28 +17,10 @@
       url = "github:nix-community/stylix/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hyprland = {
-      url = "github:hyprwm/Hyprland?ref=v0.55.0";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins";
-      inputs.hyprland.follows = "hyprland";
-    };
     hyprpaper.url = "github:hyprwm/hyprpaper";
     hyprpolkitagent.url = "github:hyprwm/hyprpolkitagent";
 
-    # Vibeshell/Quickshell is disabled while testing Noctalia v5.
-    # vibeshell.url = "path:/etc/nixos/asuraPc/vibeshell";
-
-    # Noctalia v5 is flake-only. Do not follow nixpkgs here so the upstream
-    # Cachix binary cache can be used instead of compiling the shell locally.
-    noctalia.url = "github:noctalia-dev/noctalia-shell/v5";
-
-    skwd-wall = {
-      url = "github:liixini/skwd-wall";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    vibeshell.url = "path:/etc/nixos/asuraPc/vibeshell";
 
     # Cached CachyOS kernels. Keep this input independent; upstream warns not
     # to override its nixpkgs input when relying on its binary cache.

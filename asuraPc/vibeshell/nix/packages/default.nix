@@ -62,14 +62,6 @@ let
     export PATH="/run/wrappers/bin:${envVibeshell}/bin:$PATH"
     export XDG_DATA_DIRS="${envVibeshell}/share:''${XDG_DATA_DIRS:-/run/current-system/sw/share}"
 
-    # Load AI secrets if provided via sops-nix
-    for var in OPENCLAW_GATEWAY_TOKEN OPENAI_API_KEY OPENROUTER_API_KEY GEMINI_API_KEY MISTRAL_API_KEY GITHUB_TOKEN; do
-      secret_path="/run/secrets/$var"
-      if [ -r "$secret_path" ]; then
-        export "$var"="$(cat "$secret_path")"
-      fi
-    done
-
     # Set QML2_IMPORT_PATH to include modules from envVibeshell (like syntax-highlighting)
     export QML2_IMPORT_PATH="${envVibeshell}/lib/qt-6/qml:$QML2_IMPORT_PATH"
     export QML_IMPORT_PATH="$QML2_IMPORT_PATH"

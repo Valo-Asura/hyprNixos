@@ -1,15 +1,6 @@
 {
   "vibeshell": {
     "dashboard": {
-      "assistant": {
-        "modifiers": [
-          "SUPER"
-        ],
-        "key": "A",
-        "dispatcher": "exec",
-        "argument": "vibeshell run dashboard-assistant",
-        "flags": ""
-      },
       "clipboard": {
         "modifiers": [
           "SUPER"

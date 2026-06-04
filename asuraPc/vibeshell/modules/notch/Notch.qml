@@ -43,8 +43,7 @@ Item {
         enabled: (screenNotchOpen || stackViewInternal.busy) && Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: isExpanded ? Easing.OutBack : Easing.OutQuart
-            easing.overshoot: isExpanded ? 1.2 : 1.0
+            easing.type: Easing.OutCubic
         }
     }
 
@@ -52,8 +51,7 @@ Item {
         enabled: (screenNotchOpen || stackViewInternal.busy) && Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: isExpanded ? Easing.OutBack : Easing.OutQuart
-            easing.overshoot: isExpanded ? 1.2 : 1.0
+            easing.type: Easing.OutCubic
         }
     }
 
@@ -78,19 +76,19 @@ Item {
 
         Behavior on bottomLeftRadius {
             enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration
-                easing.type: screenNotchOpen || hasActiveNotifications ? Easing.OutBack : Easing.OutQuart
-                easing.overshoot: screenNotchOpen || hasActiveNotifications ? 1.2 : 1.0
+            SpringAnimation {
+                spring: 4.0
+                damping: 0.36
+                epsilon: 0.2
             }
         }
 
         Behavior on bottomRightRadius {
             enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration
-                easing.type: screenNotchOpen || hasActiveNotifications ? Easing.OutBack : Easing.OutQuart
-                easing.overshoot: screenNotchOpen || hasActiveNotifications ? 1.2 : 1.0
+            SpringAnimation {
+                spring: 4.0
+                damping: 0.36
+                epsilon: 0.2
             }
         }
 
@@ -197,37 +195,37 @@ Item {
             
             Behavior on topLeftRadius {
                 enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: screenNotchOpen || hasActiveNotifications ? Easing.OutBack : Easing.OutQuart
-                    easing.overshoot: screenNotchOpen || hasActiveNotifications ? 1.2 : 1.0
+                SpringAnimation {
+                    spring: 4.0
+                    damping: 0.36
+                    epsilon: 0.2
                 }
             }
 
             Behavior on topRightRadius {
                 enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: screenNotchOpen || hasActiveNotifications ? Easing.OutBack : Easing.OutQuart
-                    easing.overshoot: screenNotchOpen || hasActiveNotifications ? 1.2 : 1.0
+                SpringAnimation {
+                    spring: 4.0
+                    damping: 0.36
+                    epsilon: 0.2
                 }
             }
 
             Behavior on bottomLeftRadius {
                 enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: screenNotchOpen || hasActiveNotifications ? Easing.OutBack : Easing.OutQuart
-                    easing.overshoot: screenNotchOpen || hasActiveNotifications ? 1.2 : 1.0
+                SpringAnimation {
+                    spring: 4.0
+                    damping: 0.36
+                    epsilon: 0.2
                 }
             }
 
             Behavior on bottomRightRadius {
                 enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: screenNotchOpen || hasActiveNotifications ? Easing.OutBack : Easing.OutQuart
-                    easing.overshoot: screenNotchOpen || hasActiveNotifications ? 1.2 : 1.0
+                SpringAnimation {
+                    spring: 4.0
+                    damping: 0.36
+                    epsilon: 0.2
                 }
             }
         }

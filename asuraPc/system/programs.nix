@@ -1,5 +1,5 @@
 # Programs Configuration
-{ inputs, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   programs = {
@@ -22,13 +22,12 @@
       ];
     };
 
-    # Hyprland NixOS module is required by upstream docs even when
-    # the main configuration lives in Home Manager.
+    # Track the Hyprland package pair from the pinned nixpkgs input instead of
+    # hardcoding an upstream release tag in this flake.
     hyprland = {
       enable = true;
-      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-      portalPackage =
-        inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
+      package = pkgs.hyprland;
+      portalPackage = pkgs.xdg-desktop-portal-hyprland;
       xwayland.enable = true;
     };
 

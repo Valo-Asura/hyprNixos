@@ -24,6 +24,5 @@ with pkgs;
   zbar
   zenity
   inetutils
-  litellm
   adw-gtk3
 ]

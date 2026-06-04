@@ -33,6 +33,8 @@
         if [ -f "$binds_config" ]; then
           tmp="$(mktemp)"
           ${pkgs.jq}/bin/jq '
+            .vibeshell.dashboard |= del(.assistant)
+            |
             .vibeshell.dashboard.clipboard.modifiers = ["SUPER"]
             | .vibeshell.dashboard.clipboard.key = "V"
             | .vibeshell.system.screenshot.modifiers = []
@@ -61,27 +63,107 @@
           rm -f "$performance_config.js"
         fi
 
-        ai_config="$HOME/.config/Vibeshell/config/ai.json"
-        mkdir -p "$(dirname "$ai_config")"
-        if [ -f "$ai_config" ]; then
+        theme_config="$HOME/.config/Vibeshell/config/theme.json"
+        mkdir -p "$(dirname "$theme_config")"
+        if [ -f "$theme_config" ]; then
           tmp="$(mktemp)"
           ${pkgs.jq}/bin/jq '
-            if .defaultModel == "qwen3:4b" or .defaultModel == "qwen3:8b" or (.defaultModel // "") == "" then .defaultModel = "qwen3:1.7b" else . end
-            | .memory = (.memory // {})
-            | .memory.enabled = (.memory.enabled // true)
-            | .memory.maxContextMessages = (.memory.maxContextMessages // 16)
-            | .memory.maxItems = (.memory.maxItems // 120)
-            | .memory.maxSnippets = (.memory.maxSnippets // 5)
-            | .memory.maxSnippetChars = (.memory.maxSnippetChars // 900)
-            | .rag = (.rag // {})
-            | .rag.enabled = (.rag.enabled // true)
-            | .rag.source = "sqlite-chat-memory"
-          ' "$ai_config" > "$tmp" \
-            && install -m 0644 "$tmp" "$ai_config"
+            .animDuration = 300
+            | .enableCorners = true
+            | .shadowBlur = 1
+            | .shadowOpacity = 0.5
+          ' "$theme_config" > "$tmp" \
+            && install -m 0644 "$tmp" "$theme_config"
+          rm -f "$tmp"
+        fi
+
+        notch_config="$HOME/.config/Vibeshell/config/notch.json"
+        mkdir -p "$(dirname "$notch_config")"
+        if [ -f "$notch_config" ]; then
+          tmp="$(mktemp)"
+          ${pkgs.jq}/bin/jq '
+            .theme = "default"
+            | .hoverRegionHeight = 8
+          ' "$notch_config" > "$tmp" \
+            && install -m 0644 "$tmp" "$notch_config"
           rm -f "$tmp"
         else
-          install -m 0644 ${./ai.json} "$ai_config"
+          cat > "$notch_config" <<'EOF'
+    {
+        "theme": "default",
+        "hoverRegionHeight": 8
+    }
+    EOF
         fi
+
+        hyprland_config="$HOME/.config/Vibeshell/config/hyprland.json"
+        mkdir -p "$(dirname "$hyprland_config")"
+        if [ -f "$hyprland_config" ]; then
+          tmp="$(mktemp)"
+          ${pkgs.jq}/bin/jq '
+            .shadowEnabled = false
+            | .shadowRange = 4
+            | .shadowRenderPower = 2
+            | .shadowOpacity = 0.25
+            | .blurEnabled = false
+            | .blurSize = 2
+            | .blurPasses = 1
+            | .blurSpecial = false
+            | .blurPopups = false
+            | .blurInputMethods = false
+          ' "$hyprland_config" > "$tmp" \
+            && install -m 0644 "$tmp" "$hyprland_config"
+          rm -f "$tmp"
+        else
+          cat > "$hyprland_config" <<'EOF'
+    {
+        "shadowEnabled": false,
+        "shadowRange": 4,
+        "shadowRenderPower": 2,
+        "shadowOpacity": 0.25,
+        "blurEnabled": false,
+        "blurSize": 2,
+        "blurPasses": 1,
+        "blurSpecial": false,
+        "blurPopups": false,
+        "blurInputMethods": false
+    }
+    EOF
+        fi
+
+        rm -f "$HOME/.config/Vibeshell/config/ai.json"
+        rm -rf "$HOME/.config/nanobot"
+
+        wallpaper_state="$HOME/.local/share/Vibeshell/wallpapers.json"
+        wallpaper_dir="$HOME/Pictures/wallpaper"
+        fallback_wall="$wallpaper_dir/mystical-journey-through-pink-blossom-canyon.jpg"
+        mkdir -p "$(dirname "$wallpaper_state")"
+        if [ -f "$wallpaper_state" ]; then
+          tmp="$(mktemp)"
+          ${pkgs.jq}/bin/jq --arg dir "$wallpaper_dir" --arg fallback "$fallback_wall" '
+            .wallPath = $dir
+            | if (
+                (.currentWall // "") == ""
+                or .currentWall == "/etc/nixos/asuraPc/assets/sans.png"
+                or ((.currentWall // "") | test("(?i)\\.(gif|mp4|webm|mov|avi|mkv)$"))
+              )
+              then .currentWall = $fallback
+              else .
+              end
+          ' "$wallpaper_state" > "$tmp" \
+            && install -m 0644 "$tmp" "$wallpaper_state"
+          rm -f "$tmp"
+        else
+          cat > "$wallpaper_state" <<EOF
+    {
+        "activeColorPreset": "Rose Pine",
+        "currentWall": "$fallback_wall",
+        "matugenScheme": "scheme-tonal-spot",
+        "wallPath": "$wallpaper_dir"
+    }
+    EOF
+        fi
+        ${pkgs.procps}/bin/pkill -f '/bin/mpvpaper( |$)' >/dev/null 2>&1 || true
 
         lockscreen_config="$HOME/.config/Vibeshell/config/lockscreen.json"
         mkdir -p "$(dirname "$lockscreen_config")"
@@ -104,21 +186,5 @@
     }
     EOF
         fi
-  '';
-
-  # nanobot-ai — personal AI assistant backed by local Ollama (Qwen3)
-  # Install: pip install --user nanobot-ai
-  # Usage: nanobot chat "hello" | nanobot --help
-  xdg.configFile."nanobot/config.yaml".text = ''
-    llm:
-      provider: ollama
-      model: qwen3:1.7b
-      api_base: http://127.0.0.1:11434
-      fallback_model: gemma4:e2b
-    assistant:
-      name: Asura
-      personality: helpful, concise, technical
-    logging:
-      level: warning
   '';
 }

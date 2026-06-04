@@ -33,6 +33,10 @@ Item {
         console.log("IPC run command received:", command);
         switch (command) {
         // Dashboard
+        case "dashboard-close":
+            Visibilities.setActiveModule("");
+            GlobalStates.clearLauncherState();
+            break;
         case "dashboard-widgets":
             toggleDashboardTab(0);
             break;
@@ -42,11 +46,8 @@ Item {
         case "dashboard-kanban":
             toggleDashboardTab(2);
             break;
-        case "dashboard-assistant":
-            toggleDashboardTab(3);
-            break;
         case "dashboard-controls":
-            toggleDashboardTab(4);
+            toggleDashboardTab(3);
             break;
         case "dashboard-clipboard":
             toggleDashboardWithPrefix(Config.prefix.clipboard + " ");
@@ -316,18 +317,10 @@ Item {
 
     GlobalShortcut {
         appid: root.appId
-        name: "dashboard-assistant"
-        description: "Open dashboard assistant tab"
-
-        onPressed: toggleDashboardTab(3)
-    }
-
-    GlobalShortcut {
-        appid: root.appId
         name: "dashboard-controls"
         description: "Open dashboard controls tab"
 
-        onPressed: toggleDashboardTab(4)
+        onPressed: toggleDashboardTab(3)
     }
 
     // Media player shortcuts

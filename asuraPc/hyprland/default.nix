@@ -21,24 +21,55 @@ let
   primaryMonitorDesc = "Guangxi Century Innovation Display Electronics Co. Ltd 24FHDMIQII2G 0000000000001";
   primaryMode = "1920x1080@165";
 
-  # Vibeshell/Quickshell startup is kept here for easy rollback, but disabled
-  # while testing Noctalia v5.
+  # Startup wrapper: shows a splash logo, stops inactive shell stacks, launches
+  # Quickshell VibeShell, then removes the temporary background once it maps.
   vibeshellStart = pkgs.writeShellScriptBin "vibeshell-start" ''
-    # Show splash background via swaybg while Quickshell loads
+    set -euo pipefail
+
+    # Show splash background via swaybg while VibeShell maps its layers.
     ${pkgs.swaybg}/bin/swaybg -i ${../assets/vibeshell-loading.svg} -m fill &
     SWAYBG_PID=$!
 
-    # Start vibeshell (no subcommand = launch; cli.sh's "" case handles startup)
-    vibeshell &
+    cleanup() {
+      kill "$SWAYBG_PID" 2>/dev/null || true
+    }
+    trap cleanup EXIT
 
-    # Wait until Quickshell process appears, then remove the splash
+    # Prevent inactive shell/wallpaper stacks from stacking with VibeShell.
+    ${pkgs.systemd}/bin/systemctl --user stop --no-block \
+      noctalia.service \
+      noctalia-shell.service \
+      skwd-daemon.service \
+      vibeshellREzero-live.service 2>/dev/null || true
+    ${pkgs.procps}/bin/pkill -x noctalia 2>/dev/null || true
+    ${pkgs.procps}/bin/pkill -x vibeshellREzero 2>/dev/null || true
+    ${pkgs.procps}/bin/pkill -x skwd-daemon 2>/dev/null || true
+    ${pkgs.procps}/bin/pkill -x skwd-paper 2>/dev/null || true
+
+    # Pre-launch wallpaper independently if configured to speed up boot display
+    WALLPAPER_JSON="$HOME/.local/share/Vibeshell/wallpapers.json"
+    if [ -f "$WALLPAPER_JSON" ]; then
+      CURRENT_WALL=$(${pkgs.jq}/bin/jq -r '.currentWall' "$WALLPAPER_JSON" 2>/dev/null || echo "")
+      if [[ "$CURRENT_WALL" =~ \.(mp4|webm|gif|mov|avi|mkv)$ ]]; then
+        echo "Pre-launching video wallpaper: $CURRENT_WALL"
+        bash /etc/nixos/asuraPc/vibeshell/modules/widgets/dashboard/wallpapers/mpvpaper.sh "$CURRENT_WALL" &
+      else
+        echo "Pre-launching static wallpaper: $CURRENT_WALL"
+        bash /etc/nixos/asuraPc/vibeshell/modules/widgets/dashboard/wallpapers/hyprpaper.sh "$CURRENT_WALL" &
+      fi
+    fi
+
+    vibeshell &
+    SHELL_PID=$!
+
     for i in $(seq 1 30); do
-      sleep 1
-      if ${pkgs.procps}/bin/pgrep -x qs > /dev/null 2>&1; then
+      if ${pkgs.procps}/bin/pgrep -f 'vibeshell-shell.*shell.qml' >/dev/null 2>&1 || ${pkgs.procps}/bin/pgrep -x 'vibeshellREzero' >/dev/null 2>&1 || ! kill -0 "$SHELL_PID" 2>/dev/null; then
         break
       fi
+      sleep 0.2
     done
-    kill "$SWAYBG_PID" 2>/dev/null || true
+
+    cleanup
   '';
 in
 {
@@ -59,7 +90,7 @@ in
     libva
     wayland-utils
     inputs.hyprpaper.packages.${pkgs.stdenv.hostPlatform.system}.default
-    # vibeshellStart
+    vibeshellStart
   ];
 
   wayland.windowManager.hyprland = {
@@ -222,9 +253,7 @@ in
             (lib.generators.mkLuaInline ''
               function()
                 hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP LANG LC_CTYPE LC_TIME LC_MONETARY LC_NUMERIC LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION")
-                hl.exec_cmd("systemctl --user start skwd-daemon.service")
-                -- Vibeshell/Quickshell is disabled while testing Noctalia v5.
-                -- hl.exec_cmd("${vibeshellStart}/bin/vibeshell-start")
+                hl.exec_cmd("${vibeshellStart}/bin/vibeshell-start")
                 local f = io.open(os.getenv("HOME") .. "/.config/hypr/hyprland-gui.conf", "r")
                 if f ~= nil then
                   io.close(f)

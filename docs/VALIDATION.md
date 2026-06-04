@@ -1,10 +1,11 @@
 # Validation
 
-Checked locally on 2026-05-18.
+Checked locally on 2026-05-18. Package source refreshed on 2026-06-03.
 
 ## Hyprland
 
-- Hyprland version: `0.55.0`
+- Hyprland source: `pkgs.hyprland` from the pinned `nixpkgs` input.
+- Current evaluated Hyprland version: check with `nix eval --impure --raw '.#nixosConfigurations.nixos.pkgs.hyprland.version'`; on 2026-06-03 it evaluated to `0.55.2`.
 - Active config: [hyprland.lua](/home/asura/.config/hypr/hyprland.lua)
 - Lua migration status: working
 - Validation command:
@@ -16,7 +17,7 @@ hyprctl configerrors
 
 - Result: `hyprctl reload` returns `ok`
 - Result: `hyprctl configerrors` returns no errors
-- Known upstream bug: `hyprland --verify-config` can segfault on Lua configs in `0.55.0`
+- Known upstream bug: `hyprland --verify-config` can segfault on Lua configs; use the reload/configerrors workflow above.
 
 ## Build
 

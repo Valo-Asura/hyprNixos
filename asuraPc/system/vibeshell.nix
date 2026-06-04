@@ -1,7 +1,12 @@
-# Vibeshell integration (local flake input)
 { inputs, pkgs, ... }:
 
 let
+  # Toggle Switch: set to true to test vibeshellREzero (C++ native rewrite)
+  # or false to keep using the standard Vibeshell (Quickshell/QML)
+  useREzero = false;
+
+  vibeshellREzeroPkg = pkgs.callPackage ../vibeshellREzero/package.nix { };
+
   vibeshellSafeLock = pkgs.writeShellScriptBin "vibeshell-safe-lock" ''
     set -euo pipefail
 
@@ -30,7 +35,7 @@ in
   imports = [ inputs.vibeshell.nixosModules.default ];
 
   programs.vibeshell = {
-    enable = true;
+    enable = !useREzero;
     package = inputs.vibeshell.packages.${pkgs.stdenv.hostPlatform.system}.Vibeshell;
     fonts.enable = true;
   };
@@ -38,5 +43,5 @@ in
   environment.systemPackages = [
     vibeshellSafeLock
     vibeshellLockBeforeSleep
-  ];
+  ] ++ (if useREzero then [ vibeshellREzeroPkg ] else [ ]);
 }

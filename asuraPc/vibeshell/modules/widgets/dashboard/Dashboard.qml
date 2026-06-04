@@ -10,7 +10,6 @@ import qs.modules.notch
 import qs.modules.widgets.dashboard.widgets
 import qs.modules.widgets.dashboard.controls
 import qs.modules.widgets.dashboard.wallpapers
-import qs.modules.widgets.dashboard.assistant
 import qs.modules.widgets.dashboard.tmux
 import qs.modules.widgets.dashboard.clipboard
 import qs.modules.widgets.dashboard.emoji
@@ -22,16 +21,18 @@ NotchAnimationBehavior {
 
     property int leftPanelWidth
 
-    property var state: QtObject {
+    readonly property alias state: dashboardState
+    QtObject {
+        id: dashboardState
         property int currentTab: GlobalStates.dashboardCurrentTab
     }
 
-    readonly property var tabModel: [Icons.widgets, Icons.wallpapers, Icons.heartbeat, Icons.assistant]
+    readonly property var tabModel: [Icons.widgets, Icons.wallpapers, Icons.heartbeat]
     readonly property int tabCount: tabModel.length + 1  // +1 for controls tab at bottom
     readonly property int tabSpacing: 8
 
     readonly property int tabWidth: 48
-    readonly property real nonAnimWidth: (state.currentTab === 0 ? 600 : 400) + tabWidth + 16 // unified launcher tab is wider
+    readonly property real nonAnimWidth: 900 + tabWidth + 16 // constant width for all tabs
 
     implicitWidth: nonAnimWidth
     implicitHeight: 430
@@ -154,10 +155,10 @@ NotchAnimationBehavior {
 
                 // Calcular posición Y para un índice dado
                 function getYForIndex(idx) {
-                    if (idx <= 3) {
+                    if (idx < root.tabModel.length) {
                         return idx * (width + root.tabSpacing);
                     } else {
-                        // Tab 4 (controls) está en la parte inferior
+                        // Controls tab is anchored at the bottom.
                         return controlsButtonContainer.y;
                     }
                 }
@@ -174,16 +175,18 @@ NotchAnimationBehavior {
 
                 Behavior on animatedY1 {
                     enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration / 3
-                        easing.type: Easing.OutSine
+                    SpringAnimation {
+                        spring: 5.0
+                        damping: 0.38
+                        epsilon: 0.2
                     }
                 }
                 Behavior on animatedY2 {
                     enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutSine
+                    SpringAnimation {
+                        spring: 3.8
+                        damping: 0.34
+                        epsilon: 0.2
                     }
                 }
 
@@ -253,7 +256,7 @@ NotchAnimationBehavior {
                 variant: controlsButton.hovered ? "focus" : "common"
                 z: -1
 
-                opacity: root.state.currentTab === 4 ? 0 : 1
+                opacity: root.state.currentTab === 3 ? 0 : 1
 
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
@@ -283,7 +286,7 @@ NotchAnimationBehavior {
                     font.family: Icons.font
                     font.pixelSize: 20
                     font.weight: Font.Medium
-                    color: root.state.currentTab === 4 ? Styling.srItem("primary") : Colors.overBackground
+                    color: root.state.currentTab === 3 ? Styling.srItem("primary") : Colors.overBackground
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
 
@@ -296,7 +299,7 @@ NotchAnimationBehavior {
                     }
                 }
 
-                onClicked: stack.navigateToTab(4)
+                onClicked: stack.navigateToTab(3)
             }
         }
 
@@ -322,7 +325,7 @@ NotchAnimationBehavior {
                 anchors.fill: parent
 
                 // Array de componentes para cargar dinámicamente
-                property var components: [unifiedLauncherComponent, wallpapersComponent, metricsComponent, assistantComponent, quickSettingsComponent]
+                property var components: [unifiedLauncherComponent, wallpapersComponent, metricsComponent, quickSettingsComponent]
 
                 // Cargar directamente el componente correcto según GlobalStates
                 initialItem: components[GlobalStates.dashboardCurrentTab]
@@ -520,8 +523,7 @@ NotchAnimationBehavior {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.1
+            easing.type: Easing.OutCubic
         }
     }
 
@@ -529,8 +531,7 @@ NotchAnimationBehavior {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.1
+            easing.type: Easing.OutCubic
         }
     }
 
@@ -545,11 +546,6 @@ NotchAnimationBehavior {
     Component {
         id: quickSettingsComponent
         SettingsTab {}
-    }
-
-    Component {
-        id: assistantComponent
-        AssistantTab {}
     }
 
     Component {

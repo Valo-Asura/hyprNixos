@@ -145,8 +145,7 @@ ShellRoot {
 
         Loader {
             id: overviewLoader
-            // Deferred: loads on first use instead of startup
-            active: (Config.overview?.enabled ?? true) && deferredInitTimer.triggered
+            active: (Config.overview?.enabled ?? true) && GlobalStates.overviewOpen
             required property ShellScreen modelData
             sourceComponent: OverviewPopup {
                 screen: overviewLoader.modelData
@@ -166,7 +165,7 @@ ShellRoot {
 
         Loader {
             id: presetsLoader
-            active: deferredInitTimer.triggered  // deferred from startup
+            active: GlobalStates.presetsOpen
             required property ShellScreen modelData
             sourceComponent: PresetsPopup {
                 screen: presetsLoader.modelData
@@ -245,7 +244,7 @@ ShellRoot {
 
         Loader {
             id: screenshotOverlayLoader
-            active: deferredInitTimer.triggered  // deferred from startup
+            active: GlobalStates.screenshotToolVisible
             required property ShellScreen modelData
             sourceComponent: ScreenshotOverlay {
                 targetScreen: screenshotOverlayLoader.modelData
@@ -287,7 +286,7 @@ ShellRoot {
     // Mirror Tool (deferred — loads on demand)
     Loader {
         id: mirrorLoader
-        active: deferredInitTimer.triggered
+        active: GlobalStates.mirrorWindowVisible
         source: "modules/tools/MirrorWindow.qml"
     }
 
@@ -310,7 +309,7 @@ ShellRoot {
     Timer {
         id: deferredInitTimer
         property bool triggered: false
-        interval: 500
+        interval: 1200
         running: true
         onTriggered: triggered = true
     }
@@ -318,7 +317,7 @@ ShellRoot {
     // Force initialization of control services (deferred to reduce startup load)
     Timer {
         id: serviceInitTimer
-        interval: 500
+        interval: 2000
         running: true
         onTriggered: {
             // Reference the services to force their creation

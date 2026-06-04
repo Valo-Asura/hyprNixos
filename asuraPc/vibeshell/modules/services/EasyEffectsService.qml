@@ -66,7 +66,7 @@ Singleton {
     Process {
         id: checkAvailableProcess
         command: ["which", "easyeffects"]
-        running: true
+        running: false
         onExited: (exitCode, exitStatus) => {
             root.available = (exitCode === 0);
             if (root.available) {

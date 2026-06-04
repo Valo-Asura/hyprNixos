@@ -1,5 +1,10 @@
 # System configuration
-{ hostname, lib, ... }:
+{
+  hostname,
+  inputs,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -9,13 +14,18 @@
 
   networking.hostName = hostname;
 
-  nix.settings = {
-    experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
-    max-substitution-jobs = 64;
-    http-connections = 128;
+  nix = {
+    registry.nixpkgs.flake = inputs.nixpkgs;
+    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
+
+    settings = {
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      max-substitution-jobs = 64;
+      http-connections = 128;
+    };
   };
 
   nixpkgs.config = {

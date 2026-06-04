@@ -93,10 +93,6 @@ in
         name = "copilot-agent-linux";
         type = "DesktopHelper";
       }
-      {
-        name = "ollama";
-        type = "Heavy_CPU";
-      }
     ];
   };
 

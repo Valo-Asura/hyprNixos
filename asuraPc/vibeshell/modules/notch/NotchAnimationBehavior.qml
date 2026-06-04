@@ -17,15 +17,14 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.2
+            easing.type: Easing.OutCubic
         }
     }
 
     Behavior on opacity {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Math.max(90, Config.animDuration * 0.55)
             easing.type: Easing.OutQuart
         }
     }

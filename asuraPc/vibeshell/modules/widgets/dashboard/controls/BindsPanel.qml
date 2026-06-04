@@ -429,7 +429,7 @@ Item {
 
         // Dashboard binds
         if (vibeshell.dashboard) {
-            const dashboardKeys = ["widgets", "clipboard", "emoji", "tmux", "kanban", "wallpapers", "assistant", "notes"];
+            const dashboardKeys = ["widgets", "clipboard", "emoji", "tmux", "kanban", "wallpapers", "notes"];
             for (const key of dashboardKeys) {
                 if (vibeshell.dashboard[key]) {
                     binds.push({

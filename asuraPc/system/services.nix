@@ -85,9 +85,6 @@ in
   services = {
     blueman = {
       enable = true;
-      # Noctalia provides Bluetooth controls; disabling the tray applet avoids
-      # a duplicate ExecStart merge in blueman-applet.service.
-      withApplet = false;
     };
     dbus = {
       enable = true;

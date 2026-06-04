@@ -1177,7 +1177,7 @@ Rectangle {
         // Widgets column (only visible when in launcher tab)
         ClippingRectangle {
             id: widgetsContainer
-            Layout.preferredWidth: controlButtonsContainer.implicitWidth
+            Layout.preferredWidth: root.leftPanelWidth
             Layout.fillHeight: true
             radius: Styling.radius(4)
             color: "transparent"

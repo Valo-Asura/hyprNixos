@@ -23,7 +23,7 @@ Item {
     readonly property string activePreset: PresetsService.activePreset
 
     // Available config files
-    readonly property var availableConfigFiles: ["ai.js", "bar.js", "desktop.js", "dock.js", "hyprland.js", "lockscreen.js", "notch.js", "overview.js", "performance.js", "prefix.js", "theme.js", "weather.js", "workspaces.js"]
+    readonly property var availableConfigFiles: ["bar.js", "desktop.js", "dock.js", "hyprland.js", "lockscreen.js", "notch.js", "overview.js", "performance.js", "prefix.js", "theme.js", "weather.js", "workspaces.js"]
 
     // List model
     ListModel {

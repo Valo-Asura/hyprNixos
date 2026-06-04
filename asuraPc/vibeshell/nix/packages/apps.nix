@@ -13,7 +13,6 @@ with pkgs; [
   networkmanagerapplet
   blueman
   pwvucontrol
-  easyeffects
   gradia
 
   # Icons

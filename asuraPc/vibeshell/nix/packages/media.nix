@@ -1,9 +1,9 @@
 # Media packages: video, audio, players
 { pkgs }:
 
-with pkgs; [
+with pkgs;
+[
   gpu-screen-recorder
-  mpvpaper
 
   ffmpeg
   x264
@@ -12,4 +12,5 @@ with pkgs; [
   # Audio
   pipewire
   wireplumber
+  mpvpaper
 ]

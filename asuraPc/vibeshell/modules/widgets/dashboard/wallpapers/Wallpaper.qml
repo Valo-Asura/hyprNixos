@@ -31,6 +31,7 @@ PanelWindow {
     property bool usingFallback: false
     property bool _wallpaperDirInitialized: false
     property string currentMatugenScheme: wallpaperConfig.adapter.matugenScheme
+    property bool allowLiveWallpapers: true
 
     // Sync state from the primary wallpaper manager to secondary instances
     Binding {
@@ -606,9 +607,22 @@ PanelWindow {
 
     Timer {
         id: delayedThumbnailGen
-        interval: 5000 // Delay 5 seconds after startup to not block initial load
+        interval: 20000 // Keep thumbnail work away from first shell paint.
         repeat: false
-        onTriggered: thumbnailGeneratorScript.running = true
+        onTriggered: {
+            if (GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 1) {
+                thumbnailGeneratorScript.running = true;
+            }
+        }
+    }
+
+    Connections {
+        target: GlobalStates
+        function onDashboardCurrentTabChanged() {
+            if (GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 1) {
+                delayedThumbnailGen.restart();
+            }
+        }
     }
 
     // Proceso para generar frame de lockscreen con el script de Python
@@ -889,7 +903,7 @@ PanelWindow {
     Rectangle {
         id: background
         anchors.fill: parent
-        color: "black"
+        color: "transparent"
         focus: true
 
         Keys.onLeftPressed: {
@@ -918,7 +932,7 @@ PanelWindow {
         Process {
             id: killMpvpaperProcess
             running: false
-            command: ["pkill", "-f", "mpvpaper"]
+            command: ["pkill", "-f", "/bin/mpvpaper( |$)"]
 
             onExited: function (exitCode) {
                 console.log("Killed mpvpaper processes, exit code:", exitCode);
@@ -984,30 +998,68 @@ PanelWindow {
         Loader {
             anchors.fill: parent
             sourceComponent: {
-                if (!parent.source)
+                if (!parent.source) {
+                    console.log("Loader: parent.source is empty");
                     return null;
+                }
 
                 var fileType = getFileType(parent.source);
+                console.log("Loader: source is", parent.source, "fileType is", fileType, "allowLiveWallpapers is", wallpaper.allowLiveWallpapers);
                 if (fileType === 'image') {
-                    return staticImageComponent;
-                } else if (fileType === 'gif' || fileType === 'video') {
+                    console.log("Loader: returning hyprpaperComponent");
+                    return hyprpaperComponent;
+                } else if (wallpaper.allowLiveWallpapers && (fileType === 'gif' || fileType === 'video')) {
+                    console.log("Loader: returning mpvpaperComponent");
                     return mpvpaperComponent;
                 }
-                return staticImageComponent; // fallback
+                console.log("Loader: returning fallback hyprpaperComponent");
+                return hyprpaperComponent; // fallback
             }
 
             property string sourceFile: parent.source
         }
 
         Component {
-            id: staticImageComponent
-            Image {
-                width: parent.width
-                height: parent.height
-                source: parent.sourceFile ? "file://" + parent.sourceFile : ""
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                smooth: true
+            id: hyprpaperComponent
+            Item {
+                property string sourceFile: parent.sourceFile
+                property string scriptPath: decodeURIComponent(Qt.resolvedUrl("hyprpaper.sh").toString().replace("file://", ""))
+
+                Timer {
+                    id: hyprpaperRestartTimer
+                    interval: 100
+                    onTriggered: {
+                        if (sourceFile) {
+                            console.log("Restarting hyprpaper for:", sourceFile);
+                            hyprpaperProcess.running = true;
+                        }
+                    }
+                }
+
+                onSourceFileChanged: {
+                    if (sourceFile) {
+                        console.log("Static wallpaper changed to:", sourceFile);
+                        hyprpaperProcess.running = false;
+                        hyprpaperRestartTimer.restart();
+                    }
+                }
+
+                Component.onCompleted: {
+                    if (sourceFile) {
+                        console.log("Initial hyprpaper run for:", sourceFile);
+                        hyprpaperProcess.running = true;
+                    }
+                }
+
+                Process {
+                    id: hyprpaperProcess
+                    running: false
+                    command: sourceFile ? ["bash", scriptPath, sourceFile] : []
+
+                    onExited: function (exitCode) {
+                        console.log("hyprpaper process exited with code:", exitCode);
+                    }
+                }
             }
         }
 

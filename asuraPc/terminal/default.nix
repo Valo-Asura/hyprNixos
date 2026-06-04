@@ -1,11 +1,46 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
 
 let
   logoImage = "${../assets/sans.png}";
+  warpIcon = pkgs.writeText "dev.warp.Warp.svg" ''
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="28" fill="${colors.base00}"/>
+      <path d="M25 31h78v66H25z" rx="10" fill="${colors.base01}"/>
+      <path d="M34 43h64v12H34z" fill="${colors.base0E}"/>
+      <path d="M34 65h42v10H34z" fill="${colors.base0D}"/>
+      <path d="M34 84h58v8H34z" fill="${colors.base05}"/>
+    </svg>
+  '';
+  footIcon = pkgs.writeText "foot.svg" ''
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="26" fill="${colors.base00}"/>
+      <path d="M28 35h60l18 18v55H28z" fill="${colors.base01}"/>
+      <path d="M88 35v20h18" fill="${colors.base02}"/>
+      <path d="M39 58l18 15-18 15" fill="none" stroke="${colors.base0B}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M64 90h30" stroke="${colors.base0A}" stroke-width="9" stroke-linecap="round"/>
+    </svg>
+  '';
+  ghosttyIcon = pkgs.writeText "com.mitchellh.ghostty.svg" ''
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="28" fill="${colors.base00}"/>
+      <path d="M34 94V56c0-20 13-34 30-34s30 14 30 34v38l-9-7-9 7-9-7-9 7-9-7z" fill="${colors.base05}"/>
+      <circle cx="53" cy="58" r="6" fill="${colors.base00}"/>
+      <circle cx="77" cy="58" r="6" fill="${colors.base00}"/>
+      <path d="M53 78h24" stroke="${colors.base00}" stroke-width="7" stroke-linecap="round"/>
+    </svg>
+  '';
+  warpTerminal = pkgs.warp-terminal.overrideAttrs (_oldAttrs: {
+    version = "0.2026.05.27.15.44.stable_01";
+    src = pkgs.fetchurl {
+      url = "https://releases.warp.dev/stable/v0.2026.05.27.15.44.stable_01/warp-terminal-v0.2026.05.27.15.44.stable_01-1-x86_64.pkg.tar.zst";
+      hash = "sha256-dvD9s1zVGlvWrc2TmARp5njCHKH0FvocRxg642R2tQc=";
+    };
+  });
   fastfetchSmart = pkgs.writeShellScriptBin "fastfetch-smart" ''
     logo="${logoImage}"
     cols="$(${pkgs.ncurses}/bin/tput cols 2>/dev/null || printf 120)"
@@ -46,7 +81,37 @@ let
         "$@"
     fi
 
-    exec ${pkgs.fastfetch}/bin/fastfetch --logo none "$@"
+    if [ "''${TERM:-}" = "foot" ] || [ "''${TERM_PROGRAM:-}" = "foot" ] || [ -n "''${FOOT_VERSION:-}" ]; then
+      logo_width=18
+      logo_height=9
+      logo_padding_right=2
+      logo_padding_top=3
+      extra_args=()
+
+      if [ "$cols" -lt 88 ]; then
+        logo_width=12
+        logo_height=6
+        logo_padding_right=1
+        logo_padding_top=1
+
+        if [ "$#" -eq 0 ]; then
+          extra_args+=(--structure "os:kernel:wm:shell:terminal:memory:colors")
+        fi
+      fi
+
+      exec ${pkgs.fastfetch}/bin/fastfetch \
+        --sixel "$logo" \
+        --logo-width "$logo_width" \
+        --logo-height "$logo_height" \
+        --logo-padding-left 1 \
+        --logo-padding-right "$logo_padding_right" \
+        --logo-padding-top "$logo_padding_top" \
+        --logo-recache true \
+        "''${extra_args[@]}" \
+        "$@"
+    fi
+
+    exec ${pkgs.fastfetch}/bin/fastfetch --chafa "$logo" "$@"
   '';
 
   colors = {
@@ -67,6 +132,7 @@ let
     base0E = "#d3869b";
     base0F = "#bd6f3e";
   };
+  hex = color: lib.removePrefix "#" color;
 in
 {
   programs.kitty = {
@@ -249,8 +315,160 @@ in
         return screen.cursor.x
   '';
 
+  xdg.configFile."foot/foot.ini".text = ''
+    # Managed by Home Manager: VibeShell Gruvbox terminal profile.
+    [main]
+    font=JetBrainsMono Nerd Font Mono:size=13
+    font-bold=JetBrainsMono Nerd Font Mono:style=Bold:size=13
+    font-italic=JetBrainsMono Nerd Font Mono:style=Italic:size=13
+    shell=${pkgs.fish}/bin/fish
+    term=foot
+    pad=18x14
+    dpi-aware=yes
+    workers=4
+    initial-window-size-chars=140x35
+    resize-delay-ms=50
+
+    [bell]
+    urgent=no
+    notify=no
+    visual=no
+
+    [scrollback]
+    lines=10000
+    multiplier=3.0
+
+    [cursor]
+    style=block
+    blink=no
+    beam-thickness=1.5
+
+    [mouse]
+    hide-when-typing=yes
+
+    [colors-dark]
+    alpha=1.0
+    foreground=${hex colors.base05}
+    background=${hex colors.base00}
+    regular0=${hex colors.base00}
+    regular1=${hex colors.base08}
+    regular2=${hex colors.base0B}
+    regular3=${hex colors.base0A}
+    regular4=${hex colors.base0D}
+    regular5=${hex colors.base0E}
+    regular6=${hex colors.base0C}
+    regular7=${hex colors.base05}
+    bright0=${hex colors.base03}
+    bright1=${hex colors.base08}
+    bright2=${hex colors.base0B}
+    bright3=${hex colors.base0A}
+    bright4=${hex colors.base0D}
+    bright5=${hex colors.base0E}
+    bright6=${hex colors.base0C}
+    bright7=${hex colors.base07}
+    selection-foreground=${hex colors.base00}
+    selection-background=${hex colors.base0A}
+    urls=${hex colors.base0D}
+
+    [csd]
+    preferred=none
+    border-width=2
+    border-color=${hex colors.base0E}
+
+    [tweak]
+    font-monospace-warn=no
+  '';
+
+  xdg.configFile."ghostty/config".text = ''
+    # Managed by Home Manager: VibeShell Gruvbox terminal profile.
+    font-family = JetBrainsMono Nerd Font
+    font-size = 13
+    command = ${pkgs.fish}/bin/fish
+
+    window-decoration = false
+    window-padding-x = 18
+    window-padding-y = 14
+    confirm-close-surface = false
+    resize-overlay = never
+    mouse-hide-while-typing = true
+
+    background-opacity = 1.0
+    cursor-style = block
+    cursor-style-blink = false
+    unfocused-split-opacity = 0.92
+    adjust-cell-height = 4%
+    adjust-cursor-thickness = 2
+
+    foreground = ${colors.base05}
+    background = ${colors.base00}
+    selection-foreground = ${colors.base00}
+    selection-background = ${colors.base0A}
+    cursor-color = ${colors.base0E}
+    palette = 0=${colors.base00}
+    palette = 1=${colors.base08}
+    palette = 2=${colors.base0B}
+    palette = 3=${colors.base0A}
+    palette = 4=${colors.base0D}
+    palette = 5=${colors.base0E}
+    palette = 6=${colors.base0C}
+    palette = 7=${colors.base05}
+    palette = 8=${colors.base03}
+    palette = 9=${colors.base08}
+    palette = 10=${colors.base0B}
+    palette = 11=${colors.base0A}
+    palette = 12=${colors.base0D}
+    palette = 13=${colors.base0E}
+    palette = 14=${colors.base0C}
+    palette = 15=${colors.base07}
+  '';
+
+  home.file.".warp/themes/vibeshell-gruvbox.yaml".text = ''
+    # Managed by Home Manager. Warp reads custom themes from ~/.warp/themes.
+    accent: "${colors.base0E}"
+    background: "${colors.base00}"
+    foreground: "${colors.base05}"
+    details: darker
+    terminal_colors:
+      normal:
+        black: "${colors.base00}"
+        red: "${colors.base08}"
+        green: "${colors.base0B}"
+        yellow: "${colors.base0A}"
+        blue: "${colors.base0D}"
+        magenta: "${colors.base0E}"
+        cyan: "${colors.base0C}"
+        white: "${colors.base05}"
+      bright:
+        black: "${colors.base03}"
+        red: "${colors.base08}"
+        green: "${colors.base0B}"
+        yellow: "${colors.base0A}"
+        blue: "${colors.base0D}"
+        magenta: "${colors.base0E}"
+        cyan: "${colors.base0C}"
+        white: "${colors.base07}"
+  '';
+
+  home.file.".warp-terminal/user_preferences.json".text = builtins.toJSON {
+    theme = "vibeshell-gruvbox";
+    font_name = "JetBrainsMono Nerd Font";
+    font_size = 13;
+    window_opacity = 1.0;
+    cursor_shape = "Block";
+    enable_bell = false;
+  };
+
+  xdg.dataFile."icons/hicolor/scalable/apps/dev.warp.Warp.svg".source = warpIcon;
+  xdg.dataFile."icons/hicolor/scalable/apps/foot.svg".source = footIcon;
+  xdg.dataFile."icons/hicolor/scalable/apps/com.mitchellh.ghostty.svg".source = ghosttyIcon;
+
   home.packages = with pkgs; [
+    chafa
     fastfetchSmart
+    foot
+    ghostty
+    nerd-fonts.jetbrains-mono
+    warpTerminal
   ];
 
   # Custom shell functions for enhanced terminal experience

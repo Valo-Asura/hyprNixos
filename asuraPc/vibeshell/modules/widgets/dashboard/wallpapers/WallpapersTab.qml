@@ -853,6 +853,7 @@ FocusScope {
             asynchronous: true
             smooth: true
             cache: false // Evitar acumular cache innecesario
+            sourceSize: Qt.size(wallpaperGridContainer.cellSize * 1.5, wallpaperGridContainer.cellSize * 1.5)
 
             // Fallback a imagen original si el thumbnail falla
             onStatusChanged: {

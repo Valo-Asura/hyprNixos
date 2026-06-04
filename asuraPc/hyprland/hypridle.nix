@@ -8,15 +8,15 @@
       general = {
         ignore_dbus_inhibit = false;
         ignore_systemd_inhibit = false;
-        lock_cmd = "/run/current-system/sw/bin/noctalia-safe-lock";
-        before_sleep_cmd = "/run/current-system/sw/bin/noctalia-safe-lock";
+        lock_cmd = "/run/current-system/sw/bin/vibeshell-safe-lock";
+        before_sleep_cmd = "/run/current-system/sw/bin/vibeshell-lock-before-sleep";
         after_sleep_cmd = "hyprctl dispatch dpms on";
       };
 
       listener = [
         {
           timeout = 600;
-          on-timeout = "/run/current-system/sw/bin/noctalia-safe-lock";
+          on-timeout = "/run/current-system/sw/bin/vibeshell-safe-lock";
         }
 
         {

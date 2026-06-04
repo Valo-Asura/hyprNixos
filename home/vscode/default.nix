@@ -2,8 +2,13 @@
 { lib, pkgs, ... }:
 
 let
+  bbenoistNixExtension = "${pkgs.vscode-extensions.bbenoist.nix}/share/vscode/extensions/bbenoist.Nix";
+  direnvExtension = "${pkgs.vscode-extensions.mkhl.direnv}/share/vscode/extensions/mkhl.direnv";
+  gitlensExtension = "${pkgs.vscode-extensions.eamodio.gitlens}/share/vscode/extensions/eamodio.gitlens";
   githubThemeExtension = "${pkgs.vscode-extensions.github.github-vscode-theme}/share/vscode/extensions/github.github-vscode-theme";
   catppuccinIconsExtension = "${pkgs.vscode-extensions.catppuccin.catppuccin-vsc-icons}/share/vscode/extensions/catppuccin.catppuccin-vsc-icons";
+  nixIdeExtension = "${pkgs.vscode-extensions.jnoortheen.nix-ide}/share/vscode/extensions/jnoortheen.nix-ide";
+  pythonExtension = "${pkgs.vscode-extensions.ms-python.python}/share/vscode/extensions/ms-python.python";
 
   commonProfile = {
     extensions = with pkgs.vscode-extensions; [
@@ -41,6 +46,7 @@ let
   # keybindings.json so UI changes are writable instead of symlinked to the
   # read-only Nix store.
   mutableCodeProfile = builtins.removeAttrs commonProfile [
+    "extensions"
     "userSettings"
     "keybindings"
   ];
@@ -72,6 +78,20 @@ in
         Antigravity) extensions_dir="$HOME/.antigravity/extensions" ;;
       esac
       ${pkgs.coreutils}/bin/mkdir -p "$extensions_dir"
+
+      for ext_path in "$extensions_dir"/*; do
+        if [ ! -e "$ext_path" ] && [ ! -L "$ext_path" ]; then
+          continue
+        fi
+        if [ -L "$ext_path" ] && [ ! -e "$ext_path" ]; then
+          ${pkgs.coreutils}/bin/rm -f "$ext_path"
+          continue
+        fi
+        if [ -d "$ext_path" ] && [ ! -f "$ext_path/package.json" ]; then
+          ${pkgs.coreutils}/bin/rm -rf "$ext_path"
+        fi
+      done
+
       ${pkgs.findutils}/bin/find "$extensions_dir" -maxdepth 1 -type d \( \
         -iname 'catppuccin.catppuccin-vsc-*' -o \
         -iname 'dracula-theme.theme-dracula-*' -o \
@@ -79,8 +99,17 @@ in
         -iname 'vscode-icons-team.vscode-icons-*' \
       \) -exec ${pkgs.coreutils}/bin/rm -rf {} +
 
+      ${pkgs.coreutils}/bin/ln -sfn ${bbenoistNixExtension} "$extensions_dir/bbenoist.Nix"
+      ${pkgs.coreutils}/bin/ln -sfn ${direnvExtension} "$extensions_dir/mkhl.direnv"
+      ${pkgs.coreutils}/bin/ln -sfn ${gitlensExtension} "$extensions_dir/eamodio.gitlens"
       ${pkgs.coreutils}/bin/ln -sfn ${githubThemeExtension} "$extensions_dir/github.github-vscode-theme"
       ${pkgs.coreutils}/bin/ln -sfn ${catppuccinIconsExtension} "$extensions_dir/catppuccin.catppuccin-vsc-icons"
+      ${pkgs.coreutils}/bin/ln -sfn ${nixIdeExtension} "$extensions_dir/jnoortheen.nix-ide"
+      ${pkgs.coreutils}/bin/ln -sfn ${pythonExtension} "$extensions_dir/ms-python.python"
+
+      # VS Code caches extension locations here. Removing it clears stale
+      # entries that point at old Nix-managed symlinks; VS Code regenerates it.
+      ${pkgs.coreutils}/bin/rm -f "$extensions_dir/extensions.json"
 
       # Some bundled extensions copy helper files from the immutable Nix store,
       # then update them in place later. Keep their mutable storage writable.

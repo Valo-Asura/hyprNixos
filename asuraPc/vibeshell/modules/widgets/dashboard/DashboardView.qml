@@ -3,10 +3,10 @@ import qs.modules.widgets.dashboard
 import qs.modules.services
 
 Item {
-    implicitWidth: 1000
-    implicitHeight: 56 + 48 * 7
+    implicitWidth: dashboardItem.implicitWidth
+    implicitHeight: dashboardItem.implicitHeight
 
-    readonly property int leftPanelWidth: 270
+    readonly property int leftPanelWidth: 280
 
     Dashboard {
         id: dashboardItem

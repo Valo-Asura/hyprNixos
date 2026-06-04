@@ -505,6 +505,13 @@ help | --help | -h)
 		# Force Qt6CT
 		export QT_QPA_PLATFORMTHEME=qt6ct
 
+		# Optimize Qt Quick rendering and memory footprint
+		export QSG_RENDERER_LOOP=basic
+		export QML_GC_PARAMS="max-heap-size=16777216"
+		export QML_DISABLE_DISTANCEFIELD=1
+		export QSG_ATLAS_WIDTH=1024
+		export QSG_ATLAS_HEIGHT=1024
+
 		# Launch QuickShell with the main shell.qml
 		# If NIXGL_BIN is set (NixOS/Nix setup), use it. Otherwise, just run qs directly.
 		if [ -n "$NIXGL_BIN" ]; then
