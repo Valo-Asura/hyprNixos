@@ -17,10 +17,16 @@
 ## Install
 
 1. **Install Git & Enable Flakes**:
-   These are declared system-wide in the configuration:
+   Declared system-wide in the configuration:
    ```nix
    environment.systemPackages = [ pkgs.git ];
    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+   ```
+   *Alternative (temporary terminal commands for live ISO bootstrap):*
+   ```bash
+   nix-shell -p git
+   sudo mkdir -p /etc/nix
+   echo "experimental-features = nix-command flakes" | sudo tee /etc/nix/nix.conf
    ```
 
 2. **Clone the Flake**:
