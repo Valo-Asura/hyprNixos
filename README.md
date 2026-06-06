@@ -2,7 +2,7 @@
 
 > [!WARNING]
 > **EXPERIMENTAL, HIGHLY BREAKABLE, AND AI-CODED**
-> This repository contains a highly customized NixOS configuration flake that is actively developed and maintained using AI agents. It is prone to breaking changes and is optimized specifically for the author's hardware. Use at your own risk.
+> This repository contains a highly customized NixOS configuration flake that is actively developed and maintained using AI agents. It is prone to breaking changes and is optimized specifically for the my hardware. Use at your own risk.
 
 ---
 
