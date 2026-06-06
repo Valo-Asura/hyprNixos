@@ -135,6 +135,22 @@ let
   hex = color: lib.removePrefix "#" color;
 in
 {
+  home.sessionVariables = {
+    TERMINAL = "foot";
+    VIBESHELL_TERMINAL = "foot";
+  };
+
+  xdg.mimeApps = {
+    defaultApplications = {
+      "application/x-terminal-emulator" = "foot.desktop";
+      "x-scheme-handler/terminal" = "foot.desktop";
+    };
+    associations.added = {
+      "application/x-terminal-emulator" = "foot.desktop";
+      "x-scheme-handler/terminal" = "foot.desktop";
+    };
+  };
+
   programs.kitty = {
     enable = true;
 

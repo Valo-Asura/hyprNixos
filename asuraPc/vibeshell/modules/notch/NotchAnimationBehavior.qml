@@ -9,23 +9,24 @@ Item {
     property bool isVisible: false
 
     // Aplicar las animaciones estándar del notch
-    scale: isVisible ? 1.0 : 0.8
+    scale: isVisible ? 1.0 : 0.92
     opacity: isVisible ? 1.0 : 0.0
     visible: opacity > 0
 
     Behavior on scale {
         enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutCubic
+        SpringAnimation {
+            spring: 3.2
+            damping: 0.38
+            epsilon: 0.002
         }
     }
 
     Behavior on opacity {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Math.max(90, Config.animDuration * 0.55)
-            easing.type: Easing.OutQuart
+            duration: Math.max(120, Config.animDuration * 0.7)
+            easing.type: Easing.OutQuint
         }
     }
 }

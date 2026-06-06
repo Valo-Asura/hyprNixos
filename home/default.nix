@@ -7,6 +7,7 @@
     ./desktop
     ./shell
     ./vscode
+    ./ai-memory
     ./microfetch
     ./templates
   ];

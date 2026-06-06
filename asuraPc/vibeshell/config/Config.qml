@@ -1155,7 +1155,7 @@ Singleton {
         }
 
         adapter: JsonAdapter {
-            property list<string> apps: ["kitty"]
+            property list<string> apps: ["foot"]
         }
     }
 

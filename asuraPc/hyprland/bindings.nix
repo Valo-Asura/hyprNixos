@@ -32,7 +32,7 @@ in
       (mkBind "${superKey} + G" "hl.dsp.window.float({ action = \"toggle\" })" null)
       (mkBind "${superKey} + J" "hl.dsp.layout(\"togglesplit\")" null)
       (mkBind "${superKey} + B" (exec "${pkgs.brave}/bin/brave") null)
-      (mkBind "${superKey} + T" (exec "${pkgs.kitty}/bin/kitty") null)
+      (mkBind "${superKey} + T" (exec "${pkgs.foot}/bin/foot") null)
       (mkBind "${superKey} + I" (exec "code") null)
       (mkBind "${superKey} + E" (exec "${pkgs.telegram-desktop}/bin/telegram-desktop") null)
       (mkBind "${superKey} + A" (exec "${pkgs.wofi}/bin/wofi") null)

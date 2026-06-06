@@ -159,6 +159,8 @@ in
       # File Management & NTFS Support
       thunar # Lightweight GTK file manager (replaces nemo + cinnamon-common)
       xarchiver
+      kdePackages.ark
+      pcmanfm-qt
       gvfs
       ntfs3g
       exfat # Windows filesystem support
@@ -175,12 +177,17 @@ in
       gtk3
       gtk4
       adwaita-icon-theme
+      kdePackages.breeze-icons
       gsettings-desktop-schemas
       at-spi2-atk
       at-spi2-core
       libgtop
+      loupe
+      kdePackages.okular
+      sushi
 
       # Multimedia
+      mpv
       vlc
       freetube
       kdePackages.kdenlive
@@ -190,12 +197,25 @@ in
       pavucontrol
       pulseaudio
       pwvucontrol
+      easyeffects
       v4l-utils
 
       # Hyprland Panel Dependencies
       bluez
       hyprsunset
       hypridle
+      wl-clipboard
+      cliphist
+      libnotify
+      hyprpicker
+      wf-recorder
+      cava
+      matugen
+      mpvpaper
+      songrec
+      zenity
+      qt6Packages.qt6ct
+      nwg-look
 
       # Development
       wget

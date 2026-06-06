@@ -59,7 +59,7 @@ WlSessionLockSurface {
         visible: startAnim  // Visible solo cuando startAnim es true
         z: 0  // Capa más baja - fondo absoluto
 
-        property real zoomScale: startAnim ? 1.25 : 1.0
+        property real zoomScale: startAnim ? 1.14 : 1.0
 
         transform: Scale {
             origin.x: screencopyBackground.width / 2
@@ -105,13 +105,13 @@ WlSessionLockSurface {
         source: wallpaperBackground
         autoPaddingEnabled: false
         blurEnabled: true
-        blur: startAnim ? 0.42 : 0
-        blurMax: 48
+        blur: startAnim ? 0.30 : 0
+        blurMax: 32
         visible: true
-        opacity: startAnim ? 0.86 : 0
+        opacity: startAnim ? 0.76 : 0
         z: 2
 
-        property real zoomScale: startAnim ? 1.25 : 1.0
+        property real zoomScale: startAnim ? 1.14 : 1.0
 
         transform: Scale {
             origin.x: blurEffect.width / 2
@@ -150,10 +150,10 @@ WlSessionLockSurface {
         id: dimOverlay
         anchors.fill: parent
         color: "black"
-        opacity: startAnim ? 0.34 : 0
+        opacity: startAnim ? 0.20 : 0
         z: 3
 
-        property real zoomScale: startAnim ? 1.1 : 1.0
+        property real zoomScale: startAnim ? 1.04 : 1.0
 
         transform: Scale {
             origin.x: dimOverlay.width / 2

@@ -370,13 +370,69 @@ in
           ];
         }
         {
-          match.class = "^(file-roller|org.gnome.FileRoller)$";
+          match.class = "^(org\\.kde\\.ark|ark|file-roller|org\\.gnome\\.FileRoller|xarchiver)$";
           float = true;
           center = true;
           size = [
-            800
-            600
+            860
+            620
           ];
+        }
+        {
+          match.class = "^(org\\.gnome\\.Loupe|loupe|org\\.kde\\.gwenview|Gwenview)$";
+          float = true;
+          center = true;
+          size = [
+            980
+            720
+          ];
+        }
+        {
+          match.class = "^(org\\.gnome\\.NautilusPreviewer|sushi)$";
+          float = true;
+          center = true;
+          size = [
+            900
+            640
+          ];
+        }
+        {
+          match.class = "^(asura-system-monitor|io\\.missioncenter\\.MissionCenter)$";
+          float = true;
+          center = true;
+          size = [
+            980
+            720
+          ];
+        }
+        {
+          match.class = "^(asura-display-manager|hyprmod|nwg-displays|wdisplays)$";
+          float = true;
+          center = true;
+          size = [
+            1040
+            720
+          ];
+        }
+        {
+          match.class = "^(Cloudflare Warp|cloudflare-warp|warp-taskbar|Warp)$";
+          float = true;
+          center = true;
+          size = [
+            760
+            940
+          ];
+          suppress_event = "maximize";
+        }
+        {
+          match.title = "^(Cloudflare Warp|Warp Taskbar|Warp)$";
+          float = true;
+          center = true;
+          size = [
+            760
+            940
+          ];
+          suppress_event = "maximize";
         }
         {
           match.class = "^(xdg-desktop-portal-.*)$";
@@ -391,8 +447,38 @@ in
 
       layer_rule = [
         {
+          match.namespace = "quickshell:.*";
+          blur = true;
+          ignore_alpha = 0.79;
+        }
+        {
+          match.namespace = "notifications";
+          blur = true;
+          ignore_alpha = 0.69;
+        }
+        {
           match.namespace = "launcher";
           no_anim = true;
+          blur = true;
+          ignore_alpha = 0.5;
+        }
+        {
+          match.namespace = "overview";
+          no_anim = true;
+        }
+        {
+          match.namespace = "session";
+          blur = true;
+        }
+        {
+          match.namespace = "quickshell:regionSelector";
+          no_anim = true;
+          blur = false;
+        }
+        {
+          match.namespace = "quickshell:recordingMarker";
+          no_anim = true;
+          blur = false;
         }
         {
           match.namespace = "^ags-.*$";

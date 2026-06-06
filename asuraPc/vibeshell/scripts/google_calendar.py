@@ -99,14 +99,23 @@ def agenda(args):
 
 
 def connect(_args):
-    terminal = shutil.which("kitty") or shutil.which("alacritty") or shutil.which("xterm")
+    terminal = shutil.which("foot") or shutil.which("kitty") or shutil.which("alacritty") or shutil.which("xterm")
     script = (
         "printf 'Vibeshell Google Calendar connection\\n\\n'; "
         "gcalcli init; "
         "printf '\\nConnection command finished. Press Enter to close. '; read _"
     )
     if terminal:
-        subprocess.Popen([terminal, "--title", "Vibeshell Google Calendar", "bash", "-lc", script])
+        terminal_name = os.path.basename(terminal)
+        if terminal_name == "foot":
+            command = [terminal, "--title=Vibeshell Google Calendar", "bash", "-lc", script]
+        elif terminal_name == "kitty":
+            command = [terminal, "--title", "Vibeshell Google Calendar", "bash", "-lc", script]
+        elif terminal_name == "alacritty":
+            command = [terminal, "--title", "Vibeshell Google Calendar", "-e", "bash", "-lc", script]
+        else:
+            command = [terminal, "-T", "Vibeshell Google Calendar", "-e", "bash", "-lc", script]
+        subprocess.Popen(command)
         emit(ok=True, connected=False, message="Opened Google Calendar OAuth terminal")
     else:
         emit(ok=False, connected=False, message="No terminal found. Run: gcalcli init")

@@ -27,6 +27,13 @@ You are connected to the unified memory MCP servers:
 - `ai-memory-files`: Access to `~/.config/ai-unified-memory/` filesystem.
 - `ai-memory-sqlite`: Access to SQLite database `~/.config/ai-unified-memory/memory/history.db`.
 
+### Connected Agent Clients
+- Codex reads this `AGENTS.md` and global `~/.codex/AGENTS.md`; MCP servers are configured in `~/.codex/config.toml`.
+- Cursor reads `.cursor/rules/global.mdc` and `~/.cursor/rules/ai-unified-memory.mdc`; MCP servers are configured in `.cursor/mcp.json` and `~/.cursor/mcp.json`.
+- Kiro reads `~/.kiro/steering/AGENTS.md`; MCP servers are configured in `~/.kiro/settings/mcp.json`.
+- Antigravity reads `~/.antigravity/rules/ai-unified-memory.md` and `~/.config/Antigravity/User/AGENTS.md`; MCP servers are configured in Antigravity user MCP files.
+- Warp has a shared context file at `~/.warp/ai-unified-memory.md`; MCP support is tool-dependent, so the shared filesystem and SQLite paths are also exported through environment variables.
+
 ### Operations:
 1. **At Session Start**: Query `ai-memory-sqlite` (`memories` table) or read files via `ai-memory-files` to retrieve context on recent tasks, facts, and lessons.
 2. **On Task Completion**: Proactively log new facts, gotchas, or lessons learned:

@@ -12,9 +12,8 @@ id_ed25519
 result
 result-*
 .direnv/
-result
-result-*
-.direnv
+__pycache__/
+*.py[cod]
 .envrc
 .DS_Store
 ai_ide_notes.md
