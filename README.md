@@ -14,9 +14,16 @@
 
 ---
 
-## Minimal Install
+## Install
 
-1. **Clone the Flake**:
+1. **Install Git & Enable Flakes**:
+   ```bash
+   nix-shell -p git
+   sudo mkdir -p /etc/nix
+   echo "experimental-features = nix-command flakes" | sudo tee /etc/nix/nix.conf
+   ```
+
+2. **Clone the Flake**:
    ```bash
    sudo rm -rf /etc/nixos
    sudo git clone https://github.com/Valo-Asura/hyprNixos.git /etc/nixos
