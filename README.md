@@ -1,122 +1,64 @@
 # Asura NixOS Flake
 
-Hyprland `0.55.0` + Vibeshell + Home Manager on NixOS.
+> [!WARNING]
+> **EXPERIMENTAL, HIGHLY BREAKABLE, AND AI-CODED**
+> This repository contains a highly customized NixOS configuration flake that is actively developed and maintained using AI agents. It is prone to breaking changes and is optimized specifically for the author's hardware. Use at your own risk.
 
-## Warnings
-
-- Replace [asuraPc/system/hardware-configuration.nix](/etc/nixos/asuraPc/system/hardware-configuration.nix) on every new machine. Do not reuse old disk, swap, or boot UUIDs.
-- This repo defaults to host `nixos` and user `asura`. Change [hosts/default.nix](/etc/nixos/hosts/default.nix) if the target machine should use different names.
-- Prefer Ethernet for the first install. This config supports Broadcom `wl`, but a wired link is safer if Wi-Fi lags or drops.
-- Secure Boot and secrets are separate setup steps. See [docs/SECURE_BOOT.md](/etc/nixos/docs/SECURE_BOOT.md).
-
-## Install
-
-1. Boot a NixOS machine. If you are using the live ISO, mount the target system at `/mnt` and replace `/etc/nixos` below with `/mnt/etc/nixos`.
-2. Install Git first:
-
-```bash
-nix-shell -p git
-```
-
-3. Enable flakes:
-
-```bash
-sudo mkdir -p /etc/nix
-printf 'experimental-features = nix-command flakes\n' | sudo tee /etc/nix/nix.conf
-```
-
-If you are on the live ISO, write the same line to `/mnt/etc/nix/nix.conf` after the target filesystem is mounted.
-
-4. Clone the flake:
-
-```bash
-sudo rm -rf /etc/nixos
-sudo git clone https://github.com/Valo-Asura/hyprNixos.git /etc/nixos
-cd /etc/nixos
-```
-
-5. Replace the hardware file for the target machine:
-
-```bash
-sudo nixos-generate-config --show-hardware-config > /tmp/hardware-configuration.nix
-sudo install -m 0644 /tmp/hardware-configuration.nix /etc/nixos/asuraPc/system/hardware-configuration.nix
-```
-
-On the live ISO, use `sudo nixos-generate-config --root /mnt --show-hardware-config` and install the file into `/mnt/etc/nixos/asuraPc/system/hardware-configuration.nix`.
-
-6. Build and switch:
-
-```bash
-sudo nixos-rebuild test --flake /etc/nixos#nixos
-sudo nixos-rebuild switch --flake /etc/nixos#nixos
-sudo reboot
-```
-
-If you are on the live ISO, use:
-
-```bash
-sudo nixos-install --flake /mnt/etc/nixos#nixos
-```
-
-## First Boot
-
-- Validate Hyprland Lua with `hyprctl reload && hyprctl configerrors`.
-- If Quickshell lock fails, `vibeshell-safe-lock` falls back to `hyprlock`.
-- Both lock paths use [asuraPc/hyprland/lock-images/lockscreen.png](/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png).
-- More checks live in [docs/VALIDATION.md](/etc/nixos/docs/VALIDATION.md).
+---
 
 ## Showcase
 
-### Desktop Demo
+| Desktop Workspace | Lockscreen |
+| :--- | :--- |
+| ![Desktop Workspace](screenshots/desktop-demo.png) | ![Lockscreen](screenshots/lockscreen.png) |
 
-![Asura NixOS desktop demo](screenshots/desktop-demo.png)
+---
 
-### Lockscreen
+## Minimal Install
 
-![Vibeshell lockscreen](screenshots/lockscreen.png)
+1. **Clone the Flake**:
+   ```bash
+   sudo rm -rf /etc/nixos
+   sudo git clone https://github.com/Valo-Asura/hyprNixos.git /etc/nixos
+   cd /etc/nixos
+   ```
 
+2. **Generate Host Hardware Config**:
+   ```bash
+   sudo nixos-generate-config --show-hardware-config > /etc/nixos/asuraPc/system/hardware-configuration.nix
+   ```
 
-## Desktop
+3. **Rebuild and Switch**:
+   ```bash
+   sudo nixos-rebuild switch --flake /etc/nixos#nixos
+   ```
 
-- Hyprland `0.55.0` runs from generated Lua config.
-- Vibeshell includes clickable notch-to-dashboard behavior, grouped settings, Night Light intensity control, resilient video wallpaper restarts, stale browser-player filtering, and hostname plus uptime when no app title is active.
-- `SUPER+V` opens clipboard history. Unpinned clipboard entries older than 2 days are pruned, and unpinned history is capped at 10 entries.
-- `Print` opens the screenshot tool with quick copy/save/delete actions. Direct save binds remain on `SUPER+Print` and `SUPER+SHIFT+Print`.
-- Vibeshell Notes stores notes and reminders locally. Reminder dates are color-coded: red when due or within 2 hours, yellow for later today, green for tomorrow, and muted for later dates.
-- Kitty uses a minimal bottom tab-dot strip, a `cls` shortcut to clear visible scrollback, and a responsive Fastfetch greeting.
-- Night Light uses `hyprsunset`; right-click its dashboard button to adjust intensity.
-- Desktop apps include Kdenlive, OBS Studio, DaVinci Resolve, MongoDB Compass, MySQL Workbench, Telegram, FreeTube, `ani-cli`, and a Chrome-based WhatsApp launcher.
-- MySQL 8.4 runs locally on `127.0.0.1:3306` with config at `/etc/my.cnf`, data at `/var/lib/mysql`, socket at `/run/mysqld/mysqld.sock`, and helper info via `mysql-local-info`.
-- VS Code-like IDEs are kept lean for theming: `GitHub Theme` is the theme, and `Catppuccin Icons for VSCode` is the icon pack.
+---
 
-## Local AI
+## Key Configurations
 
-- Vibeshell memory/RAG stays enabled in config.
-- Ollama startup and model loading stay disabled for the first install, so rebuilds stay fast.
-- Nothing auto-pulls models during build or switch.
-- Start local AI only when needed with `ai-local-start`.
-- Pull the light local set with `ai-models-pull-core`.
-- Check memory status in Vibeshell with `/memory`.
+* **Desktop Environment**: Hyprland window manager paired with **Vibeshell** (a custom QML/Quickshell bar, notch, and control dashboard).
+* **Unified Memory**: Integrated filesystem and SQLite memory databases (`history.db`) synchronized automatically across Zed (`context_servers`), VS Code (`mcp.json`), Cursor (`global.mdc`), Codex (`config.toml`), and Kiro.
+* **Wallpaper Engine**: Robust component that uses a timer-based process lifecycle in QML to seamlessly swap static wallpapers (`hyprpaper`) and video wallpapers (`mpvpaper`) with automatic pywal color generation.
+* **Local Services**: Local developer database engines (MySQL 8.4 and MongoDB with WiredTiger cache size constraints to prevent out-of-memory errors).
 
-## Artifacts
+---
 
-- Generated Hyprland Lua: [hyprland.lua](/home/asura/.config/hypr/hyprland.lua)
-- Shared lock image: [lockscreen.png](/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png)
-- Validation notes: [docs/VALIDATION.md](/etc/nixos/docs/VALIDATION.md)
-
-## Structure
+## Repository Structure
 
 ```text
 /etc/nixos
-├── flake.nix
-├── hosts/default.nix
-├── asuraPc/system/
-├── asuraPc/hyprland/
-├── asuraPc/vibeshell/
-├── home/
-└── docs/
+├── hosts/              # Machine host declarations
+├── asuraPc/
+│   ├── system/         # Core system services, drivers, and packages
+│   ├── hyprland/       # Window manager bindings, lockscreen, and rules
+│   └── vibeshell/      # QML/Quickshell user interface modules
+├── home/               # User-level Home Manager configurations
+└── docs/               # System documentation and validation guides
 ```
+
+---
 
 ## Thanks
 
-Thanks to the Hyprland, Quickshell/Axenide-Ambxst shell and Caelestia shell module authors whose work and ideas were adapted here.
+Special thanks to the Hyprland, Quickshell/Axenide-Ambxst, and NixOS communities.
