@@ -16,13 +16,11 @@
 
 ## Install
 
-1. **Install Git & Enable Flakes (Live ISO bootstrap only)**:
-   > [!NOTE]
-   > Git and Flakes experimental features are already configured system-wide in this flake. These commands are only needed to bootstrap a clean Live ISO.
-   ```bash
-   nix-shell -p git
-   sudo mkdir -p /etc/nix
-   echo "experimental-features = nix-command flakes" | sudo tee /etc/nix/nix.conf
+1. **Install Git & Enable Flakes**:
+   These are declared system-wide in the configuration:
+   ```nix
+   environment.systemPackages = [ pkgs.git ];
+   nix.settings.experimental-features = [ "nix-command" "flakes" ];
    ```
 
 2. **Clone the Flake**:
