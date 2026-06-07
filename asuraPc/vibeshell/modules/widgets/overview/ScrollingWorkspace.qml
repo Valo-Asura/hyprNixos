@@ -340,6 +340,7 @@ Item {
                     property real initY: baseY
                     property Item originalParent: null
                     property point pressPos: Qt.point(0, 0)
+                    property point dragOverlayCursor: Qt.point(0, 0)
                     readonly property real dragThreshold: 5
 
                     Drag.active: dragging
@@ -526,9 +527,13 @@ Item {
                                     }
                                 }
                             } else {
+                                if (root.dragOverlay) {
+                                    windowDelegate.dragOverlayCursor = dragArea.mapToItem(root.dragOverlay, mouse.x, mouse.y);
+                                }
+
                                 // Update target workspace indicator while dragging
                                 if (root.overviewRoot && root.overviewRoot.getWorkspaceAtY) {
-                                    const globalPos = dragArea.mapToItem(null, mouse.x, mouse.y);
+                                    const globalPos = root.dragOverlay ? root.dragOverlay.mapToItem(null, windowDelegate.dragOverlayCursor.x, windowDelegate.dragOverlayCursor.y) : dragArea.mapToItem(null, mouse.x, mouse.y);
                                     const targetWs = root.overviewRoot.getWorkspaceAtY(globalPos.y);
                                     if (targetWs !== -1 && targetWs !== root.workspaceId) {
                                         root.draggingTargetWorkspace = targetWs;
@@ -542,12 +547,16 @@ Item {
                         onReleased: mouse => {
                             if (mouse.button === Qt.LeftButton) {
                                 if (windowDelegate.dragging) {
+                                    if (root.dragOverlay) {
+                                        windowDelegate.dragOverlayCursor = dragArea.mapToItem(root.dragOverlay, mouse.x, mouse.y);
+                                    }
+
                                     windowDelegate.dragging = false;
 
                                     // Calculate target workspace from cursor position
-                                    let targetWs = root.workspaceId; // Default to current workspace
+                                    let targetWs = root.draggingTargetWorkspace !== -1 ? root.draggingTargetWorkspace : root.workspaceId;
                                     if (root.overviewRoot && root.overviewRoot.getWorkspaceAtY) {
-                                        const globalPos = dragArea.mapToItem(null, mouse.x, mouse.y);
+                                        const globalPos = root.dragOverlay ? root.dragOverlay.mapToItem(null, windowDelegate.dragOverlayCursor.x, windowDelegate.dragOverlayCursor.y) : dragArea.mapToItem(null, mouse.x, mouse.y);
                                         const calculatedWs = root.overviewRoot.getWorkspaceAtY(globalPos.y);
                                         if (calculatedWs !== -1) {
                                             targetWs = calculatedWs;

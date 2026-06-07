@@ -54,8 +54,17 @@ Singleton {
     // Validated disk list
     property var validDisks: []
 
+    // System overview metrics
+    property real networkRxRate: 0.0
+    property real networkTxRate: 0.0
+    property int processCount: 0
+    property int threadCount: 0
+    property real uptimeSeconds: 0.0
+    property var loadAverage: [0, 0, 0]
+
     // Update interval in milliseconds (3s is plenty for dashboards)
     property int updateInterval: 3000
+    property bool monitorEnabled: false
 
     // History data for charts (max 50 points)
     property var cpuHistory: []
@@ -95,6 +104,12 @@ Singleton {
                     root.diskTotal = stats.disk.total || {};
                     root.diskUsed = stats.disk.used || {};
                     root.diskAvailable = stats.disk.available || {};
+                    root.networkRxRate = stats.network?.rx_rate || 0;
+                    root.networkTxRate = stats.network?.tx_rate || 0;
+                    root.processCount = stats.processes?.count || 0;
+                    root.threadCount = stats.processes?.threads || 0;
+                    root.uptimeSeconds = stats.system?.uptime || 0;
+                    root.loadAverage = stats.system?.load || [0, 0, 0];
                     
                     // Update GPU
                     root.gpuDetected = stats.gpu.detected;
@@ -145,6 +160,9 @@ Singleton {
         }
     }
 
+    onMonitorEnabledChanged: restartMonitor()
+    onUpdateIntervalChanged: restartMonitor()
+
     // Restart monitor when disks change (Unified handler)
     onValidDisksChanged: {
         // Run static detection for types
@@ -152,17 +170,27 @@ Singleton {
             diskTypeDetector.running = true;
         }
 
-        // Restart monitor process with new args
+        restartMonitor();
+    }
+
+    function stopMonitor() {
         if (monitorProcess.running) {
             monitorProcess.running = false;
         }
-        
+    }
+
+    function restartMonitor() {
+        stopMonitor();
+
+        if (!monitorEnabled || validDisks.length === 0)
+            return;
+
         let cmd = ["python3", Quickshell.shellDir + "/scripts/system_monitor.py",
                    "--interval", String(updateInterval / 1000)];
         for (let i = 0; i < validDisks.length; i++) {
             cmd.push(validDisks[i]);
         }
-        
+
         monitorProcess.command = cmd;
         monitorProcess.running = true;
     }

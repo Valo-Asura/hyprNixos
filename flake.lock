@@ -913,15 +913,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1766725085,
-        "narHash": "sha256-O2aMFdDUYJazFrlwL7aSIHbUSEm3ADVZjmf41uBJfHs=",
-        "ref": "refs/heads/master",
-        "rev": "41828c4180fb921df7992a5405f5ff05d2ac2fff",
-        "revCount": 715,
+        "lastModified": 1777871389,
+        "narHash": "sha256-gU+VGpwGJ2vvg0mtYqVvj5u+2LteuHlpokH6JSAtueY=",
+        "ref": "refs/tags/v0.3.0",
+        "rev": "59e9c47b0eb48a9e4bcf9631fa062ee939bd2e83",
+        "revCount": 815,
         "type": "git",
         "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
       },
       "original": {
+        "ref": "refs/tags/v0.3.0",
         "type": "git",
         "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
       }
@@ -1132,8 +1133,8 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1780743018,
-        "narHash": "sha256-Onr5ZWLH4e02OeFL09a8UDwCqA75JQrgCEaoGrY65Wo=",
+        "lastModified": 1780797218,
+        "narHash": "sha256-TIGOFSlMGXUUpXQkZ57asxYpBo81eMQQBXjAnBIIORQ=",
         "path": "/etc/nixos/asuraPc/vibeshell",
         "type": "path"
       },

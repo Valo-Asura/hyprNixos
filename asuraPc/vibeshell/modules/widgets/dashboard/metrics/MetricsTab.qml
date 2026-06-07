@@ -61,6 +61,25 @@ Rectangle {
         return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;
     }
 
+    function formatRate(bytesPerSecond) {
+        const value = Number(bytesPerSecond || 0);
+        if (value >= 1024 * 1024)
+            return `${(value / 1024 / 1024).toFixed(2)} MB/s`;
+        if (value >= 1024)
+            return `${(value / 1024).toFixed(1)} KB/s`;
+        return `${Math.round(value)} B/s`;
+    }
+
+    function formatUptime(seconds) {
+        const safe = Math.max(0, Math.floor(seconds || 0));
+        const days = Math.floor(safe / 86400);
+        const hours = Math.floor((safe % 86400) / 3600);
+        const minutes = Math.floor((safe % 3600) / 60);
+        if (days > 0)
+            return `${days}d ${hours}h ${minutes}m`;
+        return `${hours}h ${minutes}m`;
+    }
+
     // Update OS icon when logos are loaded
     onLinuxLogosChanged: {
         if (linuxLogos && osName) {
@@ -76,6 +95,7 @@ Rectangle {
 
         const savedInterval = StateService.get("metricsRefreshInterval", 2000);
         SystemResources.updateInterval = Math.max(100, savedInterval);
+        SystemResources.monitorEnabled = GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 2;
         const savedZoom = StateService.get("metricsChartZoom", 1.0);
         // Limit zoom range: 0.2 (show all available) to 3.0 (zoom in)
         chartZoom = Math.max(0.2, Math.min(3.0, savedZoom));
@@ -83,6 +103,22 @@ Rectangle {
         hostnameReader.running = true;
         osReader.running = true;
         linuxLogosReader.running = true;
+    }
+
+    Component.onDestruction: {
+        SystemResources.monitorEnabled = false;
+    }
+
+    Connections {
+        target: GlobalStates
+
+        function onDashboardOpenChanged() {
+            SystemResources.monitorEnabled = GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 2;
+        }
+
+        function onDashboardCurrentTabChanged() {
+            SystemResources.monitorEnabled = GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 2;
+        }
     }
 
     // Load Linux logos JSON
@@ -347,6 +383,103 @@ Rectangle {
                     Separator {
                         Layout.preferredHeight: 2
                         Layout.fillWidth: true
+                    }
+                }
+
+                StyledRect {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 16
+                    Layout.rightMargin: 16
+                    implicitHeight: 92
+                    radius: Styling.radius(3)
+                    variant: "pane"
+
+                    GridLayout {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        columns: 2
+                        rowSpacing: 10
+                        columnSpacing: 16
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Text {
+                                text: "Uptime"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-2)
+                                color: Colors.overSurfaceVariant
+                            }
+
+                            Text {
+                                text: root.formatUptime(SystemResources.uptimeSeconds)
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                font.bold: true
+                                color: Colors.overBackground
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Text {
+                                text: "Load Avg"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-2)
+                                color: Colors.overSurfaceVariant
+                            }
+
+                            Text {
+                                text: SystemResources.loadAverage.map(v => Number(v || 0).toFixed(2)).join(" ")
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                font.bold: true
+                                color: Colors.overBackground
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Text {
+                                text: "Processes"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-2)
+                                color: Colors.overSurfaceVariant
+                            }
+
+                            Text {
+                                text: `${SystemResources.processCount} (${SystemResources.threadCount} threads)`
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                font.bold: true
+                                color: Colors.overBackground
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Text {
+                                text: "Network"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-2)
+                                color: Colors.overSurfaceVariant
+                            }
+
+                            Text {
+                                text: `Down ${root.formatRate(SystemResources.networkRxRate)}  Up ${root.formatRate(SystemResources.networkTxRate)}`
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                font.bold: true
+                                color: Colors.overBackground
+                            }
+                        }
                     }
                 }
 

@@ -1347,6 +1347,10 @@ Rectangle {
                         Layout.fillWidth: true
                     }
 
+                    PomodoroCard {
+                        Layout.fillWidth: true
+                    }
+
                     Calendar {
                         Layout.fillWidth: true
                         Layout.preferredHeight: width

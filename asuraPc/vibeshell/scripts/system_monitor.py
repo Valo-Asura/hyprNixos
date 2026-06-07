@@ -23,6 +23,9 @@ class SystemMonitor:
     def __init__(self):
         self.prev_cpu_total = 0
         self.prev_cpu_idle = 0
+        self.prev_net_rx = 0
+        self.prev_net_tx = 0
+        self.prev_net_time = time.monotonic()
         self.disks = []
         self.gpu_vendor = "none"
         self.gpu_count = 0
@@ -227,6 +230,78 @@ class SystemMonitor:
                 available_map[mount] = 0
         return usage_map, total_map, used_map, available_map
 
+    def get_network(self):
+        try:
+            rx_total = 0
+            tx_total = 0
+            with open("/proc/net/dev", "r") as f:
+                for line in f.readlines()[2:]:
+                    if ":" not in line:
+                        continue
+                    name, values = line.split(":", 1)
+                    iface = name.strip()
+                    if iface == "lo":
+                        continue
+                    parts = values.split()
+                    if len(parts) < 16:
+                        continue
+                    rx_total += int(parts[0])
+                    tx_total += int(parts[8])
+
+            now = time.monotonic()
+            if self.prev_net_rx == 0 and self.prev_net_tx == 0:
+                self.prev_net_rx = rx_total
+                self.prev_net_tx = tx_total
+                self.prev_net_time = now
+                return 0.0, 0.0
+
+            elapsed = max(0.001, now - self.prev_net_time)
+            rx_rate = max(0.0, (rx_total - self.prev_net_rx) / elapsed)
+            tx_rate = max(0.0, (tx_total - self.prev_net_tx) / elapsed)
+
+            self.prev_net_rx = rx_total
+            self.prev_net_tx = tx_total
+            self.prev_net_time = now
+            return rx_rate, tx_rate
+        except:
+            return 0.0, 0.0
+
+    def get_process_summary(self):
+        processes = 0
+        threads = 0
+        try:
+            for entry in os.listdir("/proc"):
+                if not entry.isdigit():
+                    continue
+                processes += 1
+                try:
+                    with open(f"/proc/{entry}/status", "r") as f:
+                        for line in f:
+                            if line.startswith("Threads:"):
+                                threads += int(line.split()[1])
+                                break
+                except:
+                    continue
+        except:
+            pass
+        return processes, threads
+
+    def get_system_summary(self):
+        uptime = 0.0
+        load = [0.0, 0.0, 0.0]
+        try:
+            with open("/proc/uptime", "r") as f:
+                uptime = float(f.read().split()[0])
+        except:
+            pass
+        try:
+            with open("/proc/loadavg", "r") as f:
+                parts = f.read().split()
+                load = [float(parts[0]), float(parts[1]), float(parts[2])]
+        except:
+            pass
+        return uptime, load
+
     def get_gpu_stats(self):
         usages = []
         temps = []
@@ -362,6 +437,9 @@ if __name__ == "__main__":
             gpu_usages, gpu_temps, gpu_memory_used, gpu_memory_total = (
                 monitor.get_gpu_stats()
             )
+            net_rx_rate, net_tx_rate = monitor.get_network()
+            process_count, thread_count = monitor.get_process_summary()
+            uptime_seconds, load_avg = monitor.get_system_summary()
 
             data = {
                 "cpu": {"usage": cpu_usage, "temp": cpu_temp},
@@ -385,6 +463,18 @@ if __name__ == "__main__":
                     "temps": gpu_temps,
                     "memory_used": gpu_memory_used,
                     "memory_total": gpu_memory_total,
+                },
+                "network": {
+                    "rx_rate": net_rx_rate,
+                    "tx_rate": net_tx_rate,
+                },
+                "processes": {
+                    "count": process_count,
+                    "threads": thread_count,
+                },
+                "system": {
+                    "uptime": uptime_seconds,
+                    "load": load_avg,
                 },
             }
 

@@ -39,11 +39,33 @@ WlSessionLockSurface {
             return syncedLockscreenImagePath;
         return fallbackLockscreenImagePath;
     }
+    property date currentDate: new Date()
 
     function fileUrl(path) {
         if (!path || path.length === 0)
             return "";
         return path.indexOf("file://") === 0 ? path : "file://" + path;
+    }
+
+    function formatHour12(date) {
+        var h = date.getHours() % 12;
+        if (h === 0)
+            h = 12;
+        return (h < 10 ? "0" : "") + h;
+    }
+
+    function lockUserLabel() {
+        const user = usernameCollector.text.trim() || Quickshell.env("USER") || "asura";
+        const host = hostnameCollector.text.trim() || Quickshell.env("HOSTNAME") || "nixos";
+        return user + "@" + host;
+    }
+
+    function weatherLabel() {
+        if (WeatherService.dataAvailable) {
+            const desc = WeatherService.effectiveWeatherDescription || "Weather";
+            return Math.round(WeatherService.currentTemp) + "°" + Config.weather.unit + "  " + desc;
+        }
+        return "Session locked";
     }
 
     // Always transparent - blur background handles the visuals
@@ -179,131 +201,65 @@ WlSessionLockSurface {
         }
     }
 
-    // Clock (center)
-    Item {
-        id: clockContainer
-        anchors.centerIn: parent
-        width: clockRow.width
-        height: hoursText.height + (hoursText.height * 0.5)
-        z: 10
-
-        function formatHour12(date) {
-            var h = date.getHours() % 12;
-            if (h === 0) h = 12;
-            return (h < 10 ? "0" : "") + h;
-        }
-
-        Row {
-            id: clockRow
-            spacing: 0
-            anchors.top: parent.top
-
-            Text {
-                id: hoursText
-                text: clockContainer.formatHour12(new Date())
-                font.family: "League Gothic"
-                font.pixelSize: Math.min(Math.max(root.width * 0.12, 128), 220)
-                color: Colors.overBackground
-                antialiasing: true
-                opacity: startAnim ? 1 : 0
-
-                property real slideOffset: startAnim ? 0 : -150
-
-                transform: Translate {
-                    y: hoursText.slideOffset
-                }
-
-                layer.enabled: true
-                layer.effect: BgShadow {}
-
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration * 2
-                        easing.type: Easing.OutExpo
-                    }
-                }
-
-                Behavior on slideOffset {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration * 2
-                        easing.type: Easing.OutExpo
-                    }
-                }
-            }
-
-            Text {
-                id: minutesText
-                text: Qt.formatTime(new Date(), "mm")
-                font.family: "League Gothic"
-                font.pixelSize: Math.min(Math.max(root.width * 0.12, 128), 220)
-                color: Colors.primaryFixedDim
-                antialiasing: true
-                anchors.verticalCenter: undefined
-                anchors.top: hoursText.top
-                anchors.topMargin: hoursText.height * 0.5
-                opacity: startAnim ? 1 : 0
-
-                property real slideOffset: startAnim ? 0 : 150
-
-                transform: Translate {
-                    y: minutesText.slideOffset
-                }
-
-                layer.enabled: true
-                layer.effect: BgShadow {}
-
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration * 2
-                        easing.type: Easing.OutExpo
-                    }
-                }
-
-                Behavior on slideOffset {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration * 2
-                        easing.type: Easing.OutExpo
-                    }
-                }
-            }
-        }
-
-        Timer {
-            interval: 1000
-            running: true
-            repeat: true
-            onTriggered: {
-                hoursText.text = clockContainer.formatHour12(new Date());
-                minutesText.text = Qt.formatTime(new Date(), "mm");
-            }
-        }
-    }
-
-    // Music player (slides from left)
-    Item {
-        id: playerContainer
-        z: 10
-
-        property bool isTopPosition: Config.lockscreen.position === "top"
-
-        anchors {
-            left: parent.left
-            leftMargin: startAnim ? 32 : -(playerContainer.width + 64)
-            top: isTopPosition ? parent.top : undefined
-            topMargin: isTopPosition ? 32 : 0
-            bottom: !isTopPosition ? parent.bottom : undefined
-            bottomMargin: !isTopPosition ? 32 : 0
-        }
-        width: 390
-        height: playerContent.height
-
+    // Reference-style status strip
+    StyledRect {
+        id: lockStatusBar
+        z: 11
+        variant: "popup"
+        backgroundOpacity: 0.62
+        enableShadow: true
+        width: Math.min(parent.width - 48, 520)
+        height: 34
+        radius: height / 2
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: startAnim ? 14 : -height
         opacity: startAnim ? 1 : 0
 
-        Behavior on anchors.leftMargin {
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
+            spacing: 12
+
+            Text {
+                text: root.lockUserLabel()
+                Layout.fillWidth: true
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-2)
+                color: Colors.overBackground
+                elide: Text.ElideRight
+            }
+
+            StyledRect {
+                Layout.preferredWidth: lockPillText.implicitWidth + 22
+                Layout.preferredHeight: 24
+                radius: height / 2
+                variant: "common"
+                backgroundOpacity: 0.65
+
+                Text {
+                    id: lockPillText
+                    anchors.centerIn: parent
+                    text: "Locked"
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-2)
+                    font.bold: true
+                    color: Colors.overBackground
+                }
+            }
+
+            Text {
+                text: Qt.formatTime(root.currentDate, "hh:mm AP")
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignRight
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-2)
+                color: Colors.overBackground
+            }
+        }
+
+        Behavior on anchors.topMargin {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration * 2
@@ -316,6 +272,173 @@ WlSessionLockSurface {
             NumberAnimation {
                 duration: Config.animDuration * 2
                 easing.type: Easing.OutQuad
+            }
+        }
+    }
+
+    // Clock island (center)
+    Item {
+        id: clockContainer
+        anchors.centerIn: parent
+        width: Math.min(Math.max(root.width * 0.16, 220), 330)
+        height: Math.min(Math.max(root.height * 0.20, 190), 260)
+        z: 10
+        opacity: startAnim ? 1 : 0
+        scale: startAnim ? 1 : 0.84
+
+        StyledRect {
+            anchors.fill: parent
+            variant: "popup"
+            backgroundOpacity: 0.38
+            enableShadow: true
+            radius: Math.min(width, height) * 0.22
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: 18
+                radius: Math.min(width, height) * 0.24
+                color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.12)
+                border.width: 1
+                border.color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.26)
+            }
+
+            Column {
+                anchors.centerIn: parent
+                spacing: 4
+
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 6
+
+                    Text {
+                        text: root.formatHour12(root.currentDate)
+                        font.family: "League Gothic"
+                        font.pixelSize: Math.min(Math.max(clockContainer.width * 0.36, 78), 118)
+                        color: Colors.overBackground
+                        antialiasing: true
+                        layer.enabled: true
+                        layer.effect: BgShadow {}
+                    }
+
+                    Text {
+                        text: Qt.formatTime(root.currentDate, "mm")
+                        font.family: "League Gothic"
+                        font.pixelSize: Math.min(Math.max(clockContainer.width * 0.36, 78), 118)
+                        color: Colors.primaryFixedDim
+                        antialiasing: true
+                        layer.enabled: true
+                        layer.effect: BgShadow {}
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Qt.formatTime(root.currentDate, "AP").toLowerCase()
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-1)
+                    font.bold: true
+                    color: Colors.overBackground
+                    opacity: 0.8
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Qt.formatDate(root.currentDate, "ddd, dd MMM")
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-2)
+                    color: Colors.overSurfaceVariant
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: clockContainer.width - 40
+                    text: root.weatherLabel()
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-2)
+                    color: Colors.overBackground
+                    opacity: 0.82
+                }
+            }
+        }
+
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration * 2
+                easing.type: Easing.OutExpo
+            }
+        }
+
+        Behavior on scale {
+            enabled: Config.animDuration > 0
+            SpringAnimation {
+                spring: 3.8
+                damping: 0.34
+                epsilon: 0.002
+            }
+        }
+    }
+
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root.currentDate = new Date()
+    }
+
+    // Music player (bottom-centered, reference-style lock card)
+    Item {
+        id: playerContainer
+        z: 10
+
+        property bool isTopPosition: Config.lockscreen.position === "top"
+
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            top: isTopPosition ? parent.top : undefined
+            topMargin: isTopPosition ? (startAnim ? 96 : -140) : 0
+            bottom: !isTopPosition ? parent.bottom : undefined
+            bottomMargin: !isTopPosition ? (startAnim ? 104 : -140) : 0
+        }
+        width: Math.min(390, parent.width - 48)
+        height: playerContent.height
+
+        opacity: startAnim && playerContent.visible ? 1 : 0
+        scale: startAnim && playerContent.visible ? 1 : 0.94
+
+        Behavior on anchors.topMargin {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration * 2
+                easing.type: Easing.OutExpo
+            }
+        }
+
+        Behavior on anchors.bottomMargin {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration * 2
+                easing.type: Easing.OutExpo
+            }
+        }
+
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration * 2
+                easing.type: Easing.OutQuad
+            }
+        }
+
+        Behavior on scale {
+            enabled: Config.animDuration > 0
+            SpringAnimation {
+                spring: 4.2
+                damping: 0.34
+                epsilon: 0.002
             }
         }
 
@@ -335,12 +458,12 @@ WlSessionLockSurface {
         anchors {
             horizontalCenter: parent.horizontalCenter
             top: isTopPosition ? parent.top : undefined
-            topMargin: isTopPosition ? (startAnim ? 32 : -80) : 0
+            topMargin: isTopPosition ? (startAnim ? 28 : -80) : 0
             bottom: !isTopPosition ? parent.bottom : undefined
-            bottomMargin: !isTopPosition ? (startAnim ? 32 : -80) : 0
+            bottomMargin: !isTopPosition ? (startAnim ? 26 : -80) : 0
         }
-        width: 350
-        height: 96
+        width: Math.min(370, parent.width - 48)
+        height: 64
 
         opacity: startAnim ? 1 : 0
         scale: startAnim ? 1 : 0.92
@@ -386,7 +509,7 @@ WlSessionLockSurface {
             enableShadow: true
             anchors.centerIn: parent
             width: parent.width
-            height: 96
+            height: 58
             radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
 
             property real shakeOffset: 0
@@ -399,14 +522,14 @@ WlSessionLockSurface {
             Row {
                 anchors.fill: parent
                 anchors.leftMargin: 16
-                anchors.rightMargin: 24
+                anchors.rightMargin: 16
                 spacing: 12
 
-                // Avatar (64x64)
+                // Avatar
                 Rectangle {
                     id: avatarContainer
-                    width: 64
-                    height: 64
+                    width: 42
+                    height: 42
                     radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
                     color: "transparent"
                     anchors.verticalCenter: parent.verticalCenter
@@ -439,7 +562,7 @@ WlSessionLockSurface {
                     Text {
                         anchors.centerIn: parent
                         text: "👤"
-                        font.pixelSize: 32
+                        font.pixelSize: 22
                         visible: userAvatar.status !== Image.Ready
                     }
                 }
@@ -448,7 +571,7 @@ WlSessionLockSurface {
                 StyledRect {
                     id: passwordFieldBg
                     width: parent.width - avatarContainer.width - parent.spacing
-                    height: 48
+                    height: 40
                     anchors.verticalCenter: parent.verticalCenter
                     variant: passwordInputBox.showError ? "error" : "common"
                     radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
@@ -502,7 +625,7 @@ WlSessionLockSurface {
                             id: passwordInput
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignVCenter
-                            placeholderText: usernameCollector.text.trim()
+                            placeholderText: failLockSecondsLeft > 0 ? `Locked ${failLockSecondsLeft}s` : "Enter password"
                             placeholderTextColor: Qt.rgba(passwordFieldBg.item.r, passwordFieldBg.item.g, passwordFieldBg.item.b, 0.5)
                             font.family: Config.theme.font
                             font.pixelSize: Styling.fontSize(0)

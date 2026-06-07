@@ -3,6 +3,7 @@
 
 let
   ark = "org.kde.ark.desktop";
+  nautilus = "org.gnome.Nautilus.desktop";
   loupe = "org.gnome.Loupe.desktop";
   okular = "org.kde.okular.desktop";
 
@@ -54,7 +55,7 @@ let
     archiveDefaults
     // viewerDefaults
     // {
-      "inode/directory" = "thunar.desktop";
+      "inode/directory" = nautilus;
     };
 in
 {

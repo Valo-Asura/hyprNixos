@@ -160,6 +160,8 @@ in
       thunar # Lightweight GTK file manager (replaces nemo + cinnamon-common)
       xarchiver
       kdePackages.ark
+      nautilus
+      gnome-disk-utility
       pcmanfm-qt
       gvfs
       ntfs3g

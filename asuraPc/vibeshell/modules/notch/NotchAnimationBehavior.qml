@@ -16,8 +16,8 @@ Item {
     Behavior on scale {
         enabled: Config.animDuration > 0
         SpringAnimation {
-            spring: 3.2
-            damping: 0.38
+            spring: 4.4
+            damping: 0.32
             epsilon: 0.002
         }
     }

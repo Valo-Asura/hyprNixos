@@ -113,6 +113,15 @@ prepare_launch_log() {
 	printf '%s\n' "$log_file"
 }
 
+prepare_stable_shell_path() {
+	local config_home="${XDG_CONFIG_HOME:-$HOME/.config}/Vibeshell"
+	local stable_shell_dir="$config_home/runtime-shell"
+
+	mkdir -p "$config_home"
+	ln -sfn "$SCRIPT_DIR" "$stable_shell_dir"
+	printf '%s\n' "$stable_shell_dir/shell.qml"
+}
+
 acquire_vibeshell_lock() {
 	if command -v flock >/dev/null 2>&1; then
 		exec 9>"$LOCK_FILE"
@@ -506,18 +515,21 @@ help | --help | -h)
 		export QT_QPA_PLATFORMTHEME=qt6ct
 
 		# Optimize Qt Quick rendering and memory footprint
+		export QS_APP_ID="vibeshell"
+		export QS_DROP_EXPENSIVE_FONTS=1
 		export QSG_RENDERER_LOOP=basic
 		export QML_GC_PARAMS="max-heap-size=16777216"
 		export QML_DISABLE_DISTANCEFIELD=1
 		export QSG_ATLAS_WIDTH=1024
 		export QSG_ATLAS_HEIGHT=1024
+		STABLE_SHELL_QML="$(prepare_stable_shell_path)"
 
 		# Launch QuickShell with the main shell.qml
 		# If NIXGL_BIN is set (NixOS/Nix setup), use it. Otherwise, just run qs directly.
 		if [ -n "$NIXGL_BIN" ]; then
-			exec "$NIXGL_BIN" "$QS_BIN" -p "${SCRIPT_DIR}/shell.qml"
+			exec "$NIXGL_BIN" "$QS_BIN" -p "$STABLE_SHELL_QML"
 		else
-			exec "$QS_BIN" -p "${SCRIPT_DIR}/shell.qml"
+			exec "$QS_BIN" -p "$STABLE_SHELL_QML"
 		fi
 	;;
 *)

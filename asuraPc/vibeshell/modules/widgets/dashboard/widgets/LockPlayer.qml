@@ -11,6 +11,8 @@ import qs.config
 StyledRect {
     id: lockPlayer
     variant: "bg"
+    backgroundOpacity: 0.78
+    enableShadow: true
 
     property bool isPlaying: MprisController.activePlayer?.playbackState === MprisPlaybackState.Playing
     property real position: MprisController.activePlayer?.position ?? 0.0
@@ -18,7 +20,7 @@ StyledRect {
     property bool hasArtwork: (MprisController.activePlayer?.trackArtUrl ?? "") !== ""
 
     visible: MprisController.activePlayer !== null
-    height: 96
+    height: 82
     radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
 
     Timer {
@@ -45,7 +47,7 @@ StyledRect {
     Item {
         id: noPlayerContainer
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: 12
         visible: !MprisController.activePlayer
 
         WavyLine {
@@ -79,15 +81,15 @@ StyledRect {
     RowLayout {
         id: contentLayout
         anchors.fill: parent
-        anchors.margins: 16
-        anchors.rightMargin: 28
-        spacing: 16
+        anchors.margins: 12
+        anchors.rightMargin: 18
+        spacing: 12
         visible: MprisController.activePlayer
 
         // Album artwork con botón de play/pause superpuesto
         Item {
-            Layout.preferredWidth: 64
-            Layout.preferredHeight: 64
+            Layout.preferredWidth: 58
+            Layout.preferredHeight: 58
             Layout.alignment: Qt.AlignVCenter
 
             ClippingRectangle {
@@ -142,7 +144,7 @@ StyledRect {
                 text: lockPlayer.isPlaying ? Icons.pause : Icons.play
                 textFormat: Text.RichText
                 color: Styling.srItem("overprimary")
-                font.pixelSize: 24
+                    font.pixelSize: 24
                 font.family: Icons.font
                 opacity: playPauseHover.hovered ? 1.0 : 0.0
                 visible: MprisController.canTogglePlaying
@@ -184,7 +186,7 @@ StyledRect {
                     text: MprisController.activePlayer?.trackTitle ?? "No hay reproducción activa"
                     textFormat: Text.PlainText
                     color: Colors.overBackground
-                    font.pixelSize: Config.theme.fontSize
+                    font.pixelSize: Styling.fontSize(0)
                     font.weight: Font.Bold
                     font.family: Config.theme.font
                     elide: Text.ElideRight
@@ -197,7 +199,7 @@ StyledRect {
                     text: MprisController.activePlayer?.trackArtist ?? ""
                     textFormat: Text.PlainText
                     color: Colors.overBackground
-                    font.pixelSize: Config.theme.fontSize
+                    font.pixelSize: Styling.fontSize(-1)
                     font.family: Config.theme.font
                     elide: Text.ElideRight
                     wrapMode: Text.NoWrap
