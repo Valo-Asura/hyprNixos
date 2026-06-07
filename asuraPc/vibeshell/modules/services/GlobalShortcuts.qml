@@ -46,8 +46,11 @@ Item {
         case "dashboard-kanban":
             toggleDashboardTab(2);
             break;
-        case "dashboard-controls":
+        case "dashboard-pomodoro":
             toggleDashboardTab(3);
+            break;
+        case "dashboard-controls":
+            toggleDashboardTab(4);
             break;
         case "dashboard-clipboard":
             toggleDashboardWithPrefix(Config.prefix.clipboard + " ");
@@ -301,6 +304,14 @@ Item {
 
     GlobalShortcut {
         appid: root.appId
+        name: "dashboard-pomodoro"
+        description: "Open dashboard Pomodoro tab"
+
+        onPressed: toggleDashboardTab(3)
+    }
+
+    GlobalShortcut {
+        appid: root.appId
         name: "dashboard-wallpapers"
         description: "Open dashboard wallpapers tab"
 
@@ -320,7 +331,7 @@ Item {
         name: "dashboard-controls"
         description: "Open dashboard controls tab"
 
-        onPressed: toggleDashboardTab(3)
+        onPressed: toggleDashboardTab(4)
     }
 
     // Media player shortcuts

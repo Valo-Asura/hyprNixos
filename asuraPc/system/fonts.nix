@@ -4,6 +4,9 @@
 {
   fonts = {
     packages = with pkgs; [
+      google-fonts
+      material-symbols
+      font-awesome
       nerd-fonts.fira-code
       nerd-fonts.jetbrains-mono
       nerd-fonts.hack

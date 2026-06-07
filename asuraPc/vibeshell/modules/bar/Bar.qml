@@ -26,6 +26,7 @@ PanelWindow {
 
     property string barPosition: ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top"
     property string orientation: barPosition === "left" || barPosition === "right" ? "vertical" : "horizontal"
+    readonly property bool barEnabled: Config.bar?.enabled ?? true
 
     // Auto-hide properties
     property bool pinned: Config.bar?.pinnedOnStartup ?? true
@@ -132,13 +133,14 @@ PanelWindow {
     }
 
     color: "transparent"
+    visible: barEnabled
 
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     WlrLayershell.layer: WlrLayer.Overlay
 
 
     // Reserve space only when revealed and pinned (not in auto-hide mode or fullscreen)
-    exclusiveZone: (reveal && pinned && !activeWindowFullscreen) ? (Config.showBackground ? 44 : 40) : 0
+    exclusiveZone: (barEnabled && reveal && pinned && !activeWindowFullscreen) ? (Config.showBackground ? 44 : 40) : 0
     exclusionMode: ExclusionMode.Ignore
 
     // Altura implicita incluye espacio extra para animaciones / futuros elementos.

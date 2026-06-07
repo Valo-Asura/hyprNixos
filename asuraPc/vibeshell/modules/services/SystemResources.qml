@@ -54,14 +54,6 @@ Singleton {
     // Validated disk list
     property var validDisks: []
 
-    // System overview metrics
-    property real networkRxRate: 0.0
-    property real networkTxRate: 0.0
-    property int processCount: 0
-    property int threadCount: 0
-    property real uptimeSeconds: 0.0
-    property var loadAverage: [0, 0, 0]
-
     // Update interval in milliseconds (3s is plenty for dashboards)
     property int updateInterval: 3000
     property bool monitorEnabled: false
@@ -104,12 +96,6 @@ Singleton {
                     root.diskTotal = stats.disk.total || {};
                     root.diskUsed = stats.disk.used || {};
                     root.diskAvailable = stats.disk.available || {};
-                    root.networkRxRate = stats.network?.rx_rate || 0;
-                    root.networkTxRate = stats.network?.tx_rate || 0;
-                    root.processCount = stats.processes?.count || 0;
-                    root.threadCount = stats.processes?.threads || 0;
-                    root.uptimeSeconds = stats.system?.uptime || 0;
-                    root.loadAverage = stats.system?.load || [0, 0, 0];
                     
                     // Update GPU
                     root.gpuDetected = stats.gpu.detected;

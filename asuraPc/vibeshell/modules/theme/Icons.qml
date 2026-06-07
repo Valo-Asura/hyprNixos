@@ -44,7 +44,6 @@ QtObject {
     readonly property string widgets: ""
     readonly property string kanban: ""
     readonly property string wallpapers: ""
-    readonly property string assistant: ""
     readonly property string apps: ""
     readonly property string terminal: ""
     readonly property string terminalWindow: ""

@@ -17,6 +17,7 @@ import "../notes"
 import "calendar"
 
 Rectangle {
+    id: root
     color: "transparent"
     implicitWidth: 600
     implicitHeight: 750
@@ -26,6 +27,10 @@ Rectangle {
     property int currentTab: GlobalStates.widgetsTabCurrentIndex  // 0=launcher, 1=clip, 2=emoji, 3=tmux, 4=notes
     property bool prefixDisabled: false  // Flag to prevent re-activation after backspace
     property bool nightLightIntensityMenuOpen: false
+
+    Component.onCompleted: {
+        Qt.callLater(focusAppSearch);
+    }
 
     // Sync with GlobalStates
     onCurrentTabChanged: {
@@ -1347,19 +1352,9 @@ Rectangle {
                         Layout.fillWidth: true
                     }
 
-                    PomodoroCard {
-                        Layout.fillWidth: true
-                    }
-
                     Calendar {
                         Layout.fillWidth: true
                         Layout.preferredHeight: width
-                    }
-
-                    StyledRect {
-                        variant: "pane"
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 150
                     }
                 }
             }
@@ -1679,10 +1674,6 @@ Rectangle {
                 }
             }
         }
-    }
-
-    Component.onCompleted: {
-        Qt.callLater(focusAppSearch);
     }
 
     // Global process for opening files/URLs - persists even when tabs change

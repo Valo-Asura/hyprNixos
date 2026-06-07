@@ -57,6 +57,14 @@ let
 
     At session start, read the shared facts/lessons and query SQLite memories when available.
     On task completion, add durable facts, lessons, and gotchas to the shared store.
+
+    ## Desktop Shell Context
+    - Active stable shell: `/etc/nixos/asuraPc/vibeshell` (Quickshell/QML).
+    - Nandriod reference shell: `/home/asura/Downloads/test/asura-quickshell-main` (read-only reference).
+    - Native rewrite experiment: `/etc/nixos/asuraPc/vibeshellREzero` (separate project, not active by default).
+    - Shell switching command: `switch-shell vibeshell` or `switch-shell nandriod`.
+    - Do not edit the Nandriod reference tree directly; keep active VibeShell changes modular and reversible.
+    - Current dashboard focus: compact top-attached dashboard, weather refresh state, Pomodoro notes, Settings/Bar separation, and low-stutter Quickshell behavior.
   '';
 
   factsSeed = {
@@ -277,6 +285,20 @@ let
             "agents": sorted(MANIFEST["agents"].keys()),
             "default_terminal": "foot",
         }
+        facts["desktop_shell"] = {
+            "active": "vibeshell",
+            "vibeshell_path": "/etc/nixos/asuraPc/vibeshell",
+            "nandriod_reference": "/home/asura/Downloads/test/asura-quickshell-main",
+            "native_rewrite_path": "/etc/nixos/asuraPc/vibeshellREzero",
+            "switch_command": "switch-shell <vibeshell|nandriod>",
+            "current_focus": [
+                "compact dashboard",
+                "weather refresh state",
+                "Pomodoro notes",
+                "Settings and Bar tab separation",
+                "file-manager/browser desktop integration"
+            ],
+        }
         write_json(facts_path, facts)
 
         lessons_path = ROOT / "memory" / "lessons.json"
@@ -290,7 +312,32 @@ let
         }
         if lesson not in lessons:
             lessons.append(lesson)
+        shell_lesson = {
+            "topic": "Desktop Shell Workflow",
+            "lesson": "Keep active VibeShell, Nandriod reference shell, and native rewrite experiments isolated from each other.",
+            "solution": "Use switch-shell for runtime switching, treat /home/asura/Downloads/test/asura-quickshell-main as read-only, and make active VibeShell edits small and reversible.",
+        }
+        if shell_lesson not in lessons:
+            lessons.append(shell_lesson)
         write_json(lessons_path, lessons)
+
+    def record_shell_update():
+        mkdir(DB.parent)
+        conn = sqlite3.connect(DB)
+        try:
+            content = "Desktop shell update: VibeShell remains active; Nandriod is available through switch-shell; dashboard work covers weather refresh, Pomodoro notes, Settings/Bar separation, and file/browser desktop integration."
+            exists = conn.execute(
+                "SELECT 1 FROM memories WHERE kind = ? AND source = ? AND content = ? LIMIT 1",
+                ("fact", "nixos-home-manager", content),
+            ).fetchone()
+            if not exists:
+                conn.execute(
+                    "INSERT INTO memories (kind, source, content, tags) VALUES (?, ?, ?, ?)",
+                    ("fact", "nixos-home-manager", content, "desktop-shell,vibeshell,nandriod,quickshell,nixos"),
+                )
+            conn.commit()
+        finally:
+            conn.close()
 
     def sync_agents():
         write_text(HOME / ".codex" / "AGENTS.md", AGENT_INSTRUCTIONS)
@@ -316,6 +363,7 @@ let
 
     ensure_base_memory()
     ensure_sqlite()
+    record_shell_update()
     sync_agents()
   '';
 in
@@ -335,4 +383,22 @@ in
   home.activation.syncAiUnifiedMemory = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     ${pkgs.python3}/bin/python3 ${syncScript}
   '';
+
+  systemd.user.services.ai-unified-memory-sync = {
+    Unit.Description = "Sync unified AI memory context";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.python3}/bin/python3 ${syncScript}";
+    };
+  };
+
+  systemd.user.timers.ai-unified-memory-sync = {
+    Unit.Description = "Daily unified AI memory review/update";
+    Timer = {
+      OnCalendar = "daily";
+      Persistent = true;
+      Unit = "ai-unified-memory-sync.service";
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
 }

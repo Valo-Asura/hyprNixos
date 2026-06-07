@@ -29,6 +29,19 @@
         install_mutable_config ${./binds.json} "$HOME/.config/Vibeshell/binds.json"
         install_mutable_config ${./system.json} "$HOME/.config/Vibeshell/config/system.json"
 
+        lockscreen_config="$HOME/.config/Vibeshell/config/lockscreen.json"
+        if [ -f "$lockscreen_config" ]; then
+          tmp="$(mktemp)"
+          ${pkgs.jq}/bin/jq '
+            if .imagePath == "/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png"
+            then .imagePath = ""
+            else .
+            end
+          ' "$lockscreen_config" > "$tmp" \
+            && install -m 0644 "$tmp" "$lockscreen_config"
+          rm -f "$tmp"
+        fi
+
         binds_config="$HOME/.config/Vibeshell/binds.json"
         if [ -f "$binds_config" ]; then
           tmp="$(mktemp)"

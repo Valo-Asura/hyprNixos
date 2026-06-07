@@ -3,7 +3,6 @@
 
 {
   environment.sessionVariables = {
-    GTK_THEME = "Adwaita:dark";
     MOZ_USE_XINPUT2 = "1";
     CHROME_EXECUTABLE = "${pkgs.google-chrome}/bin/google-chrome-stable";
   };
@@ -22,6 +21,32 @@
     "d /home/asura/.cache/thumbnails/fail 0755 asura users -"
     "Z /home/asura/.cache/thumbnails 0755 asura users - -"
   ];
+
+  environment.etc = {
+    "opt/chrome/policies/managed/vibeshell-session-restore.json".text = ''
+      {
+        "RestoreOnStartup": 1
+      }
+    '';
+
+    "chromium/policies/managed/vibeshell-session-restore.json".text = ''
+      {
+        "RestoreOnStartup": 1
+      }
+    '';
+
+    "brave/policies/managed/vibeshell-session-restore.json".text = ''
+      {
+        "RestoreOnStartup": 1
+      }
+    '';
+
+    "helium/policies/managed/vibeshell-session-restore.json".text = ''
+      {
+        "RestoreOnStartup": 1
+      }
+    '';
+  };
 
   environment.systemPackages = with pkgs; [
     ffmpegthumbnailer

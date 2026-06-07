@@ -178,7 +178,10 @@ in
       dconf
       gtk3
       gtk4
+      adw-gtk3
       adwaita-icon-theme
+      hicolor-icon-theme
+      papirus-icon-theme
       kdePackages.breeze-icons
       gsettings-desktop-schemas
       at-spi2-atk
@@ -217,6 +220,9 @@ in
       songrec
       zenity
       qt6Packages.qt6ct
+      libsForQt5.qt5ct
+      libsForQt5.qtstyleplugin-kvantum
+      qt6Packages.qtstyleplugin-kvantum
       nwg-look
 
       # Development

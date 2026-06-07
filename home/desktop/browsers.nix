@@ -29,6 +29,8 @@
         "privacy.trackingprotection.enabled" = true;
         "dom.security.https_only_mode" = true;
         "browser.cache.disk.enable" = true;
+        "browser.startup.page" = 3;
+        "browser.sessionstore.resume_from_crash" = true;
       };
 
       userChrome = ''
@@ -101,4 +103,29 @@
   home.packages = [
     pkgs.google-chrome
   ];
+
+  xdg.configFile."google-chrome/policies/managed/vibeshell-session-restore.json".text = ''
+    {
+      "RestoreOnStartup": 1
+    }
+  '';
+
+  xdg.configFile."chromium/policies/managed/vibeshell-session-restore.json".text = ''
+    {
+      "RestoreOnStartup": 1
+    }
+  '';
+
+  xdg.configFile."BraveSoftware/Brave-Browser/policies/managed/vibeshell-session-restore.json".text =
+    ''
+      {
+        "RestoreOnStartup": 1
+      }
+    '';
+
+  xdg.configFile."helium/policies/managed/vibeshell-session-restore.json".text = ''
+    {
+      "RestoreOnStartup": 1
+    }
+  '';
 }

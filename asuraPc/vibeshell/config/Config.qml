@@ -577,6 +577,7 @@ Singleton {
         }
 
         adapter: JsonAdapter {
+            property bool enabled: true
             property string position: "top"
             property string launcherIcon: ""
             property bool launcherIconTint: true
@@ -3400,9 +3401,6 @@ Singleton {
     }
     function savePinnedApps() {
         pinnedAppsLoader.writeAdapter();
-    }
-    function saveAi() {
-        // AI assistant support is intentionally disabled in this build.
     }
 
     // Helper functions for color handling (HEX or named colors)

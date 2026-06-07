@@ -1,6 +1,7 @@
 .pragma library
 
 var data = {
+    "enabled": true,
     "position": "top",
     "launcherIcon": "",
     "launcherIconTint": true,

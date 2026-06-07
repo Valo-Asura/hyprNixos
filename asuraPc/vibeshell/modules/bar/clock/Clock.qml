@@ -27,6 +27,16 @@ Item {
     // Weather availability
     readonly property bool weatherAvailable: WeatherService.dataAvailable
 
+    function compactWeatherLocation() {
+        const location = String(WeatherService.lastLocation || "").trim();
+        if (location.length === 0 || location.toLowerCase() === "auto")
+            return "Weather";
+        const parts = location.split(",").map(part => part.trim()).filter(part => part.length > 0);
+        if (parts.length >= 2)
+            return parts[0] + ", " + parts[parts.length - 1];
+        return location;
+    }
+
     Layout.preferredWidth: vertical ? 36 : buttonBg.implicitWidth
     Layout.preferredHeight: vertical ? buttonBg.implicitHeight : 36
 
@@ -306,290 +316,293 @@ Item {
                 }
             }
 
-            // Wrapper StyledRect
+            // Nandoroid-inspired weather card
             StyledRect {
                 id: popupWrapper
                 variant: "popup"
                 radius: Styling.radius(8)
                 enableShadow: false
-                width: popupContent.width + 16
-                height: popupContent.height + 16
+                width: 396
+                height: weatherCard.implicitHeight + 40
                 visible: WeatherService.dataAvailable
 
-                // Content container
-                Column {
-                    id: popupContent
-                    anchors.centerIn: parent
-                    spacing: 4
+                function relativeUpdateText() {
+                    var updated = WeatherService.lastUpdated;
+                    if (!updated || updated.getTime() <= 0)
+                        return WeatherService.isLoading ? "Updating..." : "Click to refresh";
+                    var diffMinutes = Math.floor((new Date().getTime() - updated.getTime()) / 60000);
+                    if (diffMinutes < 1)
+                        return "Updated just now, click to refresh";
+                    if (diffMinutes < 60)
+                        return "Updated " + diffMinutes + " min ago, click to refresh";
+                    return "Updated " + Math.floor(diffMinutes / 60) + " hr ago, click to refresh";
+                }
 
-                    // Weather widget with sun arc
-                    WeatherWidget {
-                        id: weatherWidget
-                        width: 300
-                        height: 140
-                        showDebugControls: true
-                    }
+                ColumnLayout {
+                    id: weatherCard
+                    anchors.fill: parent
+                    anchors.margins: 20
+                    spacing: 16
 
-                    // 7-day forecast panel (below weather widget)
-                    Item {
-                        id: forecastPanel
-                        width: weatherWidget.width
-                        height: WeatherService.dataAvailable && WeatherService.forecast.length > 0 ? forecastContent.implicitHeight : 0
-                        clip: true
-                        visible: height > 0
-
-                        StyledRect {
-                            id: forecastContent
-                            variant: "pane"
-                            anchors.fill: parent
-                            implicitHeight: forecastRow.implicitHeight + 16
-
-                            Row {
-                                id: forecastRow
-                                anchors.centerIn: parent
-                                spacing: 4
-
-                                Repeater {
-                                    model: WeatherService.forecast.slice(0, 5)
-
-                                    Row {
-                                        id: forecastDayRow
-                                        required property var modelData
-                                        required property int index
-                                        spacing: 4
-
-                                        Column {
-                                            id: forecastDay
-                                            spacing: 2
-                                            width: (weatherWidget.width - 16 - (4 * 4) - (4 * 6)) / 5
-
-                                            // Day name
-                                            Text {
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                text: forecastDayRow.modelData.dayName
-                                                color: Colors.overBackground
-                                                font.family: Config.theme.font
-                                                font.pixelSize: Styling.fontSize(0)
-                                                font.weight: Font.Medium
-                                            }
-
-                                            // Weather emoji
-                                            Text {
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                text: forecastDayRow.modelData.emoji
-                                                font.pixelSize: Styling.fontSize(4)
-                                            }
-
-                                            // Max temperature
-                                            Text {
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                text: (Math.round(forecastDayRow.modelData.maxTemp) >= 0 ? "+" : "") + Math.round(forecastDayRow.modelData.maxTemp) + "\u00B0"
-                                                color: Colors.overBackground
-                                                font.family: Config.theme.font
-                                                font.pixelSize: Styling.fontSize(0)
-                                                font.weight: Font.Bold
-                                            }
-
-                                            // Min temperature
-                                            Text {
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                text: (Math.round(forecastDayRow.modelData.minTemp) >= 0 ? "+" : "") + Math.round(forecastDayRow.modelData.minTemp) + "\u00B0"
-                                                color: Colors.outline
-                                                font.family: Config.theme.font
-                                                font.pixelSize: Styling.fontSize(0)
-                                                font.weight: Font.Normal
-                                            }
-                                        }
-
-                                        // Separator between days (not after last)
-                                        Separator {
-                                            vert: true
-                                            visible: forecastDayRow.index < 4
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            height: forecastDay.height - 16
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Debug panel (below weather widget)
-                    Item {
-                        id: debugPanel
-                        width: weatherWidget.width
-                        height: WeatherService.debugMode ? debugContent.implicitHeight : 0
-                        clip: true
-                        visible: height > 0
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 16
 
                         ColumnLayout {
-                            id: debugContent
-                            anchors.fill: parent
-                            spacing: 4
+                            Layout.fillWidth: true
+                            spacing: 6
 
-                            // Time slider pane
-                            StyledRect {
-                                variant: "pane"
+                            RowLayout {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 36
+                                spacing: 8
 
-                                StyledSlider {
-                                    id: sliderContent
-                                    anchors.fill: parent
-                                    anchors.margins: 12
-                                    icon: Icons.clock
-                                    value: WeatherService.debugHour / 24
-                                    tooltipText: {
-                                        var hour = Math.floor(WeatherService.debugHour);
-                                        var minutes = Math.round((WeatherService.debugHour - hour) * 60);
-                                        return hour.toString().padStart(2, '0') + ":" + minutes.toString().padStart(2, '0');
+                                Text {
+                                    text: WeatherService.effectiveWeatherSymbol
+                                    font.pixelSize: 30
+                                    Layout.alignment: Qt.AlignTop
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+
+                                    Text {
+                                        text: WeatherService.effectiveWeatherDescription
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        color: Colors.overBackground
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Styling.fontSize(4)
+                                        font.weight: Font.Medium
                                     }
-                                    onValueChanged: WeatherService.debugHour = value * 24
+
+                                    Text {
+                                        text: root.compactWeatherLocation()
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        color: Colors.outline
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Styling.fontSize(-1)
+                                    }
                                 }
                             }
 
-                            // Weather type selector pane
-                            StyledRect {
-                                id: weatherSelector
-                                variant: "pane"
+                            Text {
+                                text: "Feels like " + Math.round(WeatherService.feelsLikeTemp) + "\u00B0"
+                                color: Colors.overSurfaceVariant
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                            }
+
+                            Text {
+                                text: Math.round(WeatherService.maxTemp) + "\u00B0 · " + Math.round(WeatherService.minTemp) + "\u00B0"
+                                color: Colors.outline
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                            }
+                        }
+
+                        Text {
+                            text: Math.round(WeatherService.currentTemp) + "\u00B0"
+                            color: Colors.overBackground
+                            font.family: Config.theme.font
+                            font.pixelSize: 62
+                            font.weight: Font.Light
+                            Layout.alignment: Qt.AlignRight | Qt.AlignTop
+                        }
+
+                        StyledRect {
+                            Layout.preferredWidth: 34
+                            Layout.preferredHeight: 34
+                            Layout.alignment: Qt.AlignTop
+                            radius: Styling.radius(2)
+                            variant: refreshHover.hovered ? "focus" : "common"
+
+                            Text {
+                                id: refreshIcon
+                                anchors.centerIn: parent
+                                text: Icons.sync
+                                font.family: Icons.font
+                                font.pixelSize: 17
+                                color: Colors.overBackground
+
+                                RotationAnimation on rotation {
+                                    from: 0
+                                    to: 360
+                                    duration: 800
+                                    loops: Animation.Infinite
+                                    running: WeatherService.isRefreshing
+                                }
+                            }
+
+                            HoverHandler {
+                                id: refreshHover
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: WeatherService.updateWeather()
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        visible: WeatherService.hourlyForecast.length > 0
+
+                        Repeater {
+                            model: WeatherService.hourlyForecast
+
+                            ColumnLayout {
+                                required property var modelData
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 64 + 8
+                                Layout.preferredWidth: 0
+                                spacing: 7
 
-                                readonly property int buttonPadding: 4
-                                readonly property int buttonSpacing: 2
+                                Text {
+                                    text: Math.round(modelData.temp) + "\u00B0"
+                                    Layout.alignment: Qt.AlignHCenter
+                                    color: Colors.overBackground
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(-1)
+                                    font.weight: Font.Medium
+                                }
 
-                                readonly property var weatherTypes: [
-                                    {
-                                        code: 0,
-                                        icon: "☀️",
-                                        name: "Clear"
-                                    },
-                                    {
-                                        code: 1,
-                                        icon: "🌤️",
-                                        name: "Mainly clear"
-                                    },
-                                    {
-                                        code: 2,
-                                        icon: "⛅",
-                                        name: "Partly cloudy"
-                                    },
-                                    {
-                                        code: 3,
-                                        icon: "☁️",
-                                        name: "Overcast"
-                                    },
-                                    {
-                                        code: 45,
-                                        icon: "🌫️",
-                                        name: "Fog"
-                                    },
-                                    {
-                                        code: 51,
-                                        icon: "🌦️",
-                                        name: "Drizzle"
-                                    },
-                                    {
-                                        code: 61,
-                                        icon: "🌧️",
-                                        name: "Rain"
-                                    },
-                                    {
-                                        code: 65,
-                                        icon: "🌧️",
-                                        name: "Heavy rain"
-                                    },
-                                    {
-                                        code: 71,
-                                        icon: "❄️",
-                                        name: "Snow"
-                                    },
-                                    {
-                                        code: 75,
-                                        icon: "❄️",
-                                        name: "Heavy snow"
-                                    },
-                                    {
-                                        code: 95,
-                                        icon: "⛈️",
-                                        name: "Thunder"
-                                    },
-                                    {
-                                        code: 96,
-                                        icon: "🌩️",
-                                        name: "Hail"
-                                    }
-                                ]
+                                Text {
+                                    text: modelData.emoji
+                                    Layout.alignment: Qt.AlignHCenter
+                                    font.pixelSize: 25
+                                }
 
-                                readonly property int columns: 6
-                                readonly property int rows: Math.ceil(weatherTypes.length / columns)
-
-                                Grid {
-                                    id: weatherButtonsGrid
-                                    anchors.fill: parent
-                                    anchors.margins: weatherSelector.buttonPadding
-                                    columns: weatherSelector.columns
-                                    rowSpacing: weatherSelector.buttonSpacing
-                                    columnSpacing: weatherSelector.buttonSpacing
-
-                                    Repeater {
-                                        model: weatherSelector.weatherTypes
-
-                                        delegate: StyledRect {
-                                            id: weatherBtn
-                                            required property var modelData
-                                            required property int index
-
-                                            readonly property bool isSelected: WeatherService.debugWeatherCode === modelData.code
-                                            readonly property int row: Math.floor(index / weatherSelector.columns)
-                                            readonly property int col: index % weatherSelector.columns
-                                            readonly property bool isFirstCol: col === 0
-                                            readonly property bool isLastCol: col === weatherSelector.columns - 1
-                                            readonly property bool isFirstRow: row === 0
-                                            readonly property bool isLastRow: row === weatherSelector.rows - 1
-                                            property bool buttonHovered: false
-
-                                            readonly property real defaultRadius: Styling.radius(0)
-                                            readonly property real selectedRadius: Styling.radius(0) / 2
-
-                                            readonly property real gridWidth: weatherButtonsGrid.width
-                                            readonly property real gridHeight: weatherButtonsGrid.height
-
-                                            variant: isSelected ? "primary" : (buttonHovered ? "focus" : "internalbg")
-                                            enableShadow: false
-                                            width: (gridWidth - (weatherSelector.columns - 1) * weatherSelector.buttonSpacing) / weatherSelector.columns
-                                            height: (gridHeight - (weatherSelector.rows - 1) * weatherSelector.buttonSpacing) / weatherSelector.rows
-
-                                            topLeftRadius: isSelected ? (isFirstCol && isFirstRow ? defaultRadius : selectedRadius) : defaultRadius
-                                            topRightRadius: isSelected ? (isLastCol && isFirstRow ? defaultRadius : selectedRadius) : defaultRadius
-                                            bottomLeftRadius: isSelected ? (isFirstCol && isLastRow ? defaultRadius : selectedRadius) : defaultRadius
-                                            bottomRightRadius: isSelected ? (isLastCol && isLastRow ? defaultRadius : selectedRadius) : defaultRadius
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: weatherBtn.modelData.icon
-                                                font.pixelSize: 14
-                                            }
-
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onEntered: weatherBtn.buttonHovered = true
-                                                onExited: weatherBtn.buttonHovered = false
-                                                onClicked: WeatherService.debugWeatherCode = weatherBtn.modelData.code
-                                            }
-
-                                            StyledToolTip {
-                                                visible: weatherBtn.buttonHovered
-                                                tooltipText: weatherBtn.modelData.name
-                                            }
-                                        }
-                                    }
+                                Text {
+                                    text: modelData.time
+                                    Layout.fillWidth: true
+                                    horizontalAlignment: Text.AlignHCenter
+                                    color: Colors.outline
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(-2)
                                 }
                             }
                         }
                     }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 9
+                        visible: WeatherService.forecast.length > 0
+
+                        Repeater {
+                            model: WeatherService.forecast.slice(0, 3)
+
+                            RowLayout {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                spacing: 10
+
+                                Text {
+                                    text: modelData.dayName
+                                    Layout.fillWidth: true
+                                    color: Colors.overBackground
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                }
+
+                                Text {
+                                    text: Math.round(modelData.maxTemp) + "\u00B0 " + Math.round(modelData.minTemp) + "\u00B0"
+                                    color: Colors.overSurfaceVariant
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                }
+
+                                Text {
+                                    text: modelData.emoji
+                                    font.pixelSize: 22
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 22
+
+                        Text {
+                            id: updateFooter
+                            property int refreshTick: 0
+                            anchors.centerIn: parent
+                            text: {
+                                refreshTick;
+                                return popupWrapper.relativeUpdateText();
+                            }
+                            color: Colors.outline
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-3)
+
+                            Timer {
+                                interval: 60000
+                                running: clockPopup.isOpen
+                                repeat: true
+                                onTriggered: updateFooter.refreshTick++
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: WeatherService.updateWeather()
+                        }
+                    }
+                }
+            }
+
+            StyledRect {
+                variant: "popup"
+                radius: Styling.radius(8)
+                enableShadow: false
+                width: 396
+                height: 92
+                visible: WeatherService.hasFailed && !WeatherService.dataAvailable
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 18
+                    spacing: 12
+
+                    Text {
+                        text: Icons.sync
+                        font.family: Icons.font
+                        font.pixelSize: 22
+                        color: Colors.error
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        Text {
+                            text: "Weather refresh failed"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(1)
+                            font.bold: true
+                            color: Colors.overBackground
+                        }
+
+                        Text {
+                            text: WeatherService.isRefreshing ? "Retrying..." : "Click to retry"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: Colors.outline
+                        }
+                    }
+
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: WeatherService.updateWeather()
                 }
             }
         }

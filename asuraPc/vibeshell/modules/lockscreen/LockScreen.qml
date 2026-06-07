@@ -11,6 +11,7 @@ import qs.modules.components
 import qs.modules.corners
 import qs.modules.theme
 import qs.modules.globals
+import qs.modules.services
 import qs.modules.widgets.dashboard.widgets
 import qs.config
 
@@ -24,22 +25,27 @@ WlSessionLockSurface {
     property int failLockSecondsLeft: 0
     readonly property string fallbackLockscreenImagePath: "/etc/nixos/asuraPc/hyprland/lock-images/lockscreen.png"
     readonly property string configuredLockscreenImagePath: Config.lockscreen?.imagePath ?? ""
-    readonly property string syncedLockscreenImagePath: (Quickshell.env("XDG_CACHE_HOME") && Quickshell.env("XDG_CACHE_HOME").length > 0 ? Quickshell.env("XDG_CACHE_HOME") : Quickshell.env("HOME") + "/.cache") + "/Vibeshell/lockscreen.png"
     readonly property string generatedLockscreenFramePath: {
         if (!GlobalStates.wallpaperManager)
             return "";
         return GlobalStates.wallpaperManager.getLockscreenFramePath(GlobalStates.wallpaperManager.currentWallpaper);
+    }
+    readonly property string thumbnailLockscreenImagePath: {
+        if (!GlobalStates.wallpaperManager)
+            return "";
+        return GlobalStates.wallpaperManager.getThumbnailPath(GlobalStates.wallpaperManager.currentWallpaper);
     }
     readonly property string activeLockscreenImagePath: {
         if (configuredLockscreenImagePath.length > 0)
             return configuredLockscreenImagePath;
         if (generatedLockscreenFramePath.length > 0)
             return generatedLockscreenFramePath;
-        if (syncedLockscreenImagePath.length > 0)
-            return syncedLockscreenImagePath;
         return fallbackLockscreenImagePath;
     }
+    property string displayedLockscreenImagePath: activeLockscreenImagePath
     property date currentDate: new Date()
+
+    onActiveLockscreenImagePathChanged: displayedLockscreenImagePath = activeLockscreenImagePath
 
     function fileUrl(path) {
         if (!path || path.length === 0)
@@ -63,9 +69,48 @@ WlSessionLockSurface {
     function weatherLabel() {
         if (WeatherService.dataAvailable) {
             const desc = WeatherService.effectiveWeatherDescription || "Weather";
-            return Math.round(WeatherService.currentTemp) + "°" + Config.weather.unit + "  " + desc;
+            return desc;
         }
         return "Session locked";
+    }
+
+    function weatherTempLabel() {
+        if (WeatherService.dataAvailable)
+            return Math.round(WeatherService.currentTemp) + "°";
+        return "--°";
+    }
+
+    function weatherSymbolLabel() {
+        if (WeatherService.dataAvailable)
+            return WeatherService.effectiveWeatherSymbol || WeatherService.weatherSymbol || Icons.lock;
+        return Icons.lock;
+    }
+
+    function networkLabel() {
+        if (NetworkService.networkName && NetworkService.networkName.length > 0)
+            return NetworkService.networkName;
+        if (NetworkService.ethernet)
+            return "Ethernet";
+        if (NetworkService.wifiEnabled)
+            return "Wi-Fi";
+        return "Offline";
+    }
+
+    function batteryLabel() {
+        if (!Battery.available)
+            return "";
+        return Math.round(Battery.percentage) + "%";
+    }
+
+    function submitPassword() {
+        if (passwordInput.text.trim() === "")
+            return;
+
+        authPasswordHolder.password = passwordInput.text;
+        passwordInput.text = "";
+        authenticating = true;
+        errorMessage = "";
+        pamAuth.start();
     }
 
     // Always transparent - blur background handles the visuals
@@ -109,13 +154,18 @@ WlSessionLockSurface {
         visible: false
         z: 1
 
-        source: root.fileUrl(root.activeLockscreenImagePath)
+        source: root.fileUrl(root.displayedLockscreenImagePath)
 
         onStatusChanged: {
             if (status === Image.Ready) {
-                console.log("Lockscreen using wallpaper:", root.activeLockscreenImagePath);
+                console.log("Lockscreen using wallpaper:", root.displayedLockscreenImagePath);
             } else if (status === Image.Error) {
-                console.warn("Failed to load lockscreen wallpaper:", root.activeLockscreenImagePath);
+                console.warn("Failed to load lockscreen wallpaper:", root.displayedLockscreenImagePath);
+                if (root.displayedLockscreenImagePath !== root.thumbnailLockscreenImagePath && root.thumbnailLockscreenImagePath.length > 0) {
+                    root.displayedLockscreenImagePath = root.thumbnailLockscreenImagePath;
+                } else if (root.displayedLockscreenImagePath !== root.fallbackLockscreenImagePath) {
+                    root.displayedLockscreenImagePath = root.fallbackLockscreenImagePath;
+                }
             }
         }
     }
@@ -201,61 +251,120 @@ WlSessionLockSurface {
         }
     }
 
-    // Reference-style status strip
-    StyledRect {
+    // Reference-style top status/notch, kept independent from the main notch module.
+    Item {
         id: lockStatusBar
         z: 11
-        variant: "popup"
-        backgroundOpacity: 0.62
-        enableShadow: true
-        width: Math.min(parent.width - 48, 520)
-        height: 34
-        radius: height / 2
+        width: Math.min(parent.width, Math.max(760, parent.width * 0.63))
+        height: 40
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: startAnim ? 14 : -height
+        anchors.topMargin: startAnim ? 0 : -height
         opacity: startAnim ? 1 : 0
 
-        RowLayout {
+        Rectangle {
             anchors.fill: parent
-            anchors.leftMargin: 16
-            anchors.rightMargin: 16
-            spacing: 12
+            color: Qt.rgba(0.03, 0.035, 0.05, 0.90)
+            radius: 20
 
-            Text {
-                text: root.lockUserLabel()
-                Layout.fillWidth: true
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                color: Colors.overBackground
-                elide: Text.ElideRight
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: parent.radius
+                color: parent.color
             }
+        }
 
-            StyledRect {
-                Layout.preferredWidth: lockPillText.implicitWidth + 22
-                Layout.preferredHeight: 24
-                radius: height / 2
-                variant: "common"
-                backgroundOpacity: 0.65
+        layer.enabled: true
+        layer.effect: BgShadow {}
+
+        Text {
+            anchors.left: parent.left
+            anchors.leftMargin: 24
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(160, (parent.width - lockPill.width) / 2 - 48)
+            text: (usernameCollector.text.trim() || Quickshell.env("USER") || "asura") + "  •  " + root.networkLabel()
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-1)
+            font.weight: Font.Medium
+            color: Colors.overBackground
+            elide: Text.ElideRight
+        }
+
+        Rectangle {
+            id: lockPill
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            width: lockPillContent.implicitWidth + 26
+            height: 28
+            radius: height / 2
+            color: Qt.rgba(0, 0, 0, 0.72)
+
+            Row {
+                id: lockPillContent
+                anchors.centerIn: parent
+                spacing: 7
 
                 Text {
-                    id: lockPillText
-                    anchors.centerIn: parent
+                    text: Icons.lock
+                    font.family: Icons.font
+                    font.pixelSize: 13
+                    color: Colors.overBackground
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
                     text: "Locked"
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-2)
                     font.bold: true
                     color: Colors.overBackground
+                    anchors.verticalCenter: parent.verticalCenter
                 }
+            }
+        }
+
+        Row {
+            anchors.right: parent.right
+            anchors.rightMargin: 24
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 9
+
+            Text {
+                text: NetworkService.wifi ? NetworkService.wifiIconForStrength(NetworkService.networkStrength) : Icons.wifiOff
+                font.family: Icons.font
+                font.pixelSize: 15
+                color: Colors.overBackground
+                anchors.verticalCenter: parent.verticalCenter
             }
 
             Text {
-                text: Qt.formatTime(root.currentDate, "hh:mm AP")
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignRight
+                visible: BluetoothService.enabled
+                text: BluetoothService.connected ? Icons.bluetoothConnected : Icons.bluetooth
+                font.family: Icons.font
+                font.pixelSize: 15
+                color: Colors.overBackground
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                visible: Battery.available
+                text: Battery.getBatteryIcon()
+                font.family: Icons.font
+                font.pixelSize: 15
+                color: Colors.overBackground
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                visible: Battery.available
+                text: root.batteryLabel()
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-2)
+                font.bold: true
                 color: Colors.overBackground
+                anchors.verticalCenter: parent.verticalCenter
             }
         }
 
@@ -276,90 +385,236 @@ WlSessionLockSurface {
         }
     }
 
-    // Clock island (center)
+    // Center reference-style clock/weather cluster.
     Item {
         id: clockContainer
         anchors.centerIn: parent
-        width: Math.min(Math.max(root.width * 0.16, 220), 330)
-        height: Math.min(Math.max(root.height * 0.20, 190), 260)
+        anchors.verticalCenterOffset: Math.max(-80, -root.height * 0.075)
+        width: Math.min(Math.max(root.width * 0.18, 250), 350)
+        height: Math.min(350, root.height * 0.42)
         z: 10
         opacity: startAnim ? 1 : 0
         scale: startAnim ? 1 : 0.84
 
-        StyledRect {
-            anchors.fill: parent
-            variant: "popup"
-            backgroundOpacity: 0.38
-            enableShadow: true
-            radius: Math.min(width, height) * 0.22
+        Item {
+            id: analogBlob
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.min(parent.width, 238)
+            height: width
+
+            readonly property real hourRotation: ((root.currentDate.getHours() % 12) + root.currentDate.getMinutes() / 60) * 30
+            readonly property real minuteRotation: root.currentDate.getMinutes() * 6
 
             Rectangle {
-                anchors.fill: parent
-                anchors.margins: 18
-                radius: Math.min(width, height) * 0.24
-                color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.12)
-                border.width: 1
-                border.color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.26)
+                anchors.centerIn: parent
+                width: parent.width * 0.83
+                height: parent.height * 0.76
+                radius: height * 0.36
+                rotation: -10
+                color: Qt.rgba(0.20, 0.28, 0.50, 0.86)
+            }
+
+            Rectangle {
+                width: parent.width * 0.50
+                height: parent.height * 0.44
+                radius: height / 2
+                x: parent.width * 0.16
+                y: parent.height * 0.16
+                color: Qt.rgba(0.26, 0.34, 0.58, 0.86)
+            }
+
+            Rectangle {
+                width: parent.width * 0.47
+                height: parent.height * 0.40
+                radius: height / 2
+                x: parent.width * 0.46
+                y: parent.height * 0.34
+                color: Qt.rgba(0.18, 0.25, 0.47, 0.86)
+            }
+
+            Rectangle {
+                width: parent.width * 0.52
+                height: parent.height * 0.42
+                radius: height / 2
+                x: parent.width * 0.25
+                y: parent.height * 0.52
+                color: Qt.rgba(0.22, 0.30, 0.53, 0.86)
+            }
+
+            layer.enabled: true
+            layer.effect: BgShadow {}
+
+            Repeater {
+                model: 12
+
+                Rectangle {
+                    required property int index
+                    readonly property real markAngle: index * Math.PI / 6
+                    width: index % 3 === 0 ? 10 : 8
+                    height: width
+                    radius: width / 2
+                    x: analogBlob.width / 2 + Math.sin(markAngle) * (analogBlob.width * 0.34) - width / 2
+                    y: analogBlob.height / 2 - Math.cos(markAngle) * (analogBlob.height * 0.34) - height / 2
+                    color: index === 2 ? Colors.primaryFixedDim : Qt.rgba(0.78, 0.84, 1.0, 0.25)
+                }
+            }
+
+            Rectangle {
+                width: 52
+                height: 52
+                radius: 18
+                x: analogBlob.width * 0.08
+                y: analogBlob.height * 0.26
+                color: Qt.rgba(0.58, 0.30, 0.48, 0.92)
+                rotation: -10
+
+                Text {
+                    anchors.centerIn: parent
+                    text: Qt.formatDate(root.currentDate, "dd")
+                    font.family: Config.theme.font
+                    font.pixelSize: 21
+                    font.bold: true
+                    color: Colors.overBackground
+                }
+            }
+
+            Rectangle {
+                width: 52
+                height: 52
+                radius: height / 2
+                x: analogBlob.width * 0.72
+                y: analogBlob.height * 0.58
+                color: Qt.rgba(0.31, 0.34, 0.45, 0.92)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: Qt.formatDate(root.currentDate, "MM")
+                    font.family: Config.theme.font
+                    font.pixelSize: 21
+                    font.bold: true
+                    color: Colors.overBackground
+                }
+            }
+
+            Item {
+                anchors.centerIn: parent
+                width: 1
+                height: 1
+                rotation: analogBlob.hourRotation
+
+                Rectangle {
+                    width: 17
+                    height: 62
+                    radius: width / 2
+                    x: -width / 2
+                    y: -height + 10
+                    color: "#f3abc8"
+                }
+            }
+
+            Item {
+                anchors.centerIn: parent
+                width: 1
+                height: 1
+                rotation: analogBlob.minuteRotation
+
+                Rectangle {
+                    width: 17
+                    height: 78
+                    radius: width / 2
+                    x: -width / 2
+                    y: -height + 10
+                    color: "#c4cffd"
+                }
+            }
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 17
+                height: 17
+                radius: width / 2
+                color: "#9eb0f0"
             }
 
             Column {
                 anchors.centerIn: parent
-                spacing: 4
+                anchors.verticalCenterOffset: 24
+                spacing: -10
 
-                Row {
+                Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 6
+                    text: root.formatHour12(root.currentDate).replace(/^0/, "")
+                    font.family: "League Gothic"
+                    font.pixelSize: 58
+                    font.bold: true
+                    color: Qt.rgba(0.86, 0.89, 1, 0.76)
+                    layer.enabled: true
+                    layer.effect: BgShadow {}
+                }
 
-                    Text {
-                        text: root.formatHour12(root.currentDate)
-                        font.family: "League Gothic"
-                        font.pixelSize: Math.min(Math.max(clockContainer.width * 0.36, 78), 118)
-                        color: Colors.overBackground
-                        antialiasing: true
-                        layer.enabled: true
-                        layer.effect: BgShadow {}
-                    }
-
-                    Text {
-                        text: Qt.formatTime(root.currentDate, "mm")
-                        font.family: "League Gothic"
-                        font.pixelSize: Math.min(Math.max(clockContainer.width * 0.36, 78), 118)
-                        color: Colors.primaryFixedDim
-                        antialiasing: true
-                        layer.enabled: true
-                        layer.effect: BgShadow {}
-                    }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Qt.formatTime(root.currentDate, "mm")
+                    font.family: "League Gothic"
+                    font.pixelSize: 58
+                    font.bold: true
+                    color: Qt.rgba(0.86, 0.89, 1, 0.58)
+                    layer.enabled: true
+                    layer.effect: BgShadow {}
                 }
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Qt.formatTime(root.currentDate, "AP").toLowerCase()
                     font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
+                    font.pixelSize: Styling.fontSize(1)
+                    font.bold: true
+                    color: Qt.rgba(0.86, 0.89, 1, 0.62)
+                }
+            }
+        }
+
+        Column {
+            anchors.top: analogBlob.bottom
+            anchors.topMargin: 4
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 4
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 8
+
+                Text {
+                    text: root.weatherSymbolLabel()
+                    font.family: Config.theme.font
+                    font.pixelSize: 24
+                    color: Colors.overBackground
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                    text: root.weatherTempLabel()
+                    font.family: Config.theme.font
+                    font.pixelSize: 32
                     font.bold: true
                     color: Colors.overBackground
-                    opacity: 0.8
+                    anchors.verticalCenter: parent.verticalCenter
+                    layer.enabled: true
+                    layer.effect: BgShadow {}
                 }
+            }
 
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDate(root.currentDate, "ddd, dd MMM")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
-                }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: clockContainer.width - 40
-                    text: root.weatherLabel()
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overBackground
-                    opacity: 0.82
-                }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: clockContainer.width - 32
+                text: root.weatherLabel()
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-1)
+                color: Colors.overBackground
+                opacity: 0.9
             }
         }
 
@@ -401,9 +656,9 @@ WlSessionLockSurface {
             top: isTopPosition ? parent.top : undefined
             topMargin: isTopPosition ? (startAnim ? 96 : -140) : 0
             bottom: !isTopPosition ? parent.bottom : undefined
-            bottomMargin: !isTopPosition ? (startAnim ? 104 : -140) : 0
+            bottomMargin: !isTopPosition ? (startAnim ? Math.max(102, root.height * 0.105) : -140) : 0
         }
-        width: Math.min(390, parent.width - 48)
+        width: Math.min(400, parent.width - 56)
         height: playerContent.height
 
         opacity: startAnim && playerContent.visible ? 1 : 0
@@ -460,9 +715,9 @@ WlSessionLockSurface {
             top: isTopPosition ? parent.top : undefined
             topMargin: isTopPosition ? (startAnim ? 28 : -80) : 0
             bottom: !isTopPosition ? parent.bottom : undefined
-            bottomMargin: !isTopPosition ? (startAnim ? 26 : -80) : 0
+            bottomMargin: !isTopPosition ? (startAnim ? Math.max(28, root.height * 0.03) : -80) : 0
         }
-        width: Math.min(370, parent.width - 48)
+        width: Math.min(400, parent.width - 56)
         height: 64
 
         opacity: startAnim ? 1 : 0
@@ -501,7 +756,7 @@ WlSessionLockSurface {
             }
         }
 
-        // Password input with avatar
+        // Password input pill, reference-style bottom island.
         StyledRect {
             id: passwordInputBox
             variant: "popup"
@@ -519,151 +774,100 @@ WlSessionLockSurface {
                 x: passwordInputBox.shakeOffset
             }
 
-            Row {
+            RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 16
-                anchors.rightMargin: 16
-                spacing: 12
+                anchors.leftMargin: 18
+                anchors.rightMargin: 8
+                spacing: 10
 
-                // Avatar
-                Rectangle {
-                    id: avatarContainer
-                    width: 42
-                    height: 42
-                    radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
-                    color: "transparent"
-                    anchors.verticalCenter: parent.verticalCenter
+                Text {
+                    id: passwordStatusIcon
+                    text: authenticating ? Icons.spinnerGap : Icons.lock
+                    font.family: Icons.font
+                    font.pixelSize: 18
+                    color: passwordInputBox.showError ? Colors.error : Colors.overSurfaceVariant
+                    Layout.preferredWidth: 20
+                    Layout.alignment: Qt.AlignVCenter
+                    rotation: 0
 
-                    Image {
-                        id: userAvatar
-                        anchors.fill: parent
-                        source: `file://${Quickshell.env("HOME")}/.face.icon`
-                        fillMode: Image.PreserveAspectCrop
-                        smooth: true
-                        asynchronous: true
-                        visible: status === Image.Ready
-
-                        layer.enabled: true
-                        layer.effect: MultiEffect {
-                            maskEnabled: true
-                            maskThresholdMin: 0.5
-                            maskSpreadAtMin: 1.0
-                            maskSource: ShaderEffectSource {
-                                sourceItem: Rectangle {
-                                    width: userAvatar.width
-                                    height: userAvatar.height
-                                    radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
-                                }
-                            }
-                        }
+                    Timer {
+                        interval: 100
+                        repeat: true
+                        running: authenticating
+                        onTriggered: passwordStatusIcon.rotation = (passwordStatusIcon.rotation + 45) % 360
                     }
 
-                    // Fallback icon if image not found
-                    Text {
-                        anchors.centerIn: parent
-                        text: "👤"
-                        font.pixelSize: 22
-                        visible: userAvatar.status !== Image.Ready
+                    onTextChanged: {
+                        if (passwordStatusIcon.text === Icons.lock)
+                            passwordStatusIcon.rotation = 0;
                     }
                 }
 
-                // Password field
-                StyledRect {
-                    id: passwordFieldBg
-                    width: parent.width - avatarContainer.width - parent.spacing
-                    height: 40
-                    anchors.verticalCenter: parent.verticalCenter
-                    variant: passwordInputBox.showError ? "error" : "common"
-                    radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
+                Item {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredHeight: parent.height
 
-                    RowLayout {
+                    readonly property string promptText: failLockSecondsLeft > 0 ? `Locked ${failLockSecondsLeft}s` : "Enter password"
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: passwordInput.text.length === 0
+                        text: parent.promptText
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        font.weight: Font.Medium
+                        color: passwordInputBox.showError ? Colors.error : Colors.overBackground
+                        opacity: 0.9
+                    }
+
+                    TextField {
+                        id: passwordInput
                         anchors.fill: parent
-                        anchors.leftMargin: 16
-                        anchors.rightMargin: 32
-                        spacing: 8
+                        placeholderText: ""
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        font.weight: Font.Medium
+                        color: Colors.overBackground
+                        background: null
+                        echoMode: TextInput.Password
+                        verticalAlignment: TextInput.AlignVCenter
+                        horizontalAlignment: TextInput.AlignHCenter
+                        enabled: !authenticating
 
-                        // User icon / Spinner
-                        Text {
-                            id: userIcon
-                            text: authenticating ? Icons.spinnerGap : Icons.user
-                            font.family: Icons.font
-                            font.pixelSize: 24
-                            color: passwordFieldBg.item
-                            Layout.preferredWidth: 24
-                            Layout.preferredHeight: 24
-                            Layout.alignment: Qt.AlignVCenter
-                            z: 10
-                            rotation: 0
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            Timer {
-                                id: spinnerTimer
-                                interval: 100
-                                repeat: true
-                                running: authenticating
-                                onTriggered: {
-                                    userIcon.rotation = (userIcon.rotation + 45) % 360;
-                                }
-                            }
-
-                            onTextChanged: {
-                                if (userIcon.text === Icons.user) {
-                                    userIcon.rotation = 0;
-                                }
+                        Behavior on color {
+                            enabled: Config.animDuration > 0
+                            ColorAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutCubic
                             }
                         }
 
-                        // Text field
-                        TextField {
-                            id: passwordInput
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-                            placeholderText: failLockSecondsLeft > 0 ? `Locked ${failLockSecondsLeft}s` : "Enter password"
-                            placeholderTextColor: Qt.rgba(passwordFieldBg.item.r, passwordFieldBg.item.g, passwordFieldBg.item.b, 0.5)
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(0)
-                            color: passwordFieldBg.item
-                            background: null
-                            echoMode: TextInput.Password
-                            verticalAlignment: TextInput.AlignVCenter
-                            enabled: !authenticating
+                        onAccepted: root.submitPassword()
+                    }
+                }
 
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
+                Rectangle {
+                    Layout.preferredWidth: 42
+                    Layout.preferredHeight: 42
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: width / 2
+                    color: passwordInput.text.length > 0 ? Colors.primaryFixedDim : Qt.rgba(Colors.primaryFixedDim.r, Colors.primaryFixedDim.g, Colors.primaryFixedDim.b, 0.42)
+                    opacity: authenticating ? 0.55 : 1.0
 
-                            Behavior on placeholderTextColor {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
+                    Text {
+                        anchors.centerIn: parent
+                        text: Icons.arrowRight
+                        font.family: Icons.font
+                        font.pixelSize: 18
+                        color: Styling.srItem("primary")
+                    }
 
-                            onAccepted: {
-                                if (passwordInput.text.trim() === "")
-                                    return;
-
-                                // Guardar contraseña y limpiar campo inmediatamente
-                                authPasswordHolder.password = passwordInput.text;
-                                passwordInput.text = "";
-
-                                authenticating = true;
-                                errorMessage = "";
-                                pamAuth.start();
-                            }
-                        }
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: !authenticating
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.submitPassword()
                     }
                 }
             }

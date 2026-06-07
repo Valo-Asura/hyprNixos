@@ -15,6 +15,7 @@ import qs.modules.widgets.dashboard.clipboard
 import qs.modules.widgets.dashboard.emoji
 import qs.modules.widgets.dashboard.metrics
 import qs.config
+import "widgets" as DashboardWidgets
 
 NotchAnimationBehavior {
     id: root
@@ -27,15 +28,16 @@ NotchAnimationBehavior {
         property int currentTab: GlobalStates.dashboardCurrentTab
     }
 
-    readonly property var tabModel: [Icons.widgets, Icons.wallpapers, Icons.heartbeat]
-    readonly property int tabCount: tabModel.length + 1  // +1 for controls tab at bottom
+    readonly property var tabModel: [Icons.widgets, Icons.wallpapers, Icons.heartbeat, Icons.timer]
+    readonly property int controlsTabIndex: tabModel.length
+    readonly property int tabCount: controlsTabIndex + 1  // +1 for controls tab at bottom
     readonly property int tabSpacing: 8
 
     readonly property int tabWidth: 48
-    readonly property real nonAnimWidth: 900 + tabWidth + 16 // constant width for all tabs
+    readonly property real nonAnimWidth: 760 + tabWidth + 16 // constant width for all tabs
 
     implicitWidth: nonAnimWidth
-    implicitHeight: 430
+    implicitHeight: 420
 
     focus: true
 
@@ -256,7 +258,7 @@ NotchAnimationBehavior {
                 variant: controlsButton.hovered ? "focus" : "common"
                 z: -1
 
-                opacity: root.state.currentTab === 3 ? 0 : 1
+                opacity: root.state.currentTab === root.controlsTabIndex ? 0 : 1
 
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
@@ -286,7 +288,7 @@ NotchAnimationBehavior {
                     font.family: Icons.font
                     font.pixelSize: 20
                     font.weight: Font.Medium
-                    color: root.state.currentTab === 3 ? Styling.srItem("primary") : Colors.overBackground
+                    color: root.state.currentTab === root.controlsTabIndex ? Styling.srItem("primary") : Colors.overBackground
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
 
@@ -299,7 +301,7 @@ NotchAnimationBehavior {
                     }
                 }
 
-                onClicked: stack.navigateToTab(3)
+                onClicked: stack.navigateToTab(root.controlsTabIndex)
             }
         }
 
@@ -325,10 +327,10 @@ NotchAnimationBehavior {
                 anchors.fill: parent
 
                 // Array de componentes para cargar dinámicamente
-                property var components: [unifiedLauncherComponent, wallpapersComponent, metricsComponent, quickSettingsComponent]
+                property var components: [unifiedLauncherComponent, wallpapersComponent, metricsComponent, pomodoroComponent, quickSettingsComponent]
 
                 // Cargar directamente el componente correcto según GlobalStates
-                initialItem: components[GlobalStates.dashboardCurrentTab]
+                initialItem: components[Math.max(0, Math.min(GlobalStates.dashboardCurrentTab, components.length - 1))]
 
                 // Handler para cuando el item actual cambia
                 onCurrentItemChanged: {
@@ -551,6 +553,70 @@ NotchAnimationBehavior {
     Component {
         id: metricsComponent
         MetricsTab {}
+    }
+
+    Component {
+        id: pomodoroComponent
+        Rectangle {
+            color: "transparent"
+            implicitWidth: 700
+            implicitHeight: 390
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 10
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Text {
+                        text: Icons.timer
+                        font.family: Icons.font
+                        font.pixelSize: 24
+                        color: Styling.srItem("overprimary")
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        Text {
+                            text: "Pomodoro"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(3)
+                            font.bold: true
+                            color: Colors.overBackground
+                        }
+
+                        Text {
+                            text: "46 min focus, 15 min short break, 25 min long break"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: Colors.overSurfaceVariant
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 12
+
+                    PomodoroCard {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 330
+                    }
+
+                    DashboardWidgets.PomodoroNotes {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 330
+                    }
+                }
+            }
+        }
     }
 
     Component {

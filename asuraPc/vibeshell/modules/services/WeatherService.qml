@@ -12,16 +12,20 @@ QtObject {
     property real currentTemp: 0
     property real maxTemp: 0
     property real minTemp: 0
+    property real feelsLikeTemp: 0
     property int weatherCode: 0
     property real windSpeed: 0
     property bool dataAvailable: false
     property bool isLoading: false
+    readonly property bool isRefreshing: isLoading
     property bool hasFailed: false
     property string lastLocation: ""
     property bool cityFallbackUsed: false
 
     // 7-day forecast data
     property var forecast: []
+    property var hourlyForecast: []
+    property date lastUpdated: new Date(0)
 
     // Sun position data
     property string sunrise: ""  // HH:MM format
@@ -323,10 +327,20 @@ QtObject {
         return temp;
     }
 
+    function formatHour(date) {
+        var hour = date.getHours();
+        var suffix = hour >= 12 ? "PM" : "AM";
+        var displayHour = hour % 12;
+        if (displayHour === 0)
+            displayHour = 12;
+        return displayHour + " " + suffix;
+    }
+
     // Retry logic
     property int retryCount: 0
     readonly property int maxRetries: 3
     property bool wasCancelled: false
+    property bool pendingRefresh: false
 
 
 
@@ -338,6 +352,7 @@ QtObject {
             root.isLoading = false;
             root.hasFailed = true;
             retryCount = 0;
+            root.schedulePendingRefresh();
         }
     }
 
@@ -345,6 +360,19 @@ QtObject {
         interval: 3000
         repeat: false
         onTriggered: root.updateWeather()
+    }
+
+    property Timer pendingRefreshTimer: Timer {
+        interval: 0
+        repeat: false
+        onTriggered: root.updateWeather()
+    }
+
+    function schedulePendingRefresh() {
+        if (!pendingRefresh || weatherProcess.running || isLoading)
+            return;
+        pendingRefresh = false;
+        pendingRefreshTimer.restart();
     }
 
     property Process weatherProcess: Process {
@@ -397,17 +425,21 @@ QtObject {
 
                             var codeVal = weather.weather_code !== undefined ? weather.weather_code : weather.weathercode;
                             var tempVal = weather.temperature_2m !== undefined ? weather.temperature_2m : weather.temperature;
+                            var feelsVal = weather.apparent_temperature !== undefined ? weather.apparent_temperature : tempVal;
                             var windVal = weather.wind_speed_10m !== undefined ? weather.wind_speed_10m : weather.windspeed;
 
                             if (codeVal === undefined || codeVal === null || codeVal === "")
                                 codeVal = 0;
                             if (tempVal === undefined || tempVal === null || tempVal === "")
                                 tempVal = 0;
+                            if (feelsVal === undefined || feelsVal === null || feelsVal === "")
+                                feelsVal = tempVal;
                             if (windVal === undefined || windVal === null || windVal === "")
                                 windVal = 0;
 
                             root.weatherCode = parseInt(codeVal);
                             root.currentTemp = convertTemp(parseFloat(tempVal));
+                            root.feelsLikeTemp = convertTemp(parseFloat(feelsVal));
                             root.windSpeed = parseFloat(windVal);
 
                             if (daily.temperature_2m_max && daily.temperature_2m_max.length > 0) {
@@ -449,13 +481,40 @@ QtObject {
                             }
                             root.forecast = forecastData;
 
+                            var hourlyData = [];
+                            var hourly = data.hourly || {};
+                            if (hourly.time && hourly.temperature_2m && hourly.weather_code) {
+                                var now = new Date();
+                                var startIndex = 0;
+                                for (var h = 0; h < hourly.time.length; h++) {
+                                    if (new Date(hourly.time[h]) > now) {
+                                        startIndex = Math.max(0, h - 1);
+                                        break;
+                                    }
+                                }
+
+                                for (var j = startIndex; j < startIndex + 6 && j < hourly.time.length; j++) {
+                                    var hourDate = new Date(hourly.time[j]);
+                                    var hourCode = hourly.weather_code[j] !== undefined ? hourly.weather_code[j] : 0;
+                                    hourlyData.push({
+                                        time: hourlyData.length === 0 ? "Now" : formatHour(hourDate),
+                                        weatherCode: hourCode,
+                                        emoji: getWeatherCodeEmoji(hourCode),
+                                        temp: convertTemp(parseFloat(hourly.temperature_2m[j] || 0))
+                                    });
+                                }
+                            }
+                            root.hourlyForecast = hourlyData;
+
                             root.weatherSymbol = getWeatherCodeEmoji(root.weatherCode);
                             root.weatherDescription = getWeatherDescription(root.weatherCode);
                             root.calculateSunPosition();
+                            root.lastUpdated = new Date();
                             root.dataAvailable = true;
                             root.isLoading = false;
                             root.hasFailed = false;
                             root.retryCount = 0;
+                            root.schedulePendingRefresh();
                         } else {
                             console.warn("WeatherService: Invalid response structure");
                             root.dataAvailable = false;
@@ -482,6 +541,7 @@ QtObject {
             }
             // Reset cancelled flag after process fully exits
             root.wasCancelled = false;
+            root.schedulePendingRefresh();
         }
     }
 
@@ -525,10 +585,9 @@ QtObject {
     }
 
     function updateWeather() {
-        // Cancel existing process if running
         if (weatherProcess.running) {
-            root.wasCancelled = true;
-            weatherProcess.running = false;
+            root.pendingRefresh = true;
+            return;
         }
 
         // Safety check for config
@@ -539,6 +598,7 @@ QtObject {
 
         root.isLoading = true;
         root.hasFailed = false;
+        root.pendingRefresh = false;
 
         var locationStr = Config.weather.location || "auto";
         var location = locationStr.trim();

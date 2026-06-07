@@ -260,7 +260,7 @@ FloatingWindow {
                                     icon: Icons.shortcut
                                 },
                                 {
-                                    name: "System & AI",
+                                    name: "System",
                                     icon: Icons.circuitry
                                 },
                                 {
@@ -364,7 +364,7 @@ FloatingWindow {
                         id: keybindsTab
                     }
 
-                    // System and AI tab
+                    // System tab
                     SystemPanel {
                         id: systemTab
                     }

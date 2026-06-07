@@ -15,7 +15,7 @@ Rectangle {
     implicitWidth: 400
     implicitHeight: 300
 
-    property int currentSection: 0  // 0: Network, 1: Bluetooth, 2: Mixer, 3: Effects, 4: Theme, 5: Binds, 6: System, 7: Shell
+    property int currentSection: 0  // 0: Network, 1: Bluetooth, 2: Mixer, 3: Effects, 4: Theme, 5: Binds, 6: System, 7: Bar, 8: Compositor, 9: Vibeshell
 
     RowLayout {
         anchors.fill: parent
@@ -114,15 +114,21 @@ Rectangle {
                                 isIcon: true
                             },
                             {
+                                icon: Icons.widgets,
+                                label: "Bar",
+                                section: 7,
+                                isIcon: true
+                            },
+                            {
                                 icon: Icons.compositor,
                                 label: "Compositor",
-                                section: 7,
+                                section: 8,
                                 isIcon: true
                             },
                             {
                                 icon: Qt.resolvedUrl("../../../../assets/vibeshell/vibeshell-icon.svg"),
                                 label: "Vibeshell",
-                                section: 8,
+                                section: 9,
                                 isIcon: false
                             }
                         ]
@@ -224,7 +230,7 @@ Rectangle {
                     onWheel: event => {
                         if (event.angleDelta.y > 0 && root.currentSection > 0) {
                             root.currentSection--;
-                        } else if (event.angleDelta.y < 0 && root.currentSection < 8) {
+                        } else if (event.angleDelta.y < 0 && root.currentSection < 9) {
                             root.currentSection++;
                         }
                     }
@@ -460,12 +466,18 @@ Rectangle {
             }
 
             // Compositor Panel
-            CompositorPanel {
-                id: compositorPanel
+            ShellPanel {
+                id: barPanel
                 anchors.fill: parent
                 maxContentWidth: contentArea.maxContentWidth
+                currentSection: "bar"
                 visible: opacity > 0
                 opacity: root.currentSection === 7 ? 1 : 0
+
+                onCurrentSectionChanged: {
+                    if (currentSection !== "bar")
+                        currentSection = "bar";
+                }
 
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
@@ -488,9 +500,9 @@ Rectangle {
                 }
             }
 
-            // Shell Panel
-            ShellPanel {
-                id: shellPanel
+            // Compositor Panel
+            CompositorPanel {
+                id: compositorPanel
                 anchors.fill: parent
                 maxContentWidth: contentArea.maxContentWidth
                 visible: opacity > 0
@@ -506,6 +518,35 @@ Rectangle {
 
                 transform: Translate {
                     y: root.currentSection === 8 ? 0 : (root.currentSection > 8 ? -20 : 20)
+
+                    Behavior on y {
+                        enabled: Config.animDuration > 0
+                        NumberAnimation {
+                            duration: Config.animDuration
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                }
+            }
+
+            // Shell Panel
+            ShellPanel {
+                id: shellPanel
+                anchors.fill: parent
+                maxContentWidth: contentArea.maxContentWidth
+                visible: opacity > 0
+                opacity: root.currentSection === 9 ? 1 : 0
+
+                Behavior on opacity {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                transform: Translate {
+                    y: root.currentSection === 9 ? 0 : (root.currentSection > 9 ? -20 : 20)
 
                     Behavior on y {
                         enabled: Config.animDuration > 0

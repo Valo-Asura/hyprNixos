@@ -45,10 +45,14 @@ start_nandriod() {
   mkdir -p "$state_dir" "$log_dir"
   stop_managed_shells
   printf '%s\n' "nandriod" > "$state_file"
+  export XDG_DATA_DIRS="/run/current-system/sw/share:${XDG_DATA_DIRS:-}"
   if [ -d /run/current-system/sw/lib/qt-6/qml ]; then
     export QML2_IMPORT_PATH="/run/current-system/sw/lib/qt-6/qml:${QML2_IMPORT_PATH:-}"
     export QML_IMPORT_PATH="$QML2_IMPORT_PATH"
   fi
+  export QT_QPA_PLATFORMTHEME=qt6ct
+  export GTK_THEME=adw-gtk3-dark
+  export QS_ICON_THEME=Papirus-Dark
   QS_APP_ID="nandriod-shell" nohup "$qs_bin" -p "$nandriod_shell" > "$log_dir/nandriod.log" 2>&1 &
   printf 'Started Nandriod shell\n'
 }

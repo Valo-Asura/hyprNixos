@@ -2,7 +2,14 @@
 { lib, pkgs, ... }:
 
 let
+  bbenoistQml = pkgs.vscode-utils.extensionFromVscodeMarketplace {
+    publisher = "bbenoist";
+    name = "qml";
+    version = "1.0.0";
+    sha256 = "sha256-tphnVlD5LA6Au+WDrLZkAxnMJeTCd3UTyTN1Jelditk=";
+  };
   bbenoistNixExtension = "${pkgs.vscode-extensions.bbenoist.nix}/share/vscode/extensions/bbenoist.Nix";
+  bbenoistQmlExtension = "${bbenoistQml}/share/vscode/extensions/bbenoist.qml";
   direnvExtension = "${pkgs.vscode-extensions.mkhl.direnv}/share/vscode/extensions/mkhl.direnv";
   gitlensExtension = "${pkgs.vscode-extensions.eamodio.gitlens}/share/vscode/extensions/eamodio.gitlens";
   githubThemeExtension = "${pkgs.vscode-extensions.github.github-vscode-theme}/share/vscode/extensions/github.github-vscode-theme";
@@ -18,6 +25,9 @@ let
       # Nix support
       bbenoist.nix
       jnoortheen.nix-ide
+
+      # QML support
+      bbenoistQml
 
       # General development
       ms-python.python
@@ -100,6 +110,7 @@ in
       \) -exec ${pkgs.coreutils}/bin/rm -rf {} +
 
       ${pkgs.coreutils}/bin/ln -sfn ${bbenoistNixExtension} "$extensions_dir/bbenoist.Nix"
+      ${pkgs.coreutils}/bin/ln -sfn ${bbenoistQmlExtension} "$extensions_dir/bbenoist.qml"
       ${pkgs.coreutils}/bin/ln -sfn ${direnvExtension} "$extensions_dir/mkhl.direnv"
       ${pkgs.coreutils}/bin/ln -sfn ${gitlensExtension} "$extensions_dir/eamodio.gitlens"
       ${pkgs.coreutils}/bin/ln -sfn ${githubThemeExtension} "$extensions_dir/github.github-vscode-theme"

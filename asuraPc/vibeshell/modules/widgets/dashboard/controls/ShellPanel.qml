@@ -576,10 +576,6 @@ Item {
                         spacing: 8
 
                         SectionButton {
-                            text: "Bar"
-                            sectionId: "bar"
-                        }
-                        SectionButton {
                             text: "Notch"
                             sectionId: "notch"
                         }
@@ -624,6 +620,17 @@ Item {
                             font.weight: Font.Medium
                             color: Colors.overSurfaceVariant
                             Layout.bottomMargin: -4
+                        }
+
+                        ToggleRow {
+                            label: "Enable Bar"
+                            checked: Config.bar.enabled ?? true
+                            onToggled: value => {
+                                if (value !== Config.bar.enabled) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.enabled = value;
+                                }
+                            }
                         }
 
                         SelectorRow {
