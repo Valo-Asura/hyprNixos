@@ -194,6 +194,7 @@ in
       # Multimedia
       mpv
       vlc
+      easyeffects
       freetube
       kdePackages.kdenlive
       obs-studio
