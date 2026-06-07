@@ -134,8 +134,8 @@
       temp = "sensors | grep -E '(Core|Package)' | head -4";
 
       # ── NixOS ──────────────────────────────────────────────────────────────
-      rebuild = "/run/wrappers/bin/sudo nixos-rebuild switch --flake .";
-      update = "nix flake update";
+      rebuild = "/run/wrappers/bin/sudo nixos-rebuild switch --flake /etc/nixos#nixos";
+      update = "nix flake update --flake /etc/nixos";
       clean = "/run/wrappers/bin/sudo nix-collect-garbage -d";
       clean-store = "nix-storage-clean";
 
