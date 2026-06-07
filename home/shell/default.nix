@@ -158,7 +158,7 @@
 
       # ── Dev ────────────────────────────────────────────────────────────────
       y = "yazi"; # fast TUI file manager
-      steam = "setpriv --ambient-caps -all --inh-caps -all steam";
+      steam = "cd ~ && setpriv --ambient-caps -all --inh-caps -all steam";
     };
 
     functions = {
