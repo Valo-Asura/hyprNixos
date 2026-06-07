@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_CONFIG_HOME:-$HOME/.config}/asura-shell"
+state_file="$state_dir/current-shell"
+nandriod_shell="/home/asura/Downloads/test/asura-quickshell-main/shell.qml"
+log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/asura-shell"
+
+usage() {
+  printf '%s\n' \
+    "Usage: switch-shell <vibeshell|nandriod>" \
+    "" \
+    "Stops the current managed Quickshell instance and starts the selected shell."
+}
+
+stop_managed_shells() {
+  if command -v vibeshell >/dev/null 2>&1; then
+    vibeshell quit >/dev/null 2>&1 || true
+  fi
+
+  pkill -f 'quickshell.*asura-quickshell-main/shell.qml' >/dev/null 2>&1 || true
+  pkill -f 'qs .*asura-quickshell-main/shell.qml' >/dev/null 2>&1 || true
+}
+
+start_vibeshell() {
+  mkdir -p "$state_dir" "$log_dir"
+  stop_managed_shells
+  printf '%s\n' "vibeshell" > "$state_file"
+  nohup vibeshell > "$log_dir/vibeshell.log" 2>&1 &
+  printf 'Started VibeShell\n'
+}
+
+start_nandriod() {
+  if [ ! -f "$nandriod_shell" ]; then
+    printf 'Nandriod shell not found: %s\n' "$nandriod_shell" >&2
+    exit 1
+  fi
+
+  qs_bin="$(command -v qs || command -v quickshell || true)"
+  if [ -z "$qs_bin" ]; then
+    printf 'Could not find qs/quickshell in PATH\n' >&2
+    exit 1
+  fi
+
+  mkdir -p "$state_dir" "$log_dir"
+  stop_managed_shells
+  printf '%s\n' "nandriod" > "$state_file"
+  if [ -d /run/current-system/sw/lib/qt-6/qml ]; then
+    export QML2_IMPORT_PATH="/run/current-system/sw/lib/qt-6/qml:${QML2_IMPORT_PATH:-}"
+    export QML_IMPORT_PATH="$QML2_IMPORT_PATH"
+  fi
+  QS_APP_ID="nandriod-shell" nohup "$qs_bin" -p "$nandriod_shell" > "$log_dir/nandriod.log" 2>&1 &
+  printf 'Started Nandriod shell\n'
+}
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+case "$1" in
+  vibeshell) start_vibeshell ;;
+  nandriod) start_nandriod ;;
+  -h|--help|help) usage ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
