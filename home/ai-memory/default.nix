@@ -60,10 +60,8 @@ let
 
     ## Desktop Shell Context
     - Active stable shell: `/etc/nixos/asuraPc/vibeshell` (Quickshell/QML).
-    - Nandriod reference shell: `/home/asura/Downloads/test/asura-quickshell-main` (read-only reference).
     - Native rewrite experiment: `/etc/nixos/asuraPc/vibeshellREzero` (separate project, not active by default).
-    - Shell switching command: `switch-shell vibeshell` or `switch-shell nandriod`.
-    - Do not edit the Nandriod reference tree directly; keep active VibeShell changes modular and reversible.
+    - Nandriod is not installed or selectable; `/home/asura/Downloads/test/asura-quickshell-main` is reference-only.
     - Current dashboard focus: compact top-attached dashboard, weather refresh state, Pomodoro notes, Settings/Bar separation, and low-stutter Quickshell behavior.
   '';
 
@@ -288,9 +286,8 @@ let
         facts["desktop_shell"] = {
             "active": "vibeshell",
             "vibeshell_path": "/etc/nixos/asuraPc/vibeshell",
-            "nandriod_reference": "/home/asura/Downloads/test/asura-quickshell-main",
+            "reference_only_shell_path": "/home/asura/Downloads/test/asura-quickshell-main",
             "native_rewrite_path": "/etc/nixos/asuraPc/vibeshellREzero",
-            "switch_command": "switch-shell <vibeshell|nandriod>",
             "current_focus": [
                 "compact dashboard",
                 "weather refresh state",
@@ -314,8 +311,8 @@ let
             lessons.append(lesson)
         shell_lesson = {
             "topic": "Desktop Shell Workflow",
-            "lesson": "Keep active VibeShell, Nandriod reference shell, and native rewrite experiments isolated from each other.",
-            "solution": "Use switch-shell for runtime switching, treat /home/asura/Downloads/test/asura-quickshell-main as read-only, and make active VibeShell edits small and reversible.",
+            "lesson": "Keep active VibeShell and native rewrite experiments isolated from each other.",
+            "solution": "Treat /home/asura/Downloads/test/asura-quickshell-main as read-only reference only, and make active VibeShell edits small and reversible.",
         }
         if shell_lesson not in lessons:
             lessons.append(shell_lesson)
@@ -325,7 +322,7 @@ let
         mkdir(DB.parent)
         conn = sqlite3.connect(DB)
         try:
-            content = "Desktop shell update: VibeShell remains active; Nandriod is available through switch-shell; dashboard work covers weather refresh, Pomodoro notes, Settings/Bar separation, and file/browser desktop integration."
+            content = "Desktop shell update: VibeShell remains active; Nandriod is no longer installed or selectable; dashboard work covers weather refresh, Pomodoro notes, Settings/Bar separation, and file/browser desktop integration."
             exists = conn.execute(
                 "SELECT 1 FROM memories WHERE kind = ? AND source = ? AND content = ? LIMIT 1",
                 ("fact", "nixos-home-manager", content),
@@ -333,7 +330,7 @@ let
             if not exists:
                 conn.execute(
                     "INSERT INTO memories (kind, source, content, tags) VALUES (?, ?, ?, ?)",
-                    ("fact", "nixos-home-manager", content, "desktop-shell,vibeshell,nandriod,quickshell,nixos"),
+                    ("fact", "nixos-home-manager", content, "desktop-shell,vibeshell,quickshell,nixos"),
                 )
             conn.commit()
         finally:

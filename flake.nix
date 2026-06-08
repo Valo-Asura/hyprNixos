@@ -20,7 +20,10 @@
     hyprpaper.url = "github:hyprwm/hyprpaper";
     hyprpolkitagent.url = "github:hyprwm/hyprpolkitagent";
 
-    vibeshell.url = "path:/etc/nixos/asuraPc/vibeshell";
+    quickshell = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell?ref=refs/tags/v0.3.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # Cached CachyOS kernels. Keep this input independent; upstream warns not
     # to override its nixpkgs input when relying on its binary cache.

@@ -1,5 +1,5 @@
 {
-  description = "Vibeshell - An Axtremely customizable shell by Axenide";
+  description = "Vibeshell";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -10,17 +10,27 @@
     };
   };
 
-  outputs = { self, nixpkgs, quickshell, ... }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      quickshell,
+      ...
+    }:
     let
       vibeshellLib = import ./nix/lib.nix { inherit nixpkgs; };
-    in {
-      nixosModules.default = { pkgs, lib, ... }: {
-        imports = [ ./nix/modules ];
-        programs.vibeshell.enable = lib.mkDefault true;
-        programs.vibeshell.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      };
+    in
+    {
+      nixosModules.default =
+        { pkgs, lib, ... }:
+        {
+          imports = [ ./nix/modules ];
+          programs.vibeshell.enable = lib.mkDefault true;
+          programs.vibeshell.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        };
 
-      packages = vibeshellLib.forAllSystems (system:
+      packages = vibeshellLib.forAllSystems (
+        system:
         let
           pkgs = import nixpkgs {
             inherit system;
@@ -30,19 +40,29 @@
           lib = nixpkgs.lib;
 
           Vibeshell = import ./nix/packages {
-            inherit pkgs lib self system quickshell vibeshellLib;
+            inherit
+              pkgs
+              lib
+              self
+              system
+              quickshell
+              vibeshellLib
+              ;
           };
-        in {
+        in
+        {
           default = Vibeshell;
           Vibeshell = Vibeshell;
         }
       );
 
-      devShells = vibeshellLib.forAllSystems (system:
+      devShells = vibeshellLib.forAllSystems (
+        system:
         let
           pkgs = import nixpkgs { inherit system; };
           Vibeshell = self.packages.${system}.default;
-        in {
+        in
+        {
           default = pkgs.mkShell {
             packages = [ Vibeshell ];
             shellHook = ''
@@ -54,10 +74,12 @@
         }
       );
 
-      apps = vibeshellLib.forAllSystems (system:
+      apps = vibeshellLib.forAllSystems (
+        system:
         let
           Vibeshell = self.packages.${system}.default;
-        in {
+        in
+        {
           default = {
             type = "app";
             program = "${Vibeshell}/bin/vibeshell";

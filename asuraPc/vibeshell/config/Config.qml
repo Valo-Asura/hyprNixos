@@ -587,6 +587,13 @@ Singleton {
             property bool enableFirefoxPlayer: false
             property int playerTitleIntroMs: 2800
             property list<var> barColor: [["surface", 0.0]]
+            property int height: 44
+            property int width: 0
+            property int padding: 4
+            property int margin: 0
+            property int spacing: 4
+            property int radius: 18
+            property real backgroundOpacity: 1.0
             // Auto-hide properties
             property bool pinnedOnStartup: true
             property bool hoverToReveal: true

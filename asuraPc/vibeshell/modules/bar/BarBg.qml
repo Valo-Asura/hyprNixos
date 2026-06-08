@@ -11,7 +11,7 @@ Item {
 
     visible: Config.showBackground
 
-    readonly property int cornerSize: Config.theme.enableCorners ? Styling.radius(4) : 0
+    readonly property int cornerSize: Config.theme.enableCorners ? Math.max(Config.bar?.radius ?? Styling.radius(4), 0) : 0
     readonly property bool isHorizontal: position === "top" || position === "bottom"
     readonly property bool cornersVisible: Config.theme.enableCorners && cornerSize > 0
 
@@ -21,6 +21,7 @@ Item {
         variant: "barbg"
         radius: 0
         enableBorder: false
+        opacity: Math.max(0, Math.min(Config.bar?.backgroundOpacity ?? 1.0, 1.0))
 
         // Posicion y tamaño expandidos para cubrir corners
         x: position === "right" ? -cornerSize : 0

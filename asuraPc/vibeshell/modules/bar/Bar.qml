@@ -27,6 +27,22 @@ PanelWindow {
     property string barPosition: ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top"
     property string orientation: barPosition === "left" || barPosition === "right" ? "vertical" : "horizontal"
     readonly property bool barEnabled: Config.bar?.enabled ?? true
+    readonly property int barThickness: clampInt(Config.bar?.height ?? 44, 24, 80)
+    readonly property int barPadding: clampInt(Config.bar?.padding ?? 4, 0, 32)
+    readonly property int barMargin: clampInt(Config.bar?.margin ?? 0, 0, 32)
+    readonly property int moduleGap: clampInt(Config.bar?.spacing ?? 4, 0, 32)
+    readonly property int configuredLength: Config.bar?.width ?? 0
+    readonly property int availableLength: orientation === "horizontal" ? Math.max(width - barMargin * 2, 1) : Math.max(height - barMargin * 2, 1)
+    readonly property int barLength: configuredLength > 0 ? clampInt(configuredLength, Math.min(200, availableLength), availableLength) : availableLength
+
+    function clampInt(value, minValue, maxValue) {
+        return Math.max(minValue, Math.min(maxValue, Math.round(value)));
+    }
+
+    function alignedOffset(total, length) {
+        const free = Math.max(total - length, 0);
+        return barMargin + Math.max((free - barMargin * 2) / 2, 0);
+    }
 
     // Auto-hide properties
     property bool pinned: Config.bar?.pinnedOnStartup ?? true
@@ -140,7 +156,7 @@ PanelWindow {
 
 
     // Reserve space only when revealed and pinned (not in auto-hide mode or fullscreen)
-    exclusiveZone: (barEnabled && reveal && pinned && !activeWindowFullscreen) ? (Config.showBackground ? 44 : 40) : 0
+    exclusiveZone: (barEnabled && reveal && pinned && !activeWindowFullscreen) ? (barThickness + barMargin) : 0
     exclusionMode: ExclusionMode.Ignore
 
     // Altura implicita incluye espacio extra para animaciones / futuros elementos.
@@ -302,15 +318,17 @@ PanelWindow {
                     when: panel.barPosition === "top"
                     AnchorChanges {
                         target: bar
-                        anchors.left: parent.left
-                        anchors.right: parent.right
+                        anchors.left: undefined
+                        anchors.right: undefined
                         anchors.top: parent.top
                         anchors.bottom: undefined
                     }
                     PropertyChanges {
                         target: bar
-                        width: undefined
-                        height: 44
+                        anchors.topMargin: panel.barMargin
+                        x: panel.alignedOffset(panel.width, bar.width)
+                        width: panel.barLength
+                        height: panel.barThickness
                     }
                 },
                 State {
@@ -318,15 +336,17 @@ PanelWindow {
                     when: panel.barPosition === "bottom"
                     AnchorChanges {
                         target: bar
-                        anchors.left: parent.left
-                        anchors.right: parent.right
+                        anchors.left: undefined
+                        anchors.right: undefined
                         anchors.top: undefined
                         anchors.bottom: parent.bottom
                     }
                     PropertyChanges {
                         target: bar
-                        width: undefined
-                        height: 44
+                        anchors.bottomMargin: panel.barMargin
+                        x: panel.alignedOffset(panel.width, bar.width)
+                        width: panel.barLength
+                        height: panel.barThickness
                     }
                 },
                 State {
@@ -336,13 +356,15 @@ PanelWindow {
                         target: bar
                         anchors.left: parent.left
                         anchors.right: undefined
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
+                        anchors.top: undefined
+                        anchors.bottom: undefined
                     }
                     PropertyChanges {
                         target: bar
-                        width: 44
-                        height: undefined
+                        anchors.leftMargin: panel.barMargin
+                        y: panel.alignedOffset(panel.height, bar.height)
+                        width: panel.barThickness
+                        height: panel.barLength
                     }
                 },
                 State {
@@ -352,13 +374,15 @@ PanelWindow {
                         target: bar
                         anchors.left: undefined
                         anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
+                        anchors.top: undefined
+                        anchors.bottom: undefined
                     }
                     PropertyChanges {
                         target: bar
-                        width: 44
-                        height: undefined
+                        anchors.rightMargin: panel.barMargin
+                        y: panel.alignedOffset(panel.height, bar.height)
+                        width: panel.barThickness
+                        height: panel.barLength
                     }
                 }
             ]
@@ -373,8 +397,8 @@ PanelWindow {
                 id: horizontalLayout
                 visible: panel.orientation === "horizontal"
                 anchors.fill: parent
-                anchors.margins: 4
-                spacing: 4
+                anchors.margins: panel.barPadding
+                spacing: panel.moduleGap
 
                 // Obtener referencia al notch de esta pantalla
                 readonly property var notchContainer: Visibilities.getNotchForScreen(panel.screen.name)
@@ -548,8 +572,8 @@ PanelWindow {
                 id: verticalLayout
                 visible: panel.orientation === "vertical"
                 anchors.fill: parent
-                anchors.margins: 4
-                spacing: 4
+                anchors.margins: panel.barPadding
+                spacing: panel.moduleGap
 
                 LauncherButton {
                     id: launcherButtonVert

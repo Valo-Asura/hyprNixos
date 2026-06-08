@@ -666,6 +666,109 @@ Item {
                             }
                         }
 
+                        NumberInputRow {
+                            label: "Height"
+                            value: Config.bar.height ?? 44
+                            minValue: 24
+                            maxValue: 80
+                            suffix: "px"
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.bar.height) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.height = newValue;
+                                }
+                            }
+                        }
+
+                        NumberInputRow {
+                            label: "Width"
+                            value: Config.bar.width ?? 0
+                            minValue: 0
+                            maxValue: 4000
+                            suffix: "px"
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.bar.width) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.width = newValue;
+                                }
+                            }
+                        }
+
+                        NumberInputRow {
+                            label: "Padding"
+                            value: Config.bar.padding ?? 4
+                            minValue: 0
+                            maxValue: 32
+                            suffix: "px"
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.bar.padding) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.padding = newValue;
+                                }
+                            }
+                        }
+
+                        NumberInputRow {
+                            label: "Margin"
+                            value: Config.bar.margin ?? 0
+                            minValue: 0
+                            maxValue: 32
+                            suffix: "px"
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.bar.margin) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.margin = newValue;
+                                }
+                            }
+                        }
+
+                        NumberInputRow {
+                            label: "Module Gap"
+                            value: Config.bar.spacing ?? 4
+                            minValue: 0
+                            maxValue: 32
+                            suffix: "px"
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.bar.spacing) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.spacing = newValue;
+                                }
+                            }
+                        }
+
+                        NumberInputRow {
+                            label: "Radius"
+                            value: Config.bar.radius ?? 18
+                            minValue: 0
+                            maxValue: 64
+                            suffix: "px"
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.bar.radius) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.radius = newValue;
+                                }
+                            }
+                        }
+
+                        NumberInputRow {
+                            label: "BG Opacity"
+                            value: Math.round((Config.bar.backgroundOpacity ?? 1.0) * 100)
+                            minValue: 0
+                            maxValue: 100
+                            suffix: "%"
+                            onValueEdited: newValue => {
+                                const opacity = Math.max(0, Math.min(newValue, 100)) / 100.0;
+                                if (opacity !== Config.bar.backgroundOpacity) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.backgroundOpacity = opacity;
+                                }
+                            }
+                        }
+
+                        Separator {
+                            Layout.fillWidth: true
+                        }
+
                         TextInputRow {
                             label: "Launcher Icon"
                             value: Config.bar.launcherIcon ?? ""

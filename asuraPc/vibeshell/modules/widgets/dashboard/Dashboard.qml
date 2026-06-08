@@ -34,7 +34,7 @@ NotchAnimationBehavior {
     readonly property int tabSpacing: 8
 
     readonly property int tabWidth: 48
-    readonly property real nonAnimWidth: 760 + tabWidth + 16 // constant width for all tabs
+    readonly property real nonAnimWidth: 700 + tabWidth + 16 // compact constant width for all tabs
 
     implicitWidth: nonAnimWidth
     implicitHeight: 420

@@ -842,21 +842,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_6": {
-      "locked": {
-        "lastModified": 1777954456,
-        "narHash": "sha256-hGdgeU2Nk87RAuZyYjyDjFL6LK7dAZN5RE9+hrDTkDU=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "549bd84d6279f9852cae6225e372cc67fb91a4c1",
-        "type": "github"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "ref": "nixos-unstable",
-        "type": "indirect"
-      }
-    },
     "nur": {
       "inputs": {
         "flake-parts": [
@@ -908,7 +893,6 @@
     "quickshell": {
       "inputs": {
         "nixpkgs": [
-          "vibeshell",
           "nixpkgs"
         ]
       },
@@ -938,9 +922,9 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-ollama": "nixpkgs-ollama",
+        "quickshell": "quickshell",
         "sops-nix": "sops-nix",
-        "stylix": "stylix",
-        "vibeshell": "vibeshell"
+        "stylix": "stylix"
       }
     },
     "rust-overlay": {
@@ -1125,22 +1109,6 @@
         "owner": "tinted-theming",
         "repo": "base16-zed",
         "type": "github"
-      }
-    },
-    "vibeshell": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_6",
-        "quickshell": "quickshell"
-      },
-      "locked": {
-        "lastModified": 1780828980,
-        "narHash": "sha256-IyA8y4UUB1pbEAv0yaigoX9wz6GbfP/iJbqs3Iu++/0=",
-        "path": "/etc/nixos/asuraPc/vibeshell",
-        "type": "path"
-      },
-      "original": {
-        "path": "/etc/nixos/asuraPc/vibeshell",
-        "type": "path"
       }
     }
   },
