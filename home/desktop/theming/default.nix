@@ -3,6 +3,8 @@
 { config, pkgs, ... }:
 
 {
+  stylix.targets.gtk.enable = false;
+
   gtk = {
     enable = true;
     theme = {
@@ -57,9 +59,7 @@
 
   xdg.configFile."gtk-3.0/settings.ini".force = true;
   xdg.configFile."gtk-4.0/settings.ini".force = true;
-  home.file.".config/gtk-3.0/gtk.css".force = true;
-  home.file.".config/gtk-4.0/gtk.css".force = true;
-  home.file.".config/gtk-4.0/gtk-dark.css".force = true;
+
 
   xdg.configFile."qt5ct/qt5ct.conf" = {
     force = true;
