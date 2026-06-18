@@ -29,6 +29,12 @@ Item {
         }
     }
 
+    Process {
+        id: skwdProcess
+        command: ["skwd", "wall", "toggle"]
+        running: false
+    }
+
     function run(command) {
         console.log("IPC run command received:", command);
         switch (command) {
@@ -41,16 +47,17 @@ Item {
             toggleDashboardTab(0);
             break;
         case "dashboard-wallpapers":
-            toggleDashboardTab(1);
+            skwdProcess.running = false;
+            skwdProcess.running = true;
             break;
         case "dashboard-kanban":
-            toggleDashboardTab(2);
+            toggleDashboardTab(1);
             break;
         case "dashboard-pomodoro":
-            toggleDashboardTab(3);
+            toggleDashboardTab(2);
             break;
         case "dashboard-controls":
-            toggleDashboardTab(4);
+            toggleDashboardTab(3);
             break;
         case "dashboard-clipboard":
             toggleDashboardWithPrefix(Config.prefix.clipboard + " ");
@@ -100,6 +107,17 @@ Item {
             break;
         case "lockscreen":
             GlobalStates.lockscreenVisible = true;
+            break;
+        case "gamemode-toggle":
+            GameModeService.toggle();
+            break;
+        case "gamemode-enable":
+            GameModeService.toggled = true;
+            GameModeService.saveState();
+            break;
+        case "gamemode-disable":
+            GameModeService.toggled = false;
+            GameModeService.saveState();
             break;
 
         // Media
@@ -299,7 +317,7 @@ Item {
         name: "dashboard-kanban"
         description: "Open dashboard kanban tab"
 
-        onPressed: toggleDashboardTab(2)
+        onPressed: toggleDashboardTab(1)
     }
 
     GlobalShortcut {
@@ -307,7 +325,7 @@ Item {
         name: "dashboard-pomodoro"
         description: "Open dashboard Pomodoro tab"
 
-        onPressed: toggleDashboardTab(3)
+        onPressed: toggleDashboardTab(2)
     }
 
     GlobalShortcut {
@@ -315,7 +333,10 @@ Item {
         name: "dashboard-wallpapers"
         description: "Open dashboard wallpapers tab"
 
-        onPressed: toggleDashboardTab(1)
+        onPressed: {
+            skwdProcess.running = false;
+            skwdProcess.running = true;
+        }
     }
 
     GlobalShortcut {
@@ -331,7 +352,7 @@ Item {
         name: "dashboard-controls"
         description: "Open dashboard controls tab"
 
-        onPressed: toggleDashboardTab(4)
+        onPressed: toggleDashboardTab(3)
     }
 
     // Media player shortcuts

@@ -1,6 +1,9 @@
 # Browser Configuration and Theming
 { pkgs, ... }:
 
+let
+  xdman = pkgs.callPackage ../../asuraPc/system/xdman.nix { };
+in
 {
   programs.firefox = {
     enable = true;
@@ -11,6 +14,11 @@
         install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
         installation_mode = "force_installed";
         default_area = "menupanel";
+        private_browsing = true;
+      };
+      "xdm-integration-module@subhra74.github.io" = {
+        install_url = "https://addons.mozilla.org/firefox/downloads/latest/xdm-integration-module/latest.xpi";
+        installation_mode = "force_installed";
         private_browsing = true;
       };
     };
@@ -76,7 +84,17 @@
 
   programs.brave = {
     enable = true;
-    commandLineArgs = [ ];
+    commandLineArgs = [
+      "--load-extension=${xdman}/chrome-extension"
+    ];
+  };
+
+  programs.chromium = {
+    enable = true;
+    package = pkgs.google-chrome;
+    commandLineArgs = [
+      "--load-extension=${xdman}/chrome-extension"
+    ];
   };
 
   xdg.mimeApps = {
@@ -100,9 +118,7 @@
     };
   };
 
-  home.packages = [
-    pkgs.google-chrome
-  ];
+  home.packages = [ ];
 
   xdg.configFile."google-chrome/policies/managed/vibeshell-session-restore.json".text = ''
     {

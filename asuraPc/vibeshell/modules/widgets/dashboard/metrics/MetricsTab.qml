@@ -76,7 +76,6 @@ Rectangle {
 
         const savedInterval = StateService.get("metricsRefreshInterval", 2000);
         SystemResources.updateInterval = Math.max(100, savedInterval);
-        SystemResources.monitorEnabled = GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 2;
         const savedZoom = StateService.get("metricsChartZoom", 1.0);
         // Limit zoom range: 0.2 (show all available) to 3.0 (zoom in)
         chartZoom = Math.max(0.2, Math.min(3.0, savedZoom));
@@ -84,22 +83,6 @@ Rectangle {
         hostnameReader.running = true;
         osReader.running = true;
         linuxLogosReader.running = true;
-    }
-
-    Component.onDestruction: {
-        SystemResources.monitorEnabled = false;
-    }
-
-    Connections {
-        target: GlobalStates
-
-        function onDashboardOpenChanged() {
-            SystemResources.monitorEnabled = GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 2;
-        }
-
-        function onDashboardCurrentTabChanged() {
-            SystemResources.monitorEnabled = GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 2;
-        }
     }
 
     // Load Linux logos JSON

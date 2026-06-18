@@ -19,7 +19,7 @@ Rectangle {
         maskInverted: true
         maskThresholdMin: 0.5
         maskSpreadAtMin: 1.0
-        shadowEnabled: true
+        shadowEnabled: false
         shadowHorizontalOffset: 0
         shadowVerticalOffset: 0
         shadowBlur: 1

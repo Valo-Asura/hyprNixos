@@ -171,8 +171,8 @@ ClippingRectangle {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        border.color: Config.resolveColor(borderData[0])
-        border.width: borderData[1]
-        visible: root.enableBorder
+        border.color: borderData ? Config.resolveColor(borderData[0]) : "transparent"
+        border.width: borderData ? borderData[1] : 0
+        visible: root.enableBorder && borderData !== undefined
     }
 }

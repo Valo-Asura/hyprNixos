@@ -10,10 +10,10 @@ Item {
 
     required property var bar
 
-    // Orientación derivada de la barra
+    // Derived Bar Orientation
     property bool vertical: bar.orientation === "vertical"
 
-    // Estado de hover para activar wavy
+    // Hover state to activate wavy
     property bool isHovered: false
     property bool externalVolumeChange: false
     property bool isExpanded: false
@@ -23,14 +23,14 @@ Item {
     HoverHandler {
         onHoveredChanged: {
             root.isHovered = hovered;
-            // Contraer cuando el mouse sale completamente del componente
+            // Collapse when mouse completely exits component
             if (!hovered && root.isExpanded && !micSlider.isDragging) {
                 root.isExpanded = false;
             }
         }
     }
 
-    // Tamaño basado en hover para StyledRect con animación
+    // Hover based size for StyledRect with animation
     Layout.preferredWidth: root.vertical ? 36 : 36
     Layout.preferredHeight: root.vertical ? 36 : 36
 
@@ -142,7 +142,7 @@ Item {
             Connections {
                 target: micSlider
                 function onIconHovered(hovered) {
-                // No hacer nada aquí, el HoverHandler principal maneja todo
+                // Do nothing here, the main HoverHandler handles everything
                 }
             }
         }

@@ -16,7 +16,7 @@ in
       QT_QPA_PLATFORMTHEME = "qt6ct";
       SDL_VIDEODRIVER = "wayland,x11";
       GDK_BACKEND = "wayland,x11";
-      GTK_THEME = "adw-gtk3-dark";
+      GTK_THEME = "Adwaita:dark";
       CLUTTER_BACKEND = "wayland";
       XDG_CURRENT_DESKTOP = "Hyprland";
       XDG_SESSION_TYPE = "wayland";
@@ -57,7 +57,7 @@ in
 
     etc."xdg/mime/defaults.list".text = ''
       [Default Applications]
-      inode/directory=thunar.desktop
+      inode/directory=org.gnome.Nautilus.desktop
       application/zip=org.kde.ark.desktop
       application/x-zip-compressed=org.kde.ark.desktop
       application/x-7z-compressed=org.kde.ark.desktop

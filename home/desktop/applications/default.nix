@@ -9,6 +9,29 @@
 
   home.packages = [ pkgs.wofi ];
 
+  xdg.dataFile."applications/org.gnome.Nautilus.desktop" = {
+    force = true;
+    text = ''
+      [Desktop Entry]
+      Name=Files
+      Comment=Access and organize files
+      Exec=env GTK_THEME=Adwaita:dark nautilus --new-window %U
+      TryExec=nautilus
+      Icon=org.gnome.Nautilus
+      Terminal=false
+      Type=Application
+      DBusActivatable=false
+      StartupNotify=true
+      Categories=GNOME;GTK;Utility;Core;FileManager;
+      MimeType=inode/directory;application/x-gnome-saved-search;
+      Actions=new-window;
+
+      [Desktop Action new-window]
+      Name=New Window
+      Exec=env GTK_THEME=Adwaita:dark nautilus --new-window
+    '';
+  };
+
   xdg.dataFile."applications/steam.desktop" = {
     force = true;
     text = ''

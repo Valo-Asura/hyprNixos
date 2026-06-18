@@ -134,10 +134,12 @@ let
   };
 
   hyprmod = pkgs.callPackage ./hyprmod.nix { };
+  xdman = pkgs.callPackage ./xdman.nix { };
 in
 {
   environment.systemPackages =
     (with pkgs; [
+      xdman
       # System Info & Terminal
       microfetch
       zsh

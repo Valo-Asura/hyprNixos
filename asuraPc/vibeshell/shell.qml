@@ -9,9 +9,9 @@ import Quickshell.Wayland
 import qs.modules.bar
 import qs.modules.bar.workspaces
 import qs.modules.notifications
-import qs.modules.widgets.dashboard.wallpapers
 import qs.modules.widgets.notes
 import qs.modules.widgets.settings
+import qs.modules.widgets.monitor
 import qs.modules.notch
 import qs.modules.widgets.overview
 import qs.modules.widgets.presets
@@ -38,19 +38,6 @@ ShellRoot {
         id: contextMenu
         screen: Quickshell.screens[0]
         Component.onCompleted: Visibilities.setContextMenu(contextMenu)
-    }
-
-    Variants {
-        model: Quickshell.screens
-
-        Loader {
-            id: wallpaperLoader
-            active: true
-            required property ShellScreen modelData
-            sourceComponent: Wallpaper {
-                screen: wallpaperLoader.modelData
-            }
-        }
     }
 
     Variants {
@@ -215,13 +202,25 @@ ShellRoot {
         id: hyprlandKeybinds
     }
 
-    // Vibeshell Settings floating window
-    Settings {
-        id: settingsWindow
+    // Vibeshell Settings floating window (deferred)
+    Loader {
+        id: settingsLoader
+        active: GlobalStates.settingsVisible
+        source: "modules/widgets/settings/Settings.qml"
     }
 
-    QuickShellNotes {
-        id: quickShellNotesWindow
+    // Vibeshell Notes floating window (deferred)
+    Loader {
+        id: notesLoader
+        active: GlobalStates.notesVisible
+        source: "modules/widgets/notes/QuickShellNotes.qml"
+    }
+
+    // Vibeshell Monitor floating window (deferred)
+    Loader {
+        id: monitorLoader
+        active: GlobalStates.monitorVisible
+        source: "modules/widgets/monitor/QuickShellMonitor.qml"
     }
 
     // Screenshot Tool

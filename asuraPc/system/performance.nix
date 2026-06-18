@@ -26,7 +26,15 @@
   };
 
   # Let games and heavy interactive apps request temporary CPU/GPU priority boosts.
-  programs.gamemode.enable = true;
+  programs.gamemode = {
+    enable = true;
+    settings = {
+      custom = {
+        start = "vibeshell run gamemode-enable";
+        end = "vibeshell run gamemode-disable";
+      };
+    };
+  };
 
   # SSD TRIM for ext4 / NVMe health
   services.fstrim.enable = true;
@@ -35,7 +43,7 @@
   zramSwap = {
     enable = true;
     algorithm = "zstd";
-    memoryPercent = 25; # 25% of 16GB = 4GB compressed swap (was 50% — too aggressive)
+    memoryPercent = 25; # 25% of 16GB = 4GB compressed swap
   };
 
   # ── Kernel sysctl tuning ────────────────────────────────────────

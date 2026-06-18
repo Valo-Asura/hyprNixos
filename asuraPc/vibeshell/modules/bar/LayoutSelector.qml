@@ -99,6 +99,12 @@ StyledRect {
                     focusPolicy: Qt.NoFocus
                     hoverEnabled: true
 
+                    padding: 0
+                    topPadding: 0
+                    bottomPadding: 0
+                    leftPadding: 0
+                    rightPadding: 0
+
                     background: Rectangle {
                         color: "transparent"
                     }
@@ -152,6 +158,12 @@ StyledRect {
 
                     focusPolicy: Qt.NoFocus
                     hoverEnabled: true
+
+                    padding: 0
+                    topPadding: 0
+                    bottomPadding: 0
+                    leftPadding: 0
+                    rightPadding: 0
 
                     background: Rectangle {
                         color: "transparent"

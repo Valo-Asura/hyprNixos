@@ -144,7 +144,7 @@ release_vibeshell_lock() {
 case "${1:-}" in
 update)
 	echo "Vibeshell is vendored in /etc/nixos/asuraPc/vibeshell."
-	echo "Update the local flake input with: sudo nix flake update vibeshell --flake /etc/nixos"
+	echo "Update Quickshell with: sudo nix flake update quickshell --flake /etc/nixos"
 	echo "Then rebuild with: sudo nixos-rebuild switch --flake /etc/nixos#nixos"
 	;;
 refresh)

@@ -17,7 +17,7 @@ Singleton {
                     "text": action.text
                 })) ?? []
         property bool popup: false
-        // Capturar valores inmediatamente para evitar binding issues
+        // Capture values ​​immediately to avoid binding issues
         property string appIcon: ""
         property string appName: ""
         property string body: ""
@@ -27,14 +27,14 @@ Singleton {
         property string urgency: "normal"
         property Timer timer
 
-        // Propiedades para cache de imágenes
+        // Properties for image cache
         property string cachedAppIcon: ""
         property string cachedImage: ""
 
-        // Indica si esta notificación fue cargada desde cache
+        // Indicates if this notification was loaded from cache
         property bool isCached: false
 
-        // Inicializar valores cuando se asigna la notification
+        // Initialize values ​​when notification is assigned
         onNotificationChanged: {
             if (notification) {
                 appIcon = notification.appIcon ?? "";
@@ -44,7 +44,7 @@ Singleton {
                 summary = notification.summary ?? "";
                 urgency = notification.urgency.toString() ?? "normal";
 
-                // Cachear imágenes
+                // Cache images
                 if (appIcon && !appIcon.startsWith("data:")) {
                     root.cacheImageAsBase64(appIcon, function (cachedData) {
                         cachedAppIcon = cachedData;
@@ -56,9 +56,9 @@ Singleton {
                     });
                 }
 
-                // Escuchar cuando la notificación es cerrada por la aplicación
+                // Listen when the notification is closed by the app
                 notification.closed.connect(function (reason) {
-                    // CloseRequested = 3: la aplicación solicitó cerrar la notificación
+                    // CloseRequested = 3 – The app requested to close the notification
                     if (reason === 3) {
                         root.discardNotification(id);
                     }
@@ -136,7 +136,7 @@ Singleton {
     property var popupList: list.filter(notif => notif.popup)
     property bool popupInhibited: silent
     property var latestTimeForApp: ({})
-    property var totalCounts: ({})  // Conteo total independiente del almacenamiento: {appName: {summary: count}}
+    property var totalCounts: ({})  // Storage independent total count: {appName: {summary: count}}
 
     Component {
         id: notifComponent
@@ -161,11 +161,11 @@ Singleton {
         return notifComponent.createObject(root, {
             "id": json.id,
             "actions": json.actions,
-            "appIcon": json.cachedAppIcon || json.appIcon  // Usar cached si disponible
+            "appIcon": json.cachedAppIcon || json.appIcon  // Use cached if available
             ,
             "appName": json.appName,
             "body": json.body,
-            "image": json.cachedImage || json.image  // Usar cached si disponible
+            "image": json.cachedImage || json.image  // Use cached if available
             ,
             "summary": json.summary,
             "time": json.time,
@@ -174,12 +174,12 @@ Singleton {
             "cachedImage": json.cachedImage || "",
             "isCached": json.isCached || true  // Default to true for loaded notifications
             ,
-            "popup": false  // No popup para notificaciones cargadas
+            "popup": false  // No popup for loaded notifications
         });
     }
 
     function saveNotifications() {
-        // Limitar notificaciones almacenadas a 5 por summary para evitar almacenamiento excesivo
+        // Limit stored notifications to 5 per summary to avoid excessive storage
         const limitedList = limitNotificationsPerSummary(root.list);
         notifFileView.setText(stringifyList(limitedList));
     }
@@ -248,7 +248,7 @@ Singleton {
     function groupsForList(list) {
         const groups = {};
         list.forEach((notif, index) => {
-            // Verificar que la notificación es válida antes de agruparla
+            // Verify that the notification is valid before grouping it
             if (!notif || !notif.appName || (!notif.summary && !notif.body)) {
                 return;
             }
@@ -259,7 +259,7 @@ Singleton {
                     appIcon: notif.appIcon,
                     notifications: [],
                     time: 0,
-                    totalCount: 0  // Conteo independiente del almacenamiento
+                    totalCount: 0  // Storage independent counting
                 };
             }
             groups[notif.appName].notifications.push(notif);
@@ -297,7 +297,7 @@ Singleton {
         persistenceSupported: true
 
         onNotification: notification => {
-            // Verificar que la notificación tiene contenido válido antes de procesarla
+            // Verify that the notification has valid content before processing it
             if (!notification || (!notification.summary && !notification.body)) {
                 return;
             }
@@ -309,18 +309,18 @@ Singleton {
                 "time": Date.now()
             });
 
-            // Usar Qt.callLater para evitar race conditions al actualizar la lista
+            // Use Qt.callLater to avoid race conditions when updating the list
             Qt.callLater(() => {
                 root.list = [...root.list, newNotifObject];
                 saveNotifications();
             });
 
-            // Popup - ahora se muestra en el notch en lugar de popup window
+            // Popup - now displayed in notch instead of popup window
             if (!root.popupInhibited) {
                 newNotifObject.popup = true;
                 newNotifObject.timer = notifTimerComponent.createObject(root, {
                     "id": newNotifObject.id,
-                    "interval": notification.expireTimeout < 0 ? 5000 : notification.expireTimeout // Aumentado para notch
+                    "interval": notification.expireTimeout < 0 ? 5000 : notification.expireTimeout // Increased to notch
                 });
             }
 

@@ -765,9 +765,113 @@ Item {
                             }
                         }
 
+                        // Bar color layer 0 — color name + opacity
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "Bar Color"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                color: Colors.overBackground
+                                Layout.fillWidth: true
+                            }
+
+                            ComboBox {
+                                id: barColorNameBox
+                                Layout.preferredWidth: 150
+                                Layout.preferredHeight: 32
+
+                                model: Colors.availableColorNames ?? ["background", "surface", "surfaceContainer", "surfaceContainerLow", "surfaceContainerHigh", "primary", "secondary", "tertiary", "error"]
+
+                                currentIndex: {
+                                    const layers = Config.bar.barColor;
+                                    if (!layers || layers.length === 0) return 0;
+                                    const nm = layers[0][0];
+                                    const idx = model.indexOf(nm);
+                                    return idx >= 0 ? idx : 0;
+                                }
+
+                                onActivated: index => {
+                                    const layers = Config.bar.barColor ?? [["surface", 0.0]];
+                                    const updated = JSON.parse(JSON.stringify(layers));
+                                    updated[0][0] = model[index];
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.barColor = updated;
+                                }
+
+                                background: Rectangle {
+                                    color: barColorNameBox.hovered ? Colors.surfaceContainerHigh : Colors.surfaceContainer
+                                    radius: Styling.radius(-2)
+                                    border.color: Colors.outlineVariant
+                                    border.width: 1
+                                }
+
+                                contentItem: Text {
+                                    leftPadding: 8
+                                    text: barColorNameBox.displayText
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                    color: Colors.overBackground
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                            }
+
+                            // layer opacity input (0–100 %)
+                            StyledRect {
+                                variant: "common"
+                                Layout.preferredWidth: 56
+                                Layout.preferredHeight: 32
+                                radius: Styling.radius(-2)
+
+                                TextInput {
+                                    anchors.fill: parent
+                                    anchors.margins: 6
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(0)
+                                    color: Colors.overBackground
+                                    selectByMouse: true
+                                    clip: true
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    horizontalAlignment: TextInput.AlignHCenter
+                                    validator: IntValidator { bottom: 0; top: 100 }
+
+                                    readonly property int configOpacity: {
+                                        const layers = Config.bar.barColor;
+                                        if (!layers || layers.length === 0) return 0;
+                                        return Math.round((layers[0][1] ?? 0) * 100);
+                                    }
+                                    onConfigOpacityChanged: {
+                                        if (!activeFocus) text = configOpacity.toString();
+                                    }
+                                    Component.onCompleted: text = configOpacity.toString()
+
+                                    onEditingFinished: {
+                                        const v = parseInt(text);
+                                        if (!isNaN(v)) {
+                                            const layers = Config.bar.barColor ?? [["surface", 0.0]];
+                                            const updated = JSON.parse(JSON.stringify(layers));
+                                            updated[0][1] = Math.max(0, Math.min(v, 100)) / 100.0;
+                                            GlobalStates.markShellChanged();
+                                            Config.bar.barColor = updated;
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "%"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                color: Colors.overSurfaceVariant
+                            }
+                        }
+
                         Separator {
                             Layout.fillWidth: true
                         }
+
 
                         TextInputRow {
                             label: "Launcher Icon"

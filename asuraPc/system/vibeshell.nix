@@ -49,6 +49,8 @@ in
     fonts.enable = true;
   };
 
+  programs.skwd-wall.enable = true;
+
   environment.systemPackages = [
     vibeshellSafeLock
     vibeshellLockBeforeSleep

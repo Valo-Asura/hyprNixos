@@ -104,13 +104,13 @@ QtObject {
     }
 
     function applyKeybindsInternal() {
-        // Verificar que el adapter esté cargado
+        // Verify that the adapter is charged
         if (!Config.keybindsLoader.loaded) {
             console.log("HyprlandKeybinds: Esperando que se cargue el adapter...");
             return;
         }
 
-        // Esperar a que el layout esté listo
+        // Wait for the layout to be ready
         if (!GlobalStates.hyprlandLayoutReady) {
             console.log("HyprlandKeybinds: Esperando que se detecte el layout de Hyprland...");
             return;
@@ -234,7 +234,7 @@ QtObject {
             return `eval hl.bind(${luaString(luaKeyString(keyObj))}, ${luaDispatcher(dispatcher, argument, flags)}${luaBindOptions(flags)})`;
         }
 
-        // Construir batch command con todos los binds
+        // Build batch command with all binds
         let batchCommands = [];
 
         // First, unbind previous keybinds if we have them stored
@@ -358,7 +358,7 @@ QtObject {
 
         storePreviousBinds();
 
-        // Combinar unbind y bind en un solo batch
+        // Combine unbind and bind in one batch
         const fullBatchCommand = unbindCommands.join("; ") + "; " + batchCommands.join("; ");
 
         console.log("HyprlandKeybinds: Ejecutando batch command");
@@ -404,7 +404,7 @@ QtObject {
     }
 
     Component.onCompleted: {
-        // Si el loader ya está cargado, aplicar inmediatamente
+        // If the loader is already loaded, apply immediately
         if (Config.keybindsLoader.loaded) {
             applyKeybinds();
         }

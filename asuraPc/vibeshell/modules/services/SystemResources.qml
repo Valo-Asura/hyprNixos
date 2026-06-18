@@ -146,7 +146,17 @@ Singleton {
         }
     }
 
-    onMonitorEnabledChanged: restartMonitor()
+    onMonitorEnabledChanged: {
+        if (monitorEnabled) {
+            cpuHistory = [];
+            cpuTempHistory = [];
+            ramHistory = [];
+            gpuHistories = [];
+            gpuTempHistories = [];
+            totalDataPoints = 0;
+        }
+        restartMonitor();
+    }
     onUpdateIntervalChanged: restartMonitor()
 
     // Restart monitor when disks change (Unified handler)

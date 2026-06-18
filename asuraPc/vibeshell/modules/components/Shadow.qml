@@ -4,7 +4,7 @@ import qs.modules.theme
 import qs.config
 
 MultiEffect {
-    shadowEnabled: true
+    shadowEnabled: false
     shadowHorizontalOffset: Config.theme.shadowXOffset
     shadowVerticalOffset: Config.theme.shadowYOffset
     shadowBlur: Config.theme.shadowBlur

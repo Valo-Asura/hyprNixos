@@ -99,6 +99,12 @@ Singleton {
         LockscreenService.toString();
     }
 
+    Binding {
+        target: SystemResources
+        property: "monitorEnabled"
+        value: root.monitorVisible
+    }
+
     // Persistent launcher state across monitors
     property string launcherSearchText: ""
     property int launcherSelectedIndex: -1
@@ -170,6 +176,9 @@ Singleton {
     property bool notesVisible: false
     property string notesRequestedId: ""
     property int notesRequestedSection: -1
+
+    // System Monitor floating window state
+    property bool monitorVisible: false
 
     // Screenshot Tool state
     property bool screenshotToolVisible: false
@@ -342,14 +351,16 @@ Singleton {
 
     // Shell config sections and their properties
     readonly property var _shellSections: {
-        "bar": ["enabled", "position", "launcherIcon", "launcherIconTint", "launcherIconFullTint", "launcherIconSize", "enableFirefoxPlayer", "playerTitleIntroMs", "screenList", "pinnedOnStartup", "hoverToReveal", "hoverRegionHeight", "showPinButton", "availableOnFullscreen"],
+        "bar": ["enabled", "position", "launcherIcon", "launcherIconTint", "launcherIconFullTint", "launcherIconSize", "enableFirefoxPlayer", "playerTitleIntroMs", "screenList", "pinnedOnStartup", "hoverToReveal", "hoverRegionHeight", "showPinButton", "availableOnFullscreen", "height", "width", "padding", "margin", "spacing", "radius", "backgroundOpacity", "barColor"],
         "notch": ["theme", "hoverRegionHeight"],
         "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic"],
         "overview": ["rows", "columns", "scale", "workspaceSpacing"],
         "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "showPinButton", "showOverviewButton", "screenList"],
         "lockscreen": ["position", "imagePath"],
         "desktop": ["enabled", "iconSize", "spacingVertical", "textColor"],
-        "system": ["idle", "ocr"]
+        "system": ["idle", "ocr", "disks"],
+        "prefix": ["clipboard", "emoji", "tmux", "wallpapers", "notes"],
+        "weather": ["location", "unit"]
     }
 
     // Create a deep copy of the current shell config
@@ -419,6 +430,7 @@ Singleton {
         }
     }
 
+    // Ensure prefix and weather loaders are ready in Config
     function markShellChanged() {
         // Take a snapshot before the first change
         if (!shellHasChanges) {
@@ -438,6 +450,8 @@ Singleton {
             Config.saveLockscreen();
             Config.saveDesktop();
             Config.saveSystem();
+            Config.savePrefix();
+            Config.saveWeather();
 
             shellHasChanges = false;
             shellSnapshot = null;

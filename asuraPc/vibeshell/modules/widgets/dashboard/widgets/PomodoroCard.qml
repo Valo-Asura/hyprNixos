@@ -121,6 +121,7 @@ StyledRect {
                 ]
 
                 StyledRect {
+                    id: modeRect
                     required property var modelData
                     Layout.fillWidth: true
                     implicitHeight: 34
@@ -132,7 +133,7 @@ StyledRect {
                         text: modelData.label
                         font.family: Config.theme.font
                         font.pixelSize: Styling.fontSize(-1)
-                        color: PomodoroService.mode === modelData.mode ? Styling.srItem("primary") : Colors.overBackground
+                        color: modeRect.item
                     }
 
                     MouseArea {
@@ -149,6 +150,7 @@ StyledRect {
             spacing: 8
 
             StyledRect {
+                id: startBtn
                 Layout.fillWidth: true
                 implicitHeight: 38
                 radius: Styling.radius(2)
@@ -159,7 +161,7 @@ StyledRect {
                     text: PomodoroService.running ? "Pause" : "Start"
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(0)
-                    color: Styling.srItem("primary")
+                    color: startBtn.item
                 }
 
                 MouseArea {
@@ -222,6 +224,7 @@ StyledRect {
             }
 
             StyledRect {
+                id: shortBreakBtn
                 Layout.preferredWidth: 68
                 implicitHeight: 28
                 radius: Styling.radius(2)
@@ -232,7 +235,7 @@ StyledRect {
                     text: "Short"
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-2)
-                    color: !PomodoroService.nextBreakLong ? Styling.srItem("primary") : Colors.overBackground
+                    color: shortBreakBtn.item
                 }
 
                 MouseArea {
@@ -243,6 +246,7 @@ StyledRect {
             }
 
             StyledRect {
+                id: longBreakBtn
                 Layout.preferredWidth: 68
                 implicitHeight: 28
                 radius: Styling.radius(2)
@@ -253,7 +257,7 @@ StyledRect {
                     text: "Long"
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-2)
-                    color: PomodoroService.nextBreakLong ? Styling.srItem("primary") : Colors.overBackground
+                    color: longBreakBtn.item
                 }
 
                 MouseArea {

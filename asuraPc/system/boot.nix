@@ -136,7 +136,10 @@ in
     };
 
     loader = {
-      efi.canTouchEfiVariables = true;
+      # Do not rewrite motherboard NVRAM on every rebuild. The firmware should
+      # keep the manually selected Linux Boot Manager first instead of being
+      # churned by activation hooks.
+      efi.canTouchEfiVariables = lib.mkForce false;
       timeout = 12;
 
       systemd-boot = {
@@ -162,8 +165,6 @@ in
       themePackages = [ plymouthTheme ];
     };
 
-    kernelPackages = pkgs.linuxPackages_latest;
-
     kernelParams = [
       "quiet"
       "splash"
@@ -173,7 +174,7 @@ in
       "rd.udev.log_level=3"
       "udev.log_level=3"
       "vt.global_cursor_default=0"
-      "video=DP-1:1920x1080@165"
+      "video=HDMI-A-1:1920x1080@144"
       "nvidia-drm.modeset=1"
       "nvidia-drm.fbdev=1"
       "nowatchdog"
@@ -195,7 +196,7 @@ in
   '';
 
   system.activationScripts.preferSignedBootEntry.text = ''
-    ${preferSignedBootEntry}
+    echo "Skipping EFI boot-order rewrite; boot.loader.efi.canTouchEfiVariables is disabled."
   '';
 
   system.activationScripts.syncWindowsBootEntry.text = ''

@@ -40,6 +40,10 @@
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    skwd-wall = {
+      url = "path:/home/asura/Downloads/skwd-wall-main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

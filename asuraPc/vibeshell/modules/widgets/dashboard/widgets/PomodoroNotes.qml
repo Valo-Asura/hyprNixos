@@ -74,17 +74,18 @@ StyledRect {
             }
 
             StyledRect {
+                id: addBtn
                 Layout.preferredWidth: 42
                 implicitHeight: 38
                 radius: Styling.radius(2)
-                variant: addHover.hovered ? "focus" : "primary"
+                variant: addHover.hovered ? "primaryfocus" : "primary"
 
                 Text {
                     anchors.centerIn: parent
                     text: Icons.plus
                     font.family: Icons.font
                     font.pixelSize: 19
-                    color: Styling.srItem("primary")
+                    color: addBtn.item
                 }
 
                 HoverHandler {

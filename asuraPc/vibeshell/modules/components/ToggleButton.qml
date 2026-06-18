@@ -21,6 +21,12 @@ Button {
     implicitWidth: 36
     implicitHeight: 36
 
+    padding: 0
+    topPadding: 0
+    bottomPadding: 0
+    leftPadding: 0
+    rightPadding: 0
+
     // Check if buttonIcon is a single character (icon font) or a file path
     readonly property bool isIconPath: buttonIcon.length > 1
 
@@ -43,6 +49,8 @@ Button {
     }
 
     contentItem: Item {
+        implicitWidth: root.implicitWidth
+        implicitHeight: root.implicitHeight
         // Text icon (single character)
         Text {
             visible: !root.isIconPath

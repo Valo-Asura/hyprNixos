@@ -39,8 +39,13 @@ PanelWindow {
         return Math.max(minValue, Math.min(maxValue, Math.round(value)));
     }
 
-    function alignedOffset(total, length) {
-        const free = Math.max(total - length, 0);
+    readonly property int horizontalAlignedOffset: {
+        const free = Math.max(width - (orientation === "horizontal" ? barLength : barThickness), 0);
+        return barMargin + Math.max((free - barMargin * 2) / 2, 0);
+    }
+
+    readonly property int verticalAlignedOffset: {
+        const free = Math.max(height - (orientation === "vertical" ? barLength : barThickness), 0);
         return barMargin + Math.max((free - barMargin * 2) / 2, 0);
     }
 
@@ -156,13 +161,13 @@ PanelWindow {
 
 
     // Reserve space only when revealed and pinned (not in auto-hide mode or fullscreen)
-    exclusiveZone: (barEnabled && reveal && pinned && !activeWindowFullscreen) ? (barThickness + barMargin) : 0
+    exclusiveZone: (barEnabled && reveal && pinned && !activeWindowFullscreen) ? (barThickness + barMargin + 6) : 0
     exclusionMode: ExclusionMode.Ignore
 
-    // Altura implicita incluye espacio extra para animaciones / futuros elementos.
+    // Implicit height includes extra space for animations/future elements.
     implicitHeight: orientation === "horizontal" ? 200 : Screen.height
 
-    // La mascara siempre apunta al MouseArea (igual que el Dock)
+    // The mask always points to the MouseArea (same as the Dock)
     mask: Region {
         item: barMouseArea
     }
@@ -182,17 +187,16 @@ PanelWindow {
         id: barMouseArea
         hoverEnabled: true
 
-        // Position and size based on bar position
         states: [
             State {
                 name: "top"
                 when: panel.barPosition === "top"
                 PropertyChanges {
                     target: barMouseArea
-                    x: 0
+                    x: panel.reveal ? panel.horizontalAlignedOffset : 0
                     y: 0
-                    width: panel.width
-                    height: panel.reveal ? bar.height : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4)
+                    width: panel.reveal ? panel.barLength : panel.width
+                    height: panel.reveal ? (bar.height + panel.barMargin) : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4)
                 }
             },
             State {
@@ -200,10 +204,10 @@ PanelWindow {
                 when: panel.barPosition === "bottom"
                 PropertyChanges {
                     target: barMouseArea
-                    x: 0
-                    y: panel.height - (panel.reveal ? bar.height : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4))
-                    width: panel.width
-                    height: panel.reveal ? bar.height : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4)
+                    x: panel.reveal ? panel.horizontalAlignedOffset : 0
+                    y: panel.reveal ? (panel.height - bar.height - panel.barMargin) : (panel.height - Math.max(Config.bar?.hoverRegionHeight ?? 8, 4))
+                    width: panel.reveal ? panel.barLength : panel.width
+                    height: panel.reveal ? (bar.height + panel.barMargin) : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4)
                 }
             },
             State {
@@ -212,9 +216,9 @@ PanelWindow {
                 PropertyChanges {
                     target: barMouseArea
                     x: 0
-                    y: 0
-                    width: panel.reveal ? bar.width : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4)
-                    height: panel.height
+                    y: panel.reveal ? panel.verticalAlignedOffset : 0
+                    width: panel.reveal ? (bar.width + panel.barMargin) : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4)
+                    height: panel.reveal ? panel.barLength : panel.height
                 }
             },
             State {
@@ -222,10 +226,10 @@ PanelWindow {
                 when: panel.barPosition === "right"
                 PropertyChanges {
                     target: barMouseArea
-                    x: panel.width - (panel.reveal ? bar.width : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4))
-                    y: 0
-                    width: panel.reveal ? bar.width : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4)
-                    height: panel.height
+                    x: panel.reveal ? (panel.width - bar.width - panel.barMargin) : (panel.width - Math.max(Config.bar?.hoverRegionHeight ?? 8, 4))
+                    y: panel.reveal ? panel.verticalAlignedOffset : 0
+                    width: panel.reveal ? (bar.width + panel.barMargin) : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4)
+                    height: panel.reveal ? panel.barLength : panel.height
                 }
             }
         ]
@@ -282,18 +286,18 @@ PanelWindow {
                     if (!panel.shouldAutoHide)
                         return 0;
                     if (panel.barPosition === "left")
-                        return panel.reveal ? 0 : -bar.width;
+                        return panel.reveal ? 0 : -(bar.width + panel.barMargin);
                     if (panel.barPosition === "right")
-                        return panel.reveal ? 0 : bar.width;
+                        return panel.reveal ? 0 : (bar.width + panel.barMargin);
                     return 0;
                 }
                 y: {
                     if (!panel.shouldAutoHide)
                         return 0;
                     if (panel.barPosition === "top")
-                        return panel.reveal ? 0 : -bar.height;
+                        return panel.reveal ? 0 : -(bar.height + panel.barMargin);
                     if (panel.barPosition === "bottom")
-                        return panel.reveal ? 0 : bar.height;
+                        return panel.reveal ? 0 : (bar.height + panel.barMargin);
                     return 0;
                 }
                 Behavior on x {
@@ -326,7 +330,7 @@ PanelWindow {
                     PropertyChanges {
                         target: bar
                         anchors.topMargin: panel.barMargin
-                        x: panel.alignedOffset(panel.width, bar.width)
+                        x: panel.reveal ? 0 : panel.horizontalAlignedOffset
                         width: panel.barLength
                         height: panel.barThickness
                     }
@@ -344,7 +348,7 @@ PanelWindow {
                     PropertyChanges {
                         target: bar
                         anchors.bottomMargin: panel.barMargin
-                        x: panel.alignedOffset(panel.width, bar.width)
+                        x: panel.reveal ? 0 : panel.horizontalAlignedOffset
                         width: panel.barLength
                         height: panel.barThickness
                     }
@@ -362,7 +366,7 @@ PanelWindow {
                     PropertyChanges {
                         target: bar
                         anchors.leftMargin: panel.barMargin
-                        y: panel.alignedOffset(panel.height, bar.height)
+                        y: panel.reveal ? 0 : panel.verticalAlignedOffset
                         width: panel.barThickness
                         height: panel.barLength
                     }
@@ -380,7 +384,7 @@ PanelWindow {
                     PropertyChanges {
                         target: bar
                         anchors.rightMargin: panel.barMargin
-                        y: panel.alignedOffset(panel.height, bar.height)
+                        y: panel.reveal ? 0 : panel.verticalAlignedOffset
                         width: panel.barThickness
                         height: panel.barLength
                     }
@@ -397,14 +401,18 @@ PanelWindow {
                 id: horizontalLayout
                 visible: panel.orientation === "horizontal"
                 anchors.fill: parent
-                anchors.margins: panel.barPadding
+                anchors.topMargin: panel.barPadding
+                anchors.bottomMargin: panel.barPadding
+                anchors.leftMargin: panel.barPadding + 14
+                anchors.rightMargin: panel.barPadding + 14
                 spacing: panel.moduleGap
 
-                // Obtener referencia al notch de esta pantalla
+                // Get reference to the notch on this screen
                 readonly property var notchContainer: Visibilities.getNotchForScreen(panel.screen.name)
 
                 LauncherButton {
                     id: launcherButton
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 Workspaces {
@@ -412,12 +420,14 @@ PanelWindow {
                     bar: QtObject {
                         property var screen: panel.screen
                     }
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 LayoutSelectorButton {
                     id: layoutSelectorButton
                     bar: panel
                     layerEnabled: Config.showBackground
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 // Pin button (horizontal)
@@ -430,6 +440,11 @@ PanelWindow {
                         id: pinButton
                         implicitWidth: 36
                         implicitHeight: 36
+                        padding: 0
+                        topPadding: 0
+                        bottomPadding: 0
+                        leftPadding: 0
+                        rightPadding: 0
 
                         background: StyledRect {
                             id: pinButtonBg
@@ -520,35 +535,57 @@ PanelWindow {
 
                 PresetsButton {
                     id: presetsButton
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                Bar.WallpaperButton {
+                    id: wallpaperButton
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 ToolsButton {
                     id: toolsButton
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 Bar.NotesButton {
                     id: notesButton
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                Bar.MonitorButton {
+                    id: monitorButton
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                Bar.MediaWaves {
+                    id: mediaWaves
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 SysTray {
                    bar: panel
                    layer.enabled: Config.showBackground
+                   Layout.alignment: Qt.AlignVCenter
                 }
 
                 ControlsButton {
                     id: controlsButton
                     bar: panel
                     layerEnabled: Config.showBackground
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 Clock {
                     id: clockComponent
                     bar: panel
                     layerEnabled: Config.showBackground
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 Bar.SettingsButton {
                     id: settingsButton
+                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 ToggleButton {
@@ -556,6 +593,7 @@ PanelWindow {
                     Layout.preferredWidth: 36
                     Layout.preferredHeight: 36
                     visible: true
+                    Layout.alignment: Qt.AlignVCenter
                     buttonIcon: Icons.shutdown
                     tooltipText: "Power Menu"
                     onToggle: function () {
@@ -572,30 +610,56 @@ PanelWindow {
                 id: verticalLayout
                 visible: panel.orientation === "vertical"
                 anchors.fill: parent
-                anchors.margins: panel.barPadding
+                anchors.leftMargin: panel.barPadding
+                anchors.rightMargin: panel.barPadding
+                anchors.topMargin: panel.barPadding + 14
+                anchors.bottomMargin: panel.barPadding + 14
                 spacing: panel.moduleGap
 
                 LauncherButton {
                     id: launcherButtonVert
                     Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 SysTray {
                     bar: panel
                     layer.enabled: Config.showBackground
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 ToolsButton {
                     id: toolsButtonVert
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 Bar.NotesButton {
                     id: notesButtonVert
                     Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Bar.MonitorButton {
+                    id: monitorButtonVert
+                    Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Bar.MediaWaves {
+                    id: mediaWavesVert
+                    Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 PresetsButton {
                     id: presetsButtonVert
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Bar.WallpaperButton {
+                    id: wallpaperButtonVert
+                    Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 // Center Group Container
@@ -647,6 +711,11 @@ PanelWindow {
                                 id: pinButtonV
                                 implicitWidth: 36
                                 implicitHeight: 36
+                                padding: 0
+                                topPadding: 0
+                                bottomPadding: 0
+                                leftPadding: 0
+                                rightPadding: 0
 
                                 background: StyledRect {
                                     id: pinButtonVBg
@@ -714,17 +783,20 @@ PanelWindow {
                     id: controlsButtonVert
                     bar: panel
                     layerEnabled: Config.showBackground
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 Clock {
                     id: clockComponentVert
                     bar: panel
                     layerEnabled: Config.showBackground
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 Bar.SettingsButton {
                     id: settingsButtonVert
                     Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 ToggleButton {
@@ -734,6 +806,7 @@ PanelWindow {
                     visible: true
                     buttonIcon: Icons.shutdown
                     tooltipText: "Power Menu"
+                    Layout.alignment: Qt.AlignHCenter
                     onToggle: function () {
                         if (Visibilities.currentActiveModule === "powermenu") {
                             Visibilities.setActiveModule("");

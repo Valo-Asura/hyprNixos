@@ -9,7 +9,6 @@ import qs.modules.services
 import qs.modules.notch
 import qs.modules.widgets.dashboard.widgets
 import qs.modules.widgets.dashboard.controls
-import qs.modules.widgets.dashboard.wallpapers
 import qs.modules.widgets.dashboard.tmux
 import qs.modules.widgets.dashboard.clipboard
 import qs.modules.widgets.dashboard.emoji
@@ -28,13 +27,13 @@ NotchAnimationBehavior {
         property int currentTab: GlobalStates.dashboardCurrentTab
     }
 
-    readonly property var tabModel: [Icons.widgets, Icons.wallpapers, Icons.heartbeat, Icons.timer]
+    readonly property var tabModel: [Icons.widgets, Icons.timer]
     readonly property int controlsTabIndex: tabModel.length
     readonly property int tabCount: controlsTabIndex + 1  // +1 for controls tab at bottom
     readonly property int tabSpacing: 8
 
     readonly property int tabWidth: 48
-    readonly property real nonAnimWidth: 700 + tabWidth + 16 // compact constant width for all tabs
+    readonly property real nonAnimWidth: 920 + tabWidth + 16 // compact constant width for all tabs
 
     implicitWidth: nonAnimWidth
     implicitHeight: 420
@@ -327,7 +326,7 @@ NotchAnimationBehavior {
                 anchors.fill: parent
 
                 // Array de componentes para cargar dinámicamente
-                property var components: [unifiedLauncherComponent, wallpapersComponent, metricsComponent, pomodoroComponent, quickSettingsComponent]
+                property var components: [unifiedLauncherComponent, pomodoroComponent, quickSettingsComponent]
 
                 // Cargar directamente el componente correcto según GlobalStates
                 initialItem: components[Math.max(0, Math.min(GlobalStates.dashboardCurrentTab, components.length - 1))]
@@ -551,15 +550,10 @@ NotchAnimationBehavior {
     }
 
     Component {
-        id: metricsComponent
-        MetricsTab {}
-    }
-
-    Component {
         id: pomodoroComponent
         Rectangle {
             color: "transparent"
-            implicitWidth: 700
+            implicitWidth: 920
             implicitHeight: 390
 
             ColumnLayout {
@@ -619,8 +613,4 @@ NotchAnimationBehavior {
         }
     }
 
-    Component {
-        id: wallpapersComponent
-        WallpapersTab {}
-    }
 }

@@ -145,7 +145,7 @@ Singleton {
             }
 
             function onPlaybackStateChanged() {
-            // Comentado para evitar cambio automático de player
+            // Commented to avoid automatic player change
             // if (root.trackedPlayer !== modelData) root.trackedPlayer = modelData
             }
         }

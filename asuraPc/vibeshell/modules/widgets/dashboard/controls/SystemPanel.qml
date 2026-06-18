@@ -85,9 +85,29 @@ Item {
                     width: root.contentWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     title: root.currentSection === "" ? "System" : (root.currentSection === "system" ? "System Resources" : (root.currentSection.charAt(0).toUpperCase() + root.currentSection.slice(1)))
-                    statusText: ""
+                    statusText: GlobalStates.shellHasChanges ? "Unsaved changes" : ""
+                    statusColor: Colors.error
 
                     actions: {
+                        let baseActions = [
+                            {
+                                icon: Icons.arrowCounterClockwise,
+                                tooltip: "Discard changes",
+                                enabled: GlobalStates.shellHasChanges,
+                                onClicked: function () {
+                                    GlobalStates.discardShellChanges();
+                                }
+                            },
+                            {
+                                icon: Icons.disk,
+                                tooltip: "Apply changes",
+                                enabled: GlobalStates.shellHasChanges,
+                                onClicked: function () {
+                                    GlobalStates.applyShellChanges();
+                                }
+                            }
+                        ];
+
                         if (root.currentSection !== "") {
                             return [
                                 {
@@ -97,9 +117,10 @@ Item {
                                         root.currentSection = "";
                                     }
                                 }
-                            ];
+                            ].concat(baseActions);
                         }
-                        return [];
+
+                        return baseActions;
                     }
                 }
             }
@@ -172,7 +193,10 @@ Item {
                             label: "Clipboard"
                             prefixValue: Config.prefix.clipboard
                             onPrefixEdited: newValue => {
-                                Config.prefix.clipboard = newValue;
+                                if (newValue !== Config.prefix.clipboard) {
+                                    GlobalStates.markShellChanged();
+                                    Config.prefix.clipboard = newValue;
+                                }
                             }
                         }
 
@@ -182,7 +206,10 @@ Item {
                             label: "Emoji"
                             prefixValue: Config.prefix.emoji
                             onPrefixEdited: newValue => {
-                                Config.prefix.emoji = newValue;
+                                if (newValue !== Config.prefix.emoji) {
+                                    GlobalStates.markShellChanged();
+                                    Config.prefix.emoji = newValue;
+                                }
                             }
                         }
 
@@ -192,7 +219,10 @@ Item {
                             label: "Tmux"
                             prefixValue: Config.prefix.tmux
                             onPrefixEdited: newValue => {
-                                Config.prefix.tmux = newValue;
+                                if (newValue !== Config.prefix.tmux) {
+                                    GlobalStates.markShellChanged();
+                                    Config.prefix.tmux = newValue;
+                                }
                             }
                         }
 
@@ -202,7 +232,10 @@ Item {
                             label: "Wallpapers"
                             prefixValue: Config.prefix.wallpapers
                             onPrefixEdited: newValue => {
-                                Config.prefix.wallpapers = newValue;
+                                if (newValue !== Config.prefix.wallpapers) {
+                                    GlobalStates.markShellChanged();
+                                    Config.prefix.wallpapers = newValue;
+                                }
                             }
                         }
 
@@ -212,7 +245,10 @@ Item {
                             label: "Notes"
                             prefixValue: Config.prefix.notes
                             onPrefixEdited: newValue => {
-                                Config.prefix.notes = newValue;
+                                if (newValue !== Config.prefix.notes) {
+                                    GlobalStates.markShellChanged();
+                                    Config.prefix.notes = newValue;
+                                }
                             }
                         }
                     }
@@ -276,6 +312,7 @@ Item {
 
                                     onEditingFinished: {
                                         if (text !== Config.weather.location) {
+                                            GlobalStates.markShellChanged();
                                             Config.weather.location = text.trim();
                                         }
                                     }
@@ -348,7 +385,12 @@ Item {
                                             cursorShape: Qt.PointingHandCursor
                                             onEntered: unitButton.isHovered = true
                                             onExited: unitButton.isHovered = false
-                                            onClicked: Config.weather.unit = unitButton.modelData.id
+                                            onClicked: {
+                                                if (Config.weather.unit !== unitButton.modelData.id) {
+                                                    GlobalStates.markShellChanged();
+                                                    Config.weather.unit = unitButton.modelData.id;
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -418,6 +460,7 @@ Item {
 
                                             onEditingFinished: {
                                                 if (text.trim() !== diskRow.modelData) {
+                                                    GlobalStates.markShellChanged();
                                                     let newDisks = Config.system.disks.slice();
                                                     newDisks[diskRow.index] = text.trim();
                                                     Config.system.disks = newDisks;
@@ -457,6 +500,7 @@ Item {
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: {
+                                                GlobalStates.markShellChanged();
                                                 let newDisks = Config.system.disks.slice();
                                                 newDisks.splice(diskRow.index, 1);
                                                 Config.system.disks = newDisks;
@@ -507,6 +551,7 @@ Item {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
+                                        GlobalStates.markShellChanged();
                                         let newDisks = Config.system.disks.slice();
                                         newDisks.push("/");
                                         Config.system.disks = newDisks;

@@ -15,6 +15,7 @@ import "../emoji"
 import "../tmux"
 import "../notes"
 import "calendar"
+import "../wallpapers"
 
 Rectangle {
     id: root
@@ -27,6 +28,7 @@ Rectangle {
     property int currentTab: GlobalStates.widgetsTabCurrentIndex  // 0=launcher, 1=clip, 2=emoji, 3=tmux, 4=notes
     property bool prefixDisabled: false  // Flag to prevent re-activation after backspace
     property bool nightLightIntensityMenuOpen: false
+    property bool wifiMenuOpen: false
 
     Component.onCompleted: {
         Qt.callLater(focusAppSearch);
@@ -1244,7 +1246,8 @@ Rectangle {
                                     }
                                     isActive: NetworkService.wifiEnabled
                                     tooltipText: NetworkService.wifiEnabled ? "Wi-Fi: On" : "Wi-Fi: Off"
-                                    onClicked: GlobalStates.dashboardCurrentTab = 4
+                                    onClicked: NetworkService.toggleWifi()
+                                    onRightClicked: wifiMenuOpen = !wifiMenuOpen
                                 }
 
                                 ControlButton {
@@ -1348,8 +1351,305 @@ Rectangle {
                         }
                     }
 
-                    FullPlayer {
+                    StyledRect {
+                        variant: "pane"
                         Layout.fillWidth: true
+                        implicitHeight: wifiControls.implicitHeight + 24
+                        visible: wifiMenuOpen
+                        radius: Styling.radius(4)
+
+                        ColumnLayout {
+                            id: wifiControls
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 8
+
+                            RowLayout {
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Wi-Fi"
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(1)
+                                    font.weight: Font.Bold
+                                    color: Colors.overBackground
+                                    Layout.fillWidth: true
+                                }
+
+                                RowLayout {
+                                    spacing: 12
+
+                                    // Public portal
+                                    Text {
+                                        text: Icons.globe
+                                        font.family: Icons.font
+                                        font.pixelSize: 18
+                                        color: portalHover.hovered ? Colors.primary : Colors.overSurface
+                                        opacity: NetworkService.wifiEnabled ? 1.0 : 0.4
+                                        HoverHandler { id: portalHover }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            enabled: NetworkService.wifiEnabled
+                                            onClicked: NetworkService.openPublicWifiPortal()
+                                        }
+                                    }
+
+                                    // Connection Editor
+                                    Text {
+                                        text: Icons.popOpen
+                                        font.family: Icons.font
+                                        font.pixelSize: 18
+                                        color: configHover.hovered ? Colors.primary : Colors.overSurface
+                                        HoverHandler { id: configHover }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Quickshell.execDetached(["nm-connection-editor"])
+                                        }
+                                    }
+
+                                    // Refresh/Scan
+                                    Text {
+                                        text: Icons.sync
+                                        font.family: Icons.font
+                                        font.pixelSize: 18
+                                        color: scanHover.hovered ? Colors.primary : Colors.overSurface
+                                        opacity: NetworkService.wifiScanning ? 0.5 : (NetworkService.wifiEnabled ? 1.0 : 0.4)
+                                        HoverHandler { id: scanHover }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            enabled: !NetworkService.wifiScanning && NetworkService.wifiEnabled
+                                            onClicked: NetworkService.rescanWifi()
+                                        }
+                                    }
+
+                                    Switch {
+                                        checked: NetworkService.wifiEnabled
+                                        onToggled: NetworkService.enableWifi(checked)
+                                    }
+                                }
+                            }
+
+                            // Network list
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                visible: NetworkService.wifiEnabled && NetworkService.friendlyWifiNetworks.length > 0
+
+                                Repeater {
+                                    model: NetworkService.friendlyWifiNetworks
+
+                                    delegate: ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 4
+
+                                        StyledRect {
+                                            Layout.fillWidth: true
+                                            implicitHeight: 48
+                                            radius: Styling.radius(2)
+                                            variant: modelData.active ? "primary" : (itemHover.hovered ? "focus" : "surface")
+
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.margins: 8
+                                                spacing: 12
+
+                                                Item {
+                                                    Layout.preferredWidth: 24
+                                                    Layout.preferredHeight: 24
+
+                                                    Text {
+                                                        anchors.centerIn: parent
+                                                        text: NetworkService.wifiIconForStrength(modelData.strength)
+                                                        font.family: Icons.font
+                                                        font.pixelSize: 18
+                                                        color: modelData.active ? Colors.overPrimary : Colors.overSurface
+                                                    }
+
+                                                    Text {
+                                                        anchors.bottom: parent.bottom
+                                                        anchors.right: parent.right
+                                                        text: Icons.lock
+                                                        font.family: Icons.font
+                                                        font.pixelSize: 10
+                                                        color: modelData.active ? Colors.overPrimary : Colors.overSurfaceVariant
+                                                        visible: modelData.isSecure
+                                                    }
+                                                }
+
+                                                ColumnLayout {
+                                                    Layout.fillWidth: true
+                                                    spacing: 0
+
+                                                    Text {
+                                                        text: modelData.ssid
+                                                        font.family: Config.theme.font
+                                                        font.pixelSize: Styling.fontSize(0)
+                                                        font.weight: modelData.active ? Font.Bold : Font.Normal
+                                                        color: modelData.active ? Colors.overPrimary : Colors.overSurface
+                                                        elide: Text.ElideRight
+                                                        Layout.fillWidth: true
+                                                    }
+
+                                                    Text {
+                                                        text: "Connected"
+                                                        font.family: Config.theme.font
+                                                        font.pixelSize: Styling.fontSize(-2)
+                                                        color: modelData.active ? Colors.overPrimary : Colors.overSurfaceVariant
+                                                        visible: modelData.active
+                                                    }
+                                                }
+
+                                                Text {
+                                                    text: "5G"
+                                                    font.family: Config.theme.font
+                                                    font.pixelSize: Styling.fontSize(-2)
+                                                    font.weight: Font.Bold
+                                                    color: modelData.active ? Colors.overPrimary : Colors.overSurfaceVariant
+                                                    visible: modelData.is5GHz
+                                                }
+                                            }
+
+                                            HoverHandler {
+                                                id: itemHover
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (!modelData.active) {
+                                                        NetworkService.connectToWifiNetwork(modelData)
+                                                    } else {
+                                                        NetworkService.disconnectWifiNetwork()
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Inline Password prompt
+                                        StyledRect {
+                                            Layout.fillWidth: true
+                                            implicitHeight: 44
+                                            radius: Styling.radius(2)
+                                            variant: "surface"
+                                            visible: modelData.askingPassword
+
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.margins: 4
+                                                spacing: 8
+
+                                                TextField {
+                                                    id: passwordInput
+                                                    Layout.fillWidth: true
+                                                    placeholderText: "Enter password..."
+                                                    echoMode: TextInput.Password
+                                                    color: Colors.overSurface
+                                                    font.family: Config.theme.font
+                                                    font.pixelSize: Styling.fontSize(0)
+                                                    background: Rectangle {
+                                                        color: Colors.surfaceContainer
+                                                        radius: Styling.radius(1)
+                                                    }
+                                                    onAccepted: {
+                                                        NetworkService.changePassword(modelData, text)
+                                                    }
+                                                }
+
+                                                StyledRect {
+                                                    Layout.preferredWidth: 32
+                                                    Layout.preferredHeight: 32
+                                                    radius: Styling.radius(1)
+                                                    variant: connectBtnHover.hovered ? "primaryfocus" : "primary"
+
+                                                    Text {
+                                                        anchors.centerIn: parent
+                                                        text: Icons.accept
+                                                        font.family: Icons.font
+                                                        font.pixelSize: 14
+                                                        color: Colors.overPrimary
+                                                    }
+
+                                                    HoverHandler { id: connectBtnHover }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: {
+                                                            NetworkService.changePassword(modelData, passwordInput.text)
+                                                        }
+                                                    }
+                                                }
+
+                                                StyledRect {
+                                                    Layout.preferredWidth: 32
+                                                    Layout.preferredHeight: 32
+                                                    radius: Styling.radius(1)
+                                                    variant: cancelBtnHover.hovered ? "focus" : "surface"
+
+                                                    Text {
+                                                        anchors.centerIn: parent
+                                                        text: Icons.cancel
+                                                        font.family: Icons.font
+                                                        font.pixelSize: 14
+                                                        color: Colors.overSurface
+                                                    }
+
+                                                    HoverHandler { id: cancelBtnHover }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: {
+                                                            modelData.askingPassword = false
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: !NetworkService.wifiEnabled ? "Wi-Fi is disabled" : "Scanning for networks..."
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(0)
+                                color: Colors.overSurfaceVariant
+                                Layout.alignment: Qt.AlignHCenter
+                                visible: !NetworkService.wifiEnabled || NetworkService.friendlyWifiNetworks.length === 0
+                            }
+                        }
+                    }
+
+                    // Theme color scheme + dark/light switcher
+                    StyledRect {
+                        variant: "pane"
+                        Layout.fillWidth: true
+                        implicitHeight: themeSchemeCol.implicitHeight + 20
+                        radius: Styling.radius(4)
+
+                        ColumnLayout {
+                            id: themeSchemeCol
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            spacing: 8
+
+                            Text {
+                                text: "Theme"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-1)
+                                font.weight: Font.Medium
+                                color: Colors.overSurfaceVariant
+                            }
+
+                            SchemeSelector {
+                                Layout.fillWidth: true
+                            }
+                        }
                     }
 
                     Calendar {

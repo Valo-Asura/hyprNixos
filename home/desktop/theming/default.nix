@@ -21,12 +21,15 @@
       size = 18;
     };
     gtk3.extraConfig.gtk-application-prefer-dark-theme = 1;
-    gtk4.theme = config.gtk.theme;
-    gtk4.extraConfig.gtk-application-prefer-dark-theme = 1;
+    gtk4.theme = null;
+    gtk4.extraConfig = {
+      gtk-application-prefer-dark-theme = 1;
+      gtk-theme-name = "Adwaita";
+    };
   };
 
   home.sessionVariables = {
-    GTK_THEME = "adw-gtk3-dark";
+    GTK_THEME = "Adwaita:dark";
     QT_QPA_PLATFORMTHEME = "qt6ct";
   };
 
@@ -39,6 +42,7 @@
       icon-theme = "Papirus-Dark";
       cursor-theme = "Bibata-Modern-Classic";
       cursor-size = 18;
+      enable-animations = true;
     };
 
     "org/gtk/settings/file-chooser" = {
@@ -59,7 +63,6 @@
 
   xdg.configFile."gtk-3.0/settings.ini".force = true;
   xdg.configFile."gtk-4.0/settings.ini".force = true;
-
 
   xdg.configFile."qt5ct/qt5ct.conf" = {
     force = true;

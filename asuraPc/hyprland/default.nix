@@ -10,16 +10,21 @@
 let
   border-size = 1;
   gaps-in = 2;
-  gaps-out = 6;
+  gaps-out = {
+    top = 0;
+    bottom = 6;
+    left = 2;
+    right = 2;
+  };
   active-opacity = 1;
   inactive-opacity = 1;
   rounding = 6;
   blur = false;
   keyboardLayout = "us";
   border-color = "rgb(b4befe)";
-  primaryMonitor = "DP-1";
-  primaryMonitorDesc = "Guangxi Century Innovation Display Electronics Co. Ltd 24FHDMIQII2G 0000000000001";
-  primaryMode = "1920x1080@165";
+  primaryMonitor = "HDMI-A-1";
+  primaryMonitorDesc = "AOC 24G1WG4 0x000000A1";
+  primaryMode = "1920x1080@144";
 
   # Startup wrapper: shows a splash logo, stops inactive shell stacks, launches
   # Quickshell VibeShell, then removes the temporary background once it maps.
@@ -42,24 +47,12 @@ let
       skwd-daemon.service \
       vibeshellREzero-live.service 2>/dev/null || true
     ${pkgs.procps}/bin/pkill -x noctalia 2>/dev/null || true
-    ${pkgs.procps}/bin/pkill -x vibeshellREzero 2>/dev/null || true
     ${pkgs.procps}/bin/pkill -x skwd-daemon 2>/dev/null || true
     ${pkgs.procps}/bin/pkill -x skwd-paper 2>/dev/null || true
+    ${pkgs.procps}/bin/pkill -x skwd-paper-still 2>/dev/null || true
+    ${pkgs.procps}/bin/pkill -x vibeshellREzero 2>/dev/null || true
 
-    # Pre-launch wallpaper independently if configured to speed up boot display
-    WALLPAPER_JSON="$HOME/.local/share/Vibeshell/wallpapers.json"
-    if [ -f "$WALLPAPER_JSON" ]; then
-      CURRENT_WALL=$(${pkgs.jq}/bin/jq -r '.currentWall' "$WALLPAPER_JSON" 2>/dev/null || echo "")
-      if [[ "$CURRENT_WALL" =~ \.(mp4|webm|gif|mov|avi|mkv)$ ]]; then
-        echo "Pre-launching video wallpaper: $CURRENT_WALL"
-        bash /etc/nixos/asuraPc/vibeshell/modules/widgets/dashboard/wallpapers/mpvpaper.sh "$CURRENT_WALL" &
-      else
-        echo "Pre-launching static wallpaper: $CURRENT_WALL"
-        bash /etc/nixos/asuraPc/vibeshell/modules/widgets/dashboard/wallpapers/hyprpaper.sh "$CURRENT_WALL" &
-      fi
-    fi
-
-    vibeshell &
+    /run/current-system/sw/bin/vibeshell &
     SHELL_PID=$!
 
     for i in $(seq 1 30); do
@@ -245,7 +238,6 @@ in
           ];
         }
       ];
-
       on = [
         {
           _args = [
@@ -308,7 +300,9 @@ in
         };
 
         misc = {
-          vrr = 1;
+          # AOC 24G1WG4 advertises Adaptive-Sync/FreeSync, but desktop VRR can
+          # flicker with transparent layer-shell panels on NVIDIA.
+          vrr = 0;
           animate_manual_resizes = false;
           animate_mouse_windowdragging = false;
           disable_hyprland_logo = true;
@@ -443,23 +437,39 @@ in
             600
           ];
         }
+        {
+          match.class = "^(cs2|steam_app_730)$";
+          fullscreen = true;
+        }
+        {
+          match.class = "^(Thunar|thunar)$";
+          match.title = "^(File Operation Progress|Confirm to replace files|.*Progress.*)$";
+          float = true;
+          center = true;
+        }
+        {
+          match.class = "^(org.gnome.Nautilus|nautilus)$";
+          match.title = "^(File Operation Progress|Confirm to replace files|.*Progress.*)$";
+          float = true;
+          center = true;
+        }
       ];
 
       layer_rule = [
         {
           match.namespace = "quickshell:.*";
-          blur = true;
+          blur = false;
           ignore_alpha = 0.79;
         }
         {
           match.namespace = "notifications";
-          blur = true;
+          blur = false;
           ignore_alpha = 0.69;
         }
         {
           match.namespace = "launcher";
           no_anim = true;
-          blur = true;
+          blur = false;
           ignore_alpha = 0.5;
         }
         {
@@ -468,7 +478,7 @@ in
         }
         {
           match.namespace = "session";
-          blur = true;
+          blur = false;
         }
         {
           match.namespace = "quickshell:regionSelector";
