@@ -24,11 +24,12 @@ Item {
 
     // Screen-specific visibility properties passed from parent
     property var visibilities
-    readonly property bool screenNotchOpen: visibilities ? (visibilities.dashboard || visibilities.powermenu || visibilities.tools) : false
+    readonly property bool screenNotchOpen: visibilities ? (visibilities.launcher || visibilities.dashboard || visibilities.powermenu || visibilities.tools) : false
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
+    readonly property bool morphActive: screenNotchOpen || hasActiveNotifications || isHovered || stackViewInternal.busy
 
-    property int defaultHeight: Config.showBackground ? (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 44) : 44) : (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 40) : 40)
-    property int islandHeight: screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 36) : 36
+    property int defaultHeight: Config.showBackground ? (morphActive ? Math.max(stackContainer.height, 44) : 44) : (morphActive ? Math.max(stackContainer.height, 40) : 40)
+    property int islandHeight: morphActive ? Math.max(stackContainer.height, 36) : 36
 
     // Corner size calculation for dynamic width (only for default theme)
     readonly property int cornerSize: Config.roundness > 0 ? Config.roundness + 4 : 0
@@ -40,17 +41,17 @@ Item {
     implicitHeight: Config.notchTheme === "default" ? defaultHeight : (Config.notchTheme === "island" ? islandHeight : defaultHeight)
 
     Behavior on implicitWidth {
-        enabled: (screenNotchOpen || stackViewInternal.busy) && Config.animDuration > 0
+        enabled: morphActive && Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Math.max(Config.animDuration, 260)
             easing.type: Easing.OutCubic
         }
     }
 
     Behavior on implicitHeight {
-        enabled: (screenNotchOpen || stackViewInternal.busy) && Config.animDuration > 0
+        enabled: morphActive && Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Math.max(Config.animDuration, 260)
             easing.type: Easing.OutCubic
         }
     }
@@ -67,7 +68,7 @@ Item {
         enableBorder: false // No usar border de StyledRect, el Canvas se encarga
         animateRadius: false // Custom animation below
 
-        property int defaultRadius: Config.roundness > 0 ? (screenNotchOpen || hasActiveNotifications ? Config.roundness + 20 : Config.roundness + 4) : 0
+        property int defaultRadius: Config.roundness > 0 ? (morphActive ? Config.roundness + 20 : Config.roundness + 4) : 0
 
         topLeftRadius: 0
         topRightRadius: 0
@@ -166,8 +167,8 @@ Item {
         width: parent.implicitWidth - totalCornerWidth
         height: parent.implicitHeight
 
-        property int defaultRadius: Config.roundness > 0 ? (screenNotchOpen || hasActiveNotifications ? Config.roundness + 20 : Config.roundness + 4) : 0
-        property int islandRadius: Config.roundness > 0 ? (screenNotchOpen || hasActiveNotifications ? Config.roundness + 20 : Config.roundness + 4) : 0
+        property int defaultRadius: Config.roundness > 0 ? (morphActive ? Config.roundness + 20 : Config.roundness + 4) : 0
+        property int islandRadius: Config.roundness > 0 ? (morphActive ? Config.roundness + 20 : Config.roundness + 4) : 0
 
         property int topLeftRadius: Config.notchTheme === "default" ? 0 : islandRadius
         property int topRightRadius: Config.notchTheme === "default" ? 0 : islandRadius

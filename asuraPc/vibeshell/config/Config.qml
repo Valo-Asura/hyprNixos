@@ -1408,7 +1408,7 @@ Singleton {
                         property list<string> modifiers: ["SUPER"]
                         property string key: "SPACE"
                         property string dispatcher: "exec"
-                        property string argument: "vibeshell run dashboard-widgets"
+                        property string argument: "vibeshell run notch-launcher"
                         property string flags: ""
                     }
                 }
@@ -1493,7 +1493,7 @@ Singleton {
                     "notes": { "modifiers": ["SUPER"], "key": "N", "dispatcher": "exec", "argument": "vibeshell run dashboard-notes", "flags": "" },
                     "tmux": { "modifiers": ["SUPER"], "key": "T", "dispatcher": "exec", "argument": "vibeshell run dashboard-tmux", "flags": "" },
                     "wallpapers": { "modifiers": ["SUPER"], "key": "COMMA", "dispatcher": "exec", "argument": "vibeshell run dashboard-wallpapers", "flags": "" },
-                    "widgets": { "modifiers": ["SUPER"], "key": "SPACE", "dispatcher": "exec", "argument": "vibeshell run dashboard-widgets", "flags": "" }
+                    "widgets": { "modifiers": ["SUPER"], "key": "SPACE", "dispatcher": "exec", "argument": "vibeshell run notch-launcher", "flags": "" }
                 },
                 "system": {
                     "config": { "modifiers": ["SUPER", "SHIFT"], "key": "C", "dispatcher": "exec", "argument": "vibeshell run config", "flags": "" },

@@ -26,6 +26,8 @@ PanelWindow {
     }
 
     color: "transparent"
+    implicitWidth: screen ? screen.width : 1
+    implicitHeight: screen ? screen.height : 1
 
     WlrLayershell.keyboardFocus: screenNotchOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
@@ -73,8 +75,22 @@ PanelWindow {
     readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
 
     // Notch state properties
-    readonly property bool screenNotchOpen: screenVisibilities ? (screenVisibilities.dashboard || screenVisibilities.powermenu || screenVisibilities.tools) : false
+    readonly property string screenActiveModule: {
+        if (!screenVisibilities)
+            return "";
+        if (screenVisibilities.launcher)
+            return "launcher";
+        if (screenVisibilities.dashboard)
+            return "dashboard";
+        if (screenVisibilities.powermenu)
+            return "powermenu";
+        if (screenVisibilities.tools)
+            return "tools";
+        return "";
+    }
+    readonly property bool screenNotchOpen: screenActiveModule.length > 0
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
+    property string activeNotchModule: ""
 
     // Hover state with delay to prevent flickering
     property bool hoverActive: false
@@ -128,12 +144,71 @@ PanelWindow {
         }
     }
 
+    onScreenActiveModuleChanged: Qt.callLater(syncActiveModuleView)
+
+    function componentForModule(moduleName) {
+        switch (moduleName) {
+        case "launcher":
+            return launcherViewComponent;
+        case "dashboard":
+            return dashboardViewComponent;
+        case "powermenu":
+            return powermenuViewComponent;
+        case "tools":
+            return toolsMenuViewComponent;
+        default:
+            return null;
+        }
+    }
+
+    function focusCurrentView() {
+        Qt.callLater(() => {
+            notchContainer.forceActiveFocus();
+            const current = notchContainer.stackView.currentItem;
+            if (current && current.focusSearchInput)
+                current.focusSearchInput();
+        });
+    }
+
+    function resetToDefaultView() {
+        activeNotchModule = "";
+        if (notchContainer.stackView.depth > 1)
+            notchContainer.stackView.pop();
+        notchContainer.isShowingDefault = true;
+        notchContainer.isShowingNotifications = false;
+    }
+
+    function syncActiveModuleView() {
+        const moduleName = screenActiveModule;
+        const viewComponent = componentForModule(moduleName);
+
+        if (!viewComponent) {
+            resetToDefaultView();
+            return;
+        }
+
+        if (activeNotchModule === moduleName && notchContainer.stackView.depth > 1) {
+            focusCurrentView();
+            return;
+        }
+
+        if (notchContainer.stackView.depth > 1)
+            notchContainer.stackView.replace(viewComponent);
+        else
+            notchContainer.stackView.push(viewComponent);
+
+        activeNotchModule = moduleName;
+        notchContainer.isShowingDefault = false;
+        notchContainer.isShowingNotifications = false;
+        focusCurrentView();
+    }
+
     HyprlandFocusGrab {
         id: focusGrab
         windows: {
             let windowList = [notchPanel];
             // Agregar la barra de esta pantalla al focus grab cuando el notch este abierto
-            if (barPanelRef && (screenVisibilities.dashboard || screenVisibilities.powermenu || screenVisibilities.tools)) {
+            if (barPanelRef && (screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.powermenu || screenVisibilities.tools)) {
                 windowList.push(barPanelRef);
             }
             return windowList;
@@ -155,6 +230,7 @@ PanelWindow {
     Component.onCompleted: {
         Visibilities.registerNotchPanel(screen.name, notchPanel);
         Visibilities.registerNotch(screen.name, notchContainer);
+        Qt.callLater(syncActiveModuleView);
     }
 
     Component.onDestruction: {
@@ -166,6 +242,30 @@ PanelWindow {
     Component {
         id: defaultViewComponent
         DefaultView {}
+    }
+
+    // Launcher view component
+    Component {
+        id: launcherViewComponent
+        Item {
+            implicitWidth: launcherLoader.item ? launcherLoader.item.implicitWidth : 440
+            implicitHeight: launcherLoader.item ? launcherLoader.item.implicitHeight : 360
+            width: implicitWidth
+            height: implicitHeight
+
+            Loader {
+                id: launcherLoader
+                anchors.fill: parent
+                source: Qt.resolvedUrl("NotchLauncherView.qml")
+                asynchronous: false
+            }
+
+
+            function focusSearchInput() {
+                if (launcherLoader.item && launcherLoader.item.focusSearchInput)
+                    launcherLoader.item.focusSearchInput();
+            }
+        }
     }
 
     // Dashboard view component
@@ -336,7 +436,10 @@ PanelWindow {
                     return false;
 
                 // NO mostrar si estamos en el launcher (widgets tab con currentTab === 0)
-                if (screenVisibilities.dashboard) {
+                if (screenVisibilities.launcher || screenVisibilities.dashboard) {
+                    if (screenVisibilities.launcher)
+                        return false;
+
                     // Solo ocultar si estamos en el widgets tab (dashboard tab 0) Y mostrando el launcher (widgetsTab index 0)
                     return !(GlobalStates.dashboardCurrentTab === 0 && GlobalStates.widgetsTabCurrentIndex === 0);
                 }
@@ -389,47 +492,10 @@ PanelWindow {
         }
     }
 
-    // Listen for dashboard and powermenu state changes
     Connections {
-        target: screenVisibilities
-
-        function onDashboardChanged() {
-            if (screenVisibilities.dashboard) {
-                notchContainer.stackView.push(dashboardViewComponent);
-                Qt.callLater(() => notchContainer.forceActiveFocus());
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
-                }
-            }
-        }
-
-        function onPowermenuChanged() {
-            if (screenVisibilities.powermenu) {
-                notchContainer.stackView.push(powermenuViewComponent);
-                Qt.callLater(() => notchContainer.forceActiveFocus());
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
-                }
-            }
-        }
-
-        function onToolsChanged() {
-            if (screenVisibilities.tools) {
-                notchContainer.stackView.push(toolsMenuViewComponent);
-                Qt.callLater(() => notchContainer.forceActiveFocus());
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
-                }
-            }
+        target: Visibilities
+        function onCurrentActiveModuleChanged() {
+            Qt.callLater(syncActiveModuleView);
         }
     }
 }

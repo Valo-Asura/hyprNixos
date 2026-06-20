@@ -929,8 +929,8 @@ let
 
         case "$name" in
           vibeshell)
-            vibeshell run dashboard-widgets && return 0
-            call_active_ipc vibeshell run dashboard-widgets && return 0
+            vibeshell run notch-launcher && return 0
+            call_active_ipc vibeshell run notch-launcher && return 0
             ;;
           caelestia)
             call_active_ipc drawers toggle launcher && return 0
@@ -947,7 +947,7 @@ let
             ;;
           *)
             if [ "$shell_path" = "builtin:vibeshell" ]; then
-              vibeshell run dashboard-widgets && return 0
+              vibeshell run notch-launcher && return 0
             fi
             ;;
         esac

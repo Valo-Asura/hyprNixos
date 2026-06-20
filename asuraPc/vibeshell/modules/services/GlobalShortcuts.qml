@@ -43,8 +43,11 @@ Item {
             Visibilities.setActiveModule("");
             GlobalStates.clearLauncherState();
             break;
+        case "notch-launcher":
+            toggleNotchLauncher();
+            break;
         case "dashboard-widgets":
-            toggleDashboardTab(0);
+            toggleNotchLauncher();
             break;
         case "dashboard-wallpapers":
             skwdProcess.running = false;
@@ -191,6 +194,24 @@ Item {
         }
     }
 
+    function toggleNotchLauncher() {
+        const isActive = Visibilities.currentActiveModule === "launcher";
+
+        if (isActive && GlobalStates.launcherSearchText === "") {
+            Visibilities.setActiveModule("");
+            GlobalStates.clearLauncherState();
+            return;
+        }
+
+        GlobalStates.launcherSearchText = "";
+        GlobalStates.launcherSelectedIndex = -1;
+        GlobalStates.launcherCurrentTab = 0;
+
+        if (!isActive) {
+            Visibilities.setActiveModule("launcher");
+        }
+    }
+
     function toggleDashboardWithPrefix(prefix) {
         const isActive = Visibilities.currentActiveModule === "dashboard";
 
@@ -283,9 +304,17 @@ Item {
     GlobalShortcut {
         appid: root.appId
         name: "dashboard-widgets"
-        description: "Open dashboard widgets tab (includes app launcher)"
+        description: "Open notch app launcher"
 
-        onPressed: toggleDashboardTab(0)
+        onPressed: toggleNotchLauncher()
+    }
+
+    GlobalShortcut {
+        appid: root.appId
+        name: "notch-launcher"
+        description: "Open notch app launcher"
+
+        onPressed: toggleNotchLauncher()
     }
 
     GlobalShortcut {

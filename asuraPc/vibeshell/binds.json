@@ -52,7 +52,7 @@
         ],
         "key": "SPACE",
         "dispatcher": "exec",
-        "argument": "vibeshell run dashboard-widgets",
+        "argument": "vibeshell run notch-launcher",
         "flags": ""
       }
     },

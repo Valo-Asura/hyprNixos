@@ -50,6 +50,7 @@
             |
             .vibeshell.dashboard.clipboard.modifiers = ["SUPER"]
             | .vibeshell.dashboard.clipboard.key = "V"
+            | .vibeshell.dashboard.widgets.argument = "vibeshell run notch-launcher"
             | .vibeshell.system.screenshot.modifiers = []
             | .vibeshell.system.screenshot.key = "Print"
           ' "$binds_config" > "$tmp" \
