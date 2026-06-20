@@ -6,6 +6,13 @@
   ...
 }:
 
+let
+  broadcomSta = config.boot.kernelPackages.broadcom_sta.overrideAttrs (oldAttrs: {
+    patches = (oldAttrs.patches or [ ]) ++ [
+      ./patches/broadcom-sta-linux-7.1-cfg80211-wdev.patch
+    ];
+  });
+in
 {
   networking = {
     hostName = "nixos";
@@ -79,7 +86,7 @@
   boot = {
     kernelModules = [ "wl" ];
     extraModulePackages = [
-      config.boot.kernelPackages.broadcom_sta
+      broadcomSta
     ];
     blacklistedKernelModules = [
       "b43"

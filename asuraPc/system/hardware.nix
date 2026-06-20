@@ -6,6 +6,13 @@
   ...
 }:
 
+let
+  broadcomSta = config.boot.kernelPackages.broadcom_sta.overrideAttrs (oldAttrs: {
+    patches = (oldAttrs.patches or [ ]) ++ [
+      ./patches/broadcom-sta-linux-7.1-cfg80211-wdev.patch
+    ];
+  });
+in
 {
   hardware = {
     enableRedistributableFirmware = true;
@@ -44,7 +51,7 @@
 
   # Broadcom BCM4360 requires proprietary wl (broadcom_sta), not b43/bcma.
   boot.extraModulePackages = [
-    config.boot.kernelPackages.broadcom_sta
+    broadcomSta
     config.boot.kernelPackages.v4l2loopback
   ];
   boot.extraModprobeConfig = ''
