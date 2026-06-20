@@ -98,7 +98,7 @@ let
 
       Shortcuts:
         switch-shell caelestia
-        switch-shell ricelin:pill
+        switch-shell ricelin
         switch-shell 3
 
       Environment:
@@ -111,6 +111,10 @@ let
 
       discover_projects() {
         [ -d "$PROJECTS_ROOT" ] || return 0
+
+        if [ -f "$PROJECTS_ROOT/ricelin/pill/shell.qml" ]; then
+          printf '%s\t%s\n' "ricelin" "$PROJECTS_ROOT/ricelin/pill/shell.qml"
+        fi
 
         find "$PROJECTS_ROOT" \
           -type f \
@@ -125,6 +129,9 @@ let
               if [ "$rel" = "$dir" ]; then
                 rel="$(basename "$dir")"
               fi
+              case "$rel" in
+                ricelin | ricelin/*) continue ;;
+              esac
               name="$(printf '%s' "$rel" | sed 's#/#:#g')"
               printf '%s\t%s\n' "$name" "$shell"
             done
@@ -312,6 +319,10 @@ let
 
       resolve_target() {
         target="$1"
+
+        case "$target" in
+          ricelin:*) target="ricelin" ;;
+        esac
 
         if [ -f "$target" ]; then
           printf '%s\t%s\n' "custom" "$(readlink -f "$target")"
@@ -927,7 +938,7 @@ let
           ricelin:launcher)
             call_active_ipc launcher toggle "$monitor" && return 0
             ;;
-          ricelin:pill)
+          ricelin | ricelin:pill)
             call_active_ipc pill launcher "$monitor" && return 0
             ;;
           tide-island)
