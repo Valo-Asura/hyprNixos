@@ -67,7 +67,7 @@ in
       (mkBind "${superKey} + mouse:272" "hl.dsp.window.drag()" { mouse = true; })
       (mkBind "${superKey} + mouse:273" "hl.dsp.window.resize()" { mouse = true; })
       (mkBind "${superKey} + TAB" "hl.dsp.window.resize()" { mouse = true; })
-      (mkBind "${superKey} + SUPER_L" (exec "vibeshell run dashboard-widgets") { release = true; })
+      (mkBind "${superKey} + SUPER_L" (exec "quickshell-launcher") { release = true; })
       (mkBind "XF86AudioMute" (exec "sound-toggle") { locked = true; })
       (mkBind "XF86AudioPlay" (exec "${pkgs.playerctl}/bin/playerctl play-pause") { locked = true; })
       (mkBind "XF86AudioNext" (exec "${pkgs.playerctl}/bin/playerctl next") { locked = true; })

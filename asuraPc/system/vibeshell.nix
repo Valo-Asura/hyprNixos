@@ -6,6 +6,7 @@ let
   useREzero = false;
 
   vibeshellREzeroPkg = pkgs.callPackage ../vibeshellREzero/package.nix { };
+  quickshellPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
   localVibeshellPkg = import ../vibeshell/nix/packages {
     inherit pkgs;
     lib = pkgs.lib;
@@ -42,6 +43,7 @@ let
   switchShell = pkgs.writeShellApplication {
     name = "switch-shell";
     runtimeInputs = with pkgs; [
+      bash
       coreutils
       findutils
       gawk
@@ -51,6 +53,7 @@ let
       procps
       python3
       util-linux
+      quickshellPkg
       localVibeshellPkg
     ];
     text = ''
@@ -748,6 +751,204 @@ let
     exec ${switchShell}/bin/switch-shell "$@"
   '';
 
+  quickshellLauncher = pkgs.writeShellApplication {
+    name = "quickshell-launcher";
+    runtimeInputs = with pkgs; [
+      bash
+      coreutils
+      gawk
+      gnugrep
+      procps
+      wofi
+      quickshellPkg
+      localVibeshellPkg
+    ];
+    text = ''
+      set -euo pipefail
+
+      PROJECTS_ROOT="''${QUICKSHELL_PROJECTS_ROOT:-/home/asura/Downloads/Projects}"
+      QT_EXTRA_QML_IMPORTS="${pkgs.kdePackages.qt5compat}/${pkgs.qt6.qtbase.qtQmlPrefix}"
+      QT_EXTRA_LIBRARY_PATH="${pkgs.kdePackages.qt5compat}/lib"
+      STATE_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/quickshell-switch"
+      PID_FILE="$STATE_DIR/pid"
+      NAME_FILE="$STATE_DIR/current"
+      SHELL_FILE="$STATE_DIR/shell"
+      AUX_PID_FILE="$STATE_DIR/launcher-pid"
+      AUX_LOG_FILE="$STATE_DIR/launcher.log"
+
+      mkdir -p "$STATE_DIR"
+
+      QS_BIN="''${QUICKSHELL_BIN:-}"
+      if [ -z "$QS_BIN" ]; then
+        if command -v quickshell >/dev/null 2>&1; then
+          QS_BIN="$(command -v quickshell)"
+        elif command -v qs >/dev/null 2>&1; then
+          QS_BIN="$(command -v qs)"
+        else
+          echo "No quickshell/qs binary found in PATH" >&2
+          exec wofi --show drun
+        fi
+      fi
+
+      pid_alive() {
+        pid="''${1:-}"
+        [ -n "$pid" ] || return 1
+        kill -0 "$pid" 2>/dev/null
+      }
+
+      tracked_pid() {
+        [ -f "$PID_FILE" ] || return 1
+        pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+        pid_alive "$pid" || return 1
+        printf '%s\n' "$pid"
+      }
+
+      tracked_quickshell_pid() {
+        group_pid="$(tracked_pid 2>/dev/null || true)"
+        [ -n "$group_pid" ] || return 1
+
+        if ps -p "$group_pid" -o args= 2>/dev/null | grep -Eq '/(qs|quickshell)( |$)'; then
+          printf '%s\n' "$group_pid"
+          return 0
+        fi
+
+        ps -eo pid=,pgid=,args= | awk -v pgid="$group_pid" '
+          $2 == pgid && $0 ~ /\/(qs|quickshell)( |$)/ {
+            print $1
+            exit
+          }
+        '
+      }
+
+      current_name() {
+        if [ -f "$NAME_FILE" ] && tracked_pid >/dev/null 2>&1; then
+          cat "$NAME_FILE"
+          return 0
+        fi
+        printf '%s\n' "none"
+      }
+
+      current_shell() {
+        [ -f "$SHELL_FILE" ] || return 1
+        cat "$SHELL_FILE"
+      }
+
+      focused_monitor() {
+        if command -v hyprctl >/dev/null 2>&1; then
+          hyprctl monitors 2>/dev/null | awk '
+            /^Monitor / { monitor = $2 }
+            /focused: yes/ { print monitor; exit }
+          '
+        fi
+      }
+
+      call_active_ipc() {
+        target="$1"
+        func="$2"
+        shift 2
+
+        qs_pid="$(tracked_quickshell_pid || true)"
+        [ -n "$qs_pid" ] || return 1
+        "$QS_BIN" ipc --pid "$qs_pid" call "$target" "$func" "$@"
+      }
+
+      find_aux_launcher_pid() {
+        launcher_shell="$PROJECTS_ROOT/ricelin/launcher/shell.qml"
+
+        if [ -f "$AUX_PID_FILE" ]; then
+          pid="$(cat "$AUX_PID_FILE" 2>/dev/null || true)"
+          if pid_alive "$pid" && ps -p "$pid" -o args= 2>/dev/null | grep -Fq "$launcher_shell"; then
+            printf '%s\n' "$pid"
+            return 0
+          fi
+        fi
+
+        ps -eo pid=,args= | awk -v shell="$launcher_shell" '
+          /\/(qs|quickshell)( |$)/ && index($0, shell) > 0 {
+            print $1
+            exit
+          }
+        '
+      }
+
+      ensure_aux_launcher() {
+        launcher_shell="$PROJECTS_ROOT/ricelin/launcher/shell.qml"
+        [ -f "$launcher_shell" ] || return 1
+
+        pid="$(find_aux_launcher_pid || true)"
+        if [ -n "$pid" ]; then
+          printf '%s\n' "$pid" >"$AUX_PID_FILE"
+          printf '%s\n' "$pid"
+          return 0
+        fi
+
+        : >"$AUX_LOG_FILE"
+        # shellcheck disable=SC2016
+        setsid bash -c '
+          exec 9>&-
+          export QS_APP_ID="switch_shell_ricelin_launcher_overlay"
+          export QML2_IMPORT_PATH="$1''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}"
+          export QML_IMPORT_PATH="$1''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+          export LD_LIBRARY_PATH="$2''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          export QT_QPA_PLATFORMTHEME="''${QT_QPA_PLATFORMTHEME:-qt6ct}"
+          exec "$3" -p "$4"
+        ' _ "$QT_EXTRA_QML_IMPORTS" "$QT_EXTRA_LIBRARY_PATH" "$QS_BIN" "$launcher_shell" >>"$AUX_LOG_FILE" 2>&1 &
+
+        pid="$!"
+        printf '%s\n' "$pid" >"$AUX_PID_FILE"
+        sleep 0.2
+        pid_alive "$pid" || return 1
+        printf '%s\n' "$pid"
+      }
+
+      open_aux_launcher() {
+        monitor="$(focused_monitor || true)"
+        [ -n "$monitor" ] || monitor="''${QUICKSHELL_LAUNCHER_MONITOR:-}"
+
+        pid="$(ensure_aux_launcher || true)"
+        [ -n "$pid" ] || return 1
+
+        "$QS_BIN" ipc --pid "$pid" call launcher toggle "$monitor"
+      }
+
+      open_launcher() {
+        name="$(current_name)"
+        shell_path="$(current_shell || true)"
+        monitor="$(focused_monitor || true)"
+
+        case "$name" in
+          vibeshell)
+            vibeshell run dashboard-widgets && return 0
+            call_active_ipc vibeshell run dashboard-widgets && return 0
+            ;;
+          caelestia)
+            call_active_ipc drawers toggle launcher && return 0
+            ;;
+          ricelin:launcher)
+            call_active_ipc launcher toggle "$monitor" && return 0
+            ;;
+          ricelin:pill)
+            call_active_ipc pill launcher "$monitor" && return 0
+            ;;
+          tide-island)
+            # Tide has workspace overview/control-center IPC, but no app launcher.
+            open_aux_launcher && return 0
+            ;;
+          *)
+            if [ "$shell_path" = "builtin:vibeshell" ]; then
+              vibeshell run dashboard-widgets && return 0
+            fi
+            ;;
+        esac
+
+        open_aux_launcher && return 0
+        exec wofi --show drun
+      }
+
+      open_launcher
+    '';
+  };
+
 in
 {
   imports = [ ../vibeshell/nix/modules ];
@@ -767,6 +968,7 @@ in
     vibeshellLockBeforeSleep
     switchShell
     quickshellSwitch
+    quickshellLauncher
     pkgs.material-symbols
     pkgs.google-fonts
     pkgs.papirus-icon-theme
