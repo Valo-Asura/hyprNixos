@@ -7,12 +7,14 @@ export PATH="/run/wrappers/bin:/run/current-system/sw/bin:/etc/profiles/per-user
 # If no location is provided, uses GeoIP to determine location
 # Output: JSON with weather data or error
 
-LOCATION="${1:-}"
+LOCATION="${1:-${VIBESHELL_WEATHER_LOCATION:-Rishikesh, Uttarakhand, India}}"
+DEFAULT_LOCATION="${VIBESHELL_WEATHER_LOCATION:-Rishikesh, Uttarakhand, India}"
+DEFAULT_COORDS="${VIBESHELL_WEATHER_COORDS:-30.0869,78.2676}"
 MAX_RETRIES=3
 RETRY_DELAY=2
 
 if [[ "${LOCATION,,}" == "auto" ]]; then
-	LOCATION=""
+	LOCATION="$DEFAULT_LOCATION"
 fi
 
 # Function to make HTTP request with retries
@@ -129,13 +131,8 @@ main() {
 	local resolution lat lon resolved_location
 
 	if [[ -z "$LOCATION" ]]; then
-		# No location provided, use GeoIP
-		resolution=$(resolve_geoip || true)
-		if [[ "$resolution" == "{"*error* ]]; then
-			# It's an error JSON
-			echo "$resolution"
-			exit 1
-		fi
+		# Empty means use the declarative default instead of GeoIP drift.
+		LOCATION="$DEFAULT_LOCATION"
 	elif [[ "$LOCATION" =~ ^-?[0-9]+\.?[0-9]*,-?[0-9]+\.?[0-9]*$ ]]; then
 		# Location is coordinates (lat,lon)
 		lat="${LOCATION%,*}"
@@ -157,13 +154,22 @@ main() {
 		fi
 
 		if [[ "$resolution" == "{"*error* ]]; then
-			# Fallback to GeoIP if geocoding failed
-			resolution=$(resolve_geoip || true)
-			if [[ "$resolution" == "{"*error* ]]; then
-				echo "$resolution"
-				exit 1
-			fi
+			lat="${DEFAULT_COORDS%,*}"
+			lon="${DEFAULT_COORDS#*,}"
+			resolution=$(jq -cn --argjson lat "$lat" --argjson lon "$lon" --arg location "$DEFAULT_LOCATION" \
+				'{lat: $lat, lon: $lon, location: $location}')
 		fi
+	fi
+
+	if [[ -z "${resolution:-}" ]]; then
+		resolution=$(resolve_city "$LOCATION" || true)
+	fi
+
+	if [[ "$resolution" == "{"*error* ]]; then
+		lat="${DEFAULT_COORDS%,*}"
+		lon="${DEFAULT_COORDS#*,}"
+		resolution=$(jq -cn --argjson lat "$lat" --argjson lon "$lon" --arg location "$DEFAULT_LOCATION" \
+			'{lat: $lat, lon: $lon, location: $location}')
 	fi
 
 	lat=$(echo "$resolution" | jq -r '.lat // empty')

@@ -872,7 +872,7 @@ Singleton {
         }
 
         adapter: JsonAdapter {
-            property string location: "auto"
+            property string location: "Rishikesh, Uttarakhand, India"
             property string unit: "C"
         }
     }

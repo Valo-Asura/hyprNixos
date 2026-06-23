@@ -15,6 +15,7 @@ Item {
     property bool vertical: bar.orientation === "vertical"
     property bool isHovered: false
     property bool layerEnabled: true
+    visible: Battery.available
 
     // Popup visibility state
     property bool popupOpen: batteryPopup.isOpen
@@ -35,8 +36,8 @@ Item {
         return Qt.rgba(Colors.red.r + (Colors.green.r - Colors.red.r) * ratio, Colors.red.g + (Colors.green.g - Colors.red.g) * ratio, Colors.red.b + (Colors.green.b - Colors.red.b) * ratio, 1);
     }
 
-    Layout.preferredWidth: 36
-    Layout.preferredHeight: 36
+    Layout.preferredWidth: Battery.available ? 36 : 0
+    Layout.preferredHeight: Battery.available ? 36 : 0
     Layout.fillWidth: vertical
     Layout.fillHeight: !vertical
 

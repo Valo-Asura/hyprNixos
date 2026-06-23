@@ -10,6 +10,7 @@ StyledRect {
 
     property alias text: textField.text
     property alias placeholderText: textField.placeholderText
+    property alias cursorPosition: textField.cursorPosition
     property string iconText: ""
     property string prefixText: ""  // Prefix indicator (e.g., "clip ")
     property string prefixIcon: ""  // Prefix icon (e.g., Icons.clipboard)
@@ -45,6 +46,11 @@ StyledRect {
 
     function clear() {
         textField.text = "";
+    }
+
+    function cursorCenterIn(item) {
+        const rect = textField.positionToRectangle(textField.cursorPosition);
+        return textField.mapToItem(item, rect.x, rect.y + rect.height / 2);
     }
 
     implicitHeight: 48

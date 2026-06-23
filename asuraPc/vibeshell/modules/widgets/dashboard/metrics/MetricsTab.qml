@@ -61,6 +61,24 @@ Rectangle {
         return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;
     }
 
+    function compactCpuName(name) {
+        let value = (name || "CPU").trim();
+        value = value.replace(/\(R\)|\(TM\)|CPU|Processor/gi, "");
+        value = value.replace(/12th Gen\s+/i, "12th ");
+        value = value.replace(/Intel\s+Core\s+/i, "Intel ");
+        value = value.replace(/\s+/g, " ").trim();
+        return value || "CPU";
+    }
+
+    function compactGpuName(name) {
+        let value = (name || "GPU").trim();
+        value = value.replace(/NVIDIA\s+GeForce\s+/i, "");
+        value = value.replace(/\s+Laptop\s+GPU/i, " Laptop");
+        value = value.replace(/\s+Graphics/i, "");
+        value = value.replace(/\s+/g, " ").trim();
+        return value || "GPU";
+    }
+
     // Update OS icon when logos are loaded
     onLinuxLogosChanged: {
         if (linuxLogos && osName) {
@@ -357,11 +375,12 @@ Rectangle {
                                 spacing: 4
 
                                 Text {
-                                    text: SystemResources.cpuModel || "CPU"
+                                    text: root.compactCpuName(SystemResources.cpuModel)
                                     font.family: Config.theme.font
                                     font.pixelSize: Styling.fontSize(-2)
                                     color: Colors.overBackground
                                     elide: Text.ElideMiddle
+                                    Layout.maximumWidth: 190
                                 }
 
                                 Separator {
@@ -459,7 +478,7 @@ Rectangle {
 
                                         // If we have a descriptive name, use it
                                         if (name && name !== `${vendor.toUpperCase()} GPU ${index}`) {
-                                            return name;
+                                            return root.compactGpuName(name);
                                         }
                                         // Otherwise show GPU index if multiple, or just "GPU" if single
                                         return SystemResources.gpuCount > 1 ? `GPU ${index}` : "GPU";
@@ -488,12 +507,13 @@ Rectangle {
                                     Text {
                                         text: {
                                             const name = SystemResources.gpuNames[index] || "";
-                                            return name || "GPU";
+                                            return root.compactGpuName(name);
                                         }
                                         font.family: Config.theme.font
                                         font.pixelSize: Styling.fontSize(-2)
                                         color: Colors.overBackground
                                         elide: Text.ElideMiddle
+                                        Layout.maximumWidth: 190
                                     }
 
                                     Separator {

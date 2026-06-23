@@ -1,6 +1,6 @@
 .pragma library
 
 var data = {
-    "location": "auto",
+    "location": "Rishikesh, Uttarakhand, India",
     "unit": "C"
 }

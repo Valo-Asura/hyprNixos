@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.globals
 import qs.config
 
 Item {
@@ -65,13 +66,22 @@ Item {
             font.family: Icons.font
             font.pixelSize: 18
             color: hovered ? Styling.srItem("overprimary") : (Notifications.list.length > 0 ? Colors.error : Colors.overBackground)
+        }
 
-            HoverHandler {
-                onHoveredChanged: root.hovered = hovered
-            }
-
-            TapHandler {
-                onTapped: Notifications.silent = !Notifications.silent
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
+            onContainsMouseChanged: root.hovered = containsMouse
+            onClicked: mouse => {
+                if (mouse.button === Qt.RightButton) {
+                    Notifications.silent = !Notifications.silent;
+                    return;
+                }
+                GlobalStates.dashboardCurrentTab = 0;
+                GlobalStates.widgetsTabCurrentIndex = 0;
+                Visibilities.setActiveModule("dashboard");
             }
         }
     }

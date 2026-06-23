@@ -558,11 +558,6 @@ PanelWindow {
                     Layout.alignment: Qt.AlignVCenter
                 }
 
-                Bar.MediaWaves {
-                    id: mediaWaves
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
                 SysTray {
                    bar: panel
                    layer.enabled: Config.showBackground
@@ -641,12 +636,6 @@ PanelWindow {
 
                 Bar.MonitorButton {
                     id: monitorButtonVert
-                    Layout.preferredHeight: 36
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                Bar.MediaWaves {
-                    id: mediaWavesVert
                     Layout.preferredHeight: 36
                     Layout.alignment: Qt.AlignHCenter
                 }

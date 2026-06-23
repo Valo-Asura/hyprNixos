@@ -1,5 +1,6 @@
 import QtQuick
 import qs.config
+import qs.modules.globals
 
 // Comportamiento estándar para animaciones de elementos que aparecen en el notch
 Item {
@@ -9,16 +10,15 @@ Item {
     property bool isVisible: false
 
     // Aplicar las animaciones estándar del notch
-    scale: isVisible ? 1.0 : 0.92
+    scale: isVisible ? 1.0 : 0.86
     opacity: isVisible ? 1.0 : 0.0
     visible: opacity > 0
 
     Behavior on scale {
         enabled: Config.animDuration > 0
-        SpringAnimation {
-            spring: 4.4
-            damping: 0.32
-            epsilon: 0.002
+        NumberAnimation {
+            duration: Motion.standard
+            easing.type: Motion.easeStandard
         }
     }
 

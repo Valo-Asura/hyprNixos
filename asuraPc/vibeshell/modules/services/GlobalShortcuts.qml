@@ -35,6 +35,18 @@ Item {
         running: false
     }
 
+    Process {
+        id: caffeineCommand
+        running: false
+    }
+
+    function setCaffeine(next) {
+        CaffeineService.inhibit = next;
+        caffeineCommand.running = false;
+        caffeineCommand.command = ["asura-quickshell-switch", next ? "caffeine-on" : "caffeine-off"];
+        caffeineCommand.running = true;
+    }
+
     function run(command) {
         console.log("IPC run command received:", command);
         switch (command) {
@@ -46,8 +58,11 @@ Item {
         case "notch-launcher":
             toggleNotchLauncher();
             break;
+        case "dashboard":
+            toggleDashboardTab(0);
+            break;
         case "dashboard-widgets":
-            toggleNotchLauncher();
+            toggleDashboardTab(0);
             break;
         case "dashboard-wallpapers":
             skwdProcess.running = false;
@@ -57,7 +72,18 @@ Item {
             toggleDashboardTab(1);
             break;
         case "dashboard-pomodoro":
+            GlobalStates.widgetsTabCurrentIndex = 0;
             toggleDashboardTab(2);
+            break;
+        case "dashboard-wifi":
+            if (Visibilities.currentActiveModule === "dashboard" && GlobalStates.dashboardCurrentTab === 0 && GlobalStates.widgetsTabCurrentIndex === 5) {
+                Visibilities.setActiveModule("");
+            } else {
+                GlobalStates.dashboardCurrentTab = 0;
+                GlobalStates.widgetsTabCurrentIndex = 5;
+                NetworkService.rescanWifi();
+                Visibilities.setActiveModule("dashboard");
+            }
             break;
         case "dashboard-controls":
             toggleDashboardTab(3);
@@ -103,6 +129,15 @@ Item {
             break;
         case "screenrecord":
             GlobalStates.screenRecordToolVisible = true;
+            break;
+        case "caffeine-on":
+            setCaffeine(true);
+            break;
+        case "caffeine-off":
+            setCaffeine(false);
+            break;
+        case "caffeine-toggle":
+            setCaffeine(!CaffeineService.inhibit);
             break;
         case "lens":
             Screenshot.captureMode = "lens";
@@ -188,6 +223,7 @@ Item {
             return;
         }
 
+        GlobalStates.widgetsTabCurrentIndex = 0;
         GlobalStates.dashboardCurrentTab = tabIndex;
         if (!isActive) {
             Visibilities.setActiveModule("dashboard");

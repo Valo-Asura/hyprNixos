@@ -123,11 +123,12 @@ PanelWindow {
     // Timer to delay hiding the notch after mouse leaves
     Timer {
         id: hideDelayTimer
-        interval: 1000
+        interval: screenNotchOpen ? 260 : 120
         repeat: false
         onTriggered: {
             if (!notchPanel.isMouseOverNotch) {
                 notchPanel.hoverActive = false;
+                notchContainer.hoverLatch = false;
             }
         }
     }
@@ -248,16 +249,28 @@ PanelWindow {
     Component {
         id: launcherViewComponent
         Item {
+            id: launcherSurface
             implicitWidth: launcherLoader.item ? launcherLoader.item.implicitWidth : 440
             implicitHeight: launcherLoader.item ? launcherLoader.item.implicitHeight : 360
             width: implicitWidth
             height: implicitHeight
+            property real morphCloseness: 1
+            property string ameForm: launcherLoader.item && launcherLoader.item.hasOwnProperty("ameForm") ? launcherLoader.item.ameForm : "caret"
+            property point amePoint: launcherLoader.item && launcherLoader.item.hasOwnProperty("amePoint") ? launcherLoader.item.mapToItem(launcherSurface, launcherLoader.item.amePoint.x, launcherLoader.item.amePoint.y) : Qt.point(width / 2, 32)
+            property real ameHeat: launcherLoader.item && launcherLoader.item.hasOwnProperty("ameHeat") ? launcherLoader.item.ameHeat : 0
 
             Loader {
                 id: launcherLoader
                 anchors.fill: parent
                 source: Qt.resolvedUrl("NotchLauncherView.qml")
                 asynchronous: false
+            }
+
+            Binding {
+                target: launcherLoader.item
+                property: "morphCloseness"
+                value: launcherSurface.morphCloseness
+                when: launcherLoader.item !== null && launcherLoader.item.hasOwnProperty("morphCloseness")
             }
 
 
@@ -307,8 +320,9 @@ PanelWindow {
         Behavior on height {
             enabled: Config.animDuration > 0 && notchPanel.shouldAutoHide
             NumberAnimation {
-                duration: Config.animDuration / 4
-                easing.type: Easing.OutCubic
+                duration: Motion.morph
+                easing.type: Motion.easeMorph
+                easing.bezierCurve: Motion.morphCurve
             }
         }
 
@@ -345,8 +359,8 @@ PanelWindow {
             Behavior on opacity {
                 enabled: Config.animDuration > 0 && notchPanel.shouldAutoHide
                 NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Easing.OutCubic
+                    duration: Math.max(120, Config.animDuration * 0.55)
+                    easing.type: Easing.OutQuint
                 }
             }
 
@@ -356,8 +370,9 @@ PanelWindow {
                 Behavior on y {
                     enabled: Config.animDuration > 0 && notchPanel.shouldAutoHide
                     NumberAnimation {
-                        duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        duration: Motion.morph
+                        easing.type: Motion.easeMorph
+                        easing.bezierCurve: Motion.morphCurve
                     }
                 }
             }
@@ -450,9 +465,9 @@ PanelWindow {
             Behavior on width {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.2
+                    duration: Motion.morph
+                    easing.type: Motion.easeMorph
+                    easing.bezierCurve: Motion.morphCurve
                 }
             }
 

@@ -21,38 +21,106 @@ Item {
     property var stackView: stackViewInternal
     property bool isExpanded: stackViewInternal.depth > 1
     property bool isHovered: false
+    property bool hoverLatch: false
 
     // Screen-specific visibility properties passed from parent
     property var visibilities
     readonly property bool screenNotchOpen: visibilities ? (visibilities.launcher || visibilities.dashboard || visibilities.powermenu || visibilities.tools) : false
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
-    readonly property bool morphActive: screenNotchOpen || hasActiveNotifications || isHovered || stackViewInternal.busy
+    readonly property bool morphActive: screenNotchOpen || hasActiveNotifications || isHovered || hoverLatch || stackViewInternal.busy
+    readonly property string morphMode: {
+        if (visibilities) {
+            if (visibilities.launcher)
+                return "launcher";
+            if (visibilities.dashboard)
+                return "dashboard";
+            if (visibilities.powermenu)
+                return "powermenu";
+            if (visibilities.tools)
+                return "tools";
+        }
+        if (hasActiveNotifications)
+            return "notification";
+        if (isHovered || hoverLatch)
+            return "hover";
+        return "rest";
+    }
+    readonly property int minRestWidth: 168
+    readonly property int minHoverWidth: 264
+    readonly property int minLauncherWidth: 486
+    readonly property int minDashboardWidth: 430
+    readonly property int minToolsWidth: 520
+    readonly property int minPowerWidth: 420
+    readonly property int minNotificationWidth: 410
+    readonly property real morphRadius: Config.roundness > 0 ? (morphActive ? Config.roundness + 20 : Config.roundness + 4) : 0
+
+    function minWidthForMode(mode) {
+        if (mode === "launcher")
+            return minLauncherWidth;
+        if (mode === "dashboard")
+            return minDashboardWidth;
+        if (mode === "powermenu")
+            return minPowerWidth;
+        if (mode === "tools")
+            return minToolsWidth;
+        if (mode === "notification")
+            return minNotificationWidth;
+        if (mode === "hover")
+            return minHoverWidth;
+        return minRestWidth;
+    }
 
     property int defaultHeight: Config.showBackground ? (morphActive ? Math.max(stackContainer.height, 44) : 44) : (morphActive ? Math.max(stackContainer.height, 40) : 40)
-    property int islandHeight: morphActive ? Math.max(stackContainer.height, 36) : 36
+    property int islandHeight: morphActive ? Math.max(stackContainer.height, morphMode === "hover" ? 42 : 36) : 36
+    readonly property int targetWidth: Math.max(stackContainer.width + totalCornerWidth, minWidthForMode(morphMode))
+    readonly property int targetHeight: Config.notchTheme === "default" ? defaultHeight : (Config.notchTheme === "island" ? islandHeight : defaultHeight)
 
     // Corner size calculation for dynamic width (only for default theme)
     readonly property int cornerSize: Config.roundness > 0 ? Config.roundness + 4 : 0
     readonly property int totalCornerWidth: Config.notchTheme === "default" ? cornerSize * 2 : 0
 
-    implicitWidth: screenNotchOpen 
-        ? Math.max(stackContainer.width + totalCornerWidth, 290) 
-        : stackContainer.width + totalCornerWidth
-    implicitHeight: Config.notchTheme === "default" ? defaultHeight : (Config.notchTheme === "island" ? islandHeight : defaultHeight)
+    width: targetWidth
+    height: targetHeight
+    implicitWidth: width
+    implicitHeight: height
 
-    Behavior on implicitWidth {
+    readonly property real morphCloseness: {
+        const d = Math.max(Math.abs(width - targetWidth), Math.abs(height - targetHeight));
+        return 1 - Math.min(1, d / 110);
+    }
+
+    readonly property var activeSurfaceItem: stackViewInternal.currentItem
+    readonly property string fallbackAmeForm: morphMode === "rest" ? "rest"
+        : (morphMode === "hover" ? "soul"
+        : (morphMode === "launcher" ? "caret"
+        : (morphMode === "dashboard" ? "ring"
+        : (morphMode === "powermenu" || morphMode === "tools" ? "dock"
+        : (morphMode === "notification" ? "rowseam" : "off")))))
+    readonly property string activeAmeForm: activeSurfaceItem && activeSurfaceItem.hasOwnProperty("ameForm") ? activeSurfaceItem.ameForm : fallbackAmeForm
+    readonly property real activeAmeHeat: activeSurfaceItem && activeSurfaceItem.hasOwnProperty("ameHeat") ? activeSurfaceItem.ameHeat : 0
+    readonly property point activeAmePoint: {
+        if (activeSurfaceItem && activeSurfaceItem.hasOwnProperty("amePoint")) {
+            const p = activeSurfaceItem.amePoint;
+            return activeSurfaceItem.mapToItem(notchRect, p.x, p.y);
+        }
+        return Qt.point(Math.max(1, width - totalCornerWidth) / 2, Math.min(height / 2, 22));
+    }
+
+    Behavior on width {
         enabled: morphActive && Config.animDuration > 0
         NumberAnimation {
-            duration: Math.max(Config.animDuration, 260)
-            easing.type: Easing.OutCubic
+            duration: Motion.morph
+            easing.type: Motion.easeMorph
+            easing.bezierCurve: Motion.morphCurve
         }
     }
 
-    Behavior on implicitHeight {
+    Behavior on height {
         enabled: morphActive && Config.animDuration > 0
         NumberAnimation {
-            duration: Math.max(Config.animDuration, 260)
-            easing.type: Easing.OutCubic
+            duration: Motion.morph
+            easing.type: Motion.easeMorph
+            easing.bezierCurve: Motion.morphCurve
         }
     }
 
@@ -77,19 +145,19 @@ Item {
 
         Behavior on bottomLeftRadius {
             enabled: Config.animDuration > 0
-            SpringAnimation {
-                spring: 4.0
-                damping: 0.36
-                epsilon: 0.2
+            NumberAnimation {
+                duration: Motion.morph
+                easing.type: Motion.easeMorph
+                easing.bezierCurve: Motion.morphCurve
             }
         }
 
         Behavior on bottomRightRadius {
             enabled: Config.animDuration > 0
-            SpringAnimation {
-                spring: 4.0
-                damping: 0.36
-                epsilon: 0.2
+            NumberAnimation {
+                duration: Motion.morph
+                easing.type: Motion.easeMorph
+                easing.bezierCurve: Motion.morphCurve
             }
         }
 
@@ -196,37 +264,37 @@ Item {
             
             Behavior on topLeftRadius {
                 enabled: Config.animDuration > 0
-                SpringAnimation {
-                    spring: 4.0
-                    damping: 0.36
-                    epsilon: 0.2
+                NumberAnimation {
+                    duration: Motion.morph
+                    easing.type: Motion.easeMorph
+                    easing.bezierCurve: Motion.morphCurve
                 }
             }
 
             Behavior on topRightRadius {
                 enabled: Config.animDuration > 0
-                SpringAnimation {
-                    spring: 4.0
-                    damping: 0.36
-                    epsilon: 0.2
+                NumberAnimation {
+                    duration: Motion.morph
+                    easing.type: Motion.easeMorph
+                    easing.bezierCurve: Motion.morphCurve
                 }
             }
 
             Behavior on bottomLeftRadius {
                 enabled: Config.animDuration > 0
-                SpringAnimation {
-                    spring: 4.0
-                    damping: 0.36
-                    epsilon: 0.2
+                NumberAnimation {
+                    duration: Motion.morph
+                    easing.type: Motion.easeMorph
+                    easing.bezierCurve: Motion.morphCurve
                 }
             }
 
             Behavior on bottomRightRadius {
                 enabled: Config.animDuration > 0
-                SpringAnimation {
-                    spring: 4.0
-                    damping: 0.36
-                    epsilon: 0.2
+                NumberAnimation {
+                    duration: Motion.morph
+                    easing.type: Motion.easeMorph
+                    easing.bezierCurve: Motion.morphCurve
                 }
             }
         }
@@ -238,18 +306,49 @@ Item {
 
             onHoveredChanged: {
                 isHovered = hovered;
+                if (hovered) {
+                    hoverReleaseTimer.stop();
+                    hoverLatch = true;
+                } else {
+                    hoverReleaseTimer.restart();
+                }
                 if (stackViewInternal.currentItem && stackViewInternal.currentItem.hasOwnProperty("notchHovered")) {
                     stackViewInternal.currentItem.notchHovered = hovered;
                 }
             }
         }
 
+        Timer {
+            id: hoverReleaseTimer
+            interval: 140
+            repeat: false
+            onTriggered: hoverLatch = false
+        }
+
         Item {
             id: stackContainer
             anchors.centerIn: parent
-            width: stackViewInternal.currentItem ? stackViewInternal.currentItem.implicitWidth + (screenNotchOpen ? 32 : 0) : (screenNotchOpen ? 32 : 0)
+            width: stackViewInternal.currentItem ? Math.max(stackViewInternal.currentItem.implicitWidth + (screenNotchOpen ? 32 : 0), minWidthForMode(morphMode) - totalCornerWidth) : (screenNotchOpen ? minWidthForMode(morphMode) : minRestWidth)
             height: stackViewInternal.currentItem ? stackViewInternal.currentItem.implicitHeight + (screenNotchOpen ? 32 : 0) : (screenNotchOpen ? 32 : 0)
-            clip: true
+            clip: false
+
+            Behavior on width {
+                enabled: morphActive && Config.animDuration > 0
+                NumberAnimation {
+                    duration: Motion.morph
+                    easing.type: Motion.easeMorph
+                    easing.bezierCurve: Motion.morphCurve
+                }
+            }
+
+            Behavior on height {
+                enabled: morphActive && Config.animDuration > 0
+                NumberAnimation {
+                    duration: Motion.morph
+                    easing.type: Motion.easeMorph
+                    easing.bezierCurve: Motion.morphCurve
+                }
+            }
 
             // Propiedad para controlar el blur durante las transiciones
             property real transitionBlur: 0.0
@@ -292,110 +391,39 @@ Item {
                     }
                 }
 
-                pushEnter: Transition {
-                    PropertyAnimation {
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                    PropertyAnimation {
-                        property: "scale"
-                        from: 0.8
-                        to: 1
-                        duration: Config.animDuration
-                        easing.type: Easing.OutBack
-                        easing.overshoot: 1.2
-                    }
-                }
-
-                pushExit: Transition {
-                    PropertyAnimation {
-                        property: "opacity"
-                        from: 1
-                        to: 0
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                    PropertyAnimation {
-                        property: "scale"
-                        from: 1
-                        to: 1.05
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                }
-
-                popEnter: Transition {
-                    PropertyAnimation {
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                    PropertyAnimation {
-                        property: "scale"
-                        from: 1.05
-                        to: 1
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                }
-
-                popExit: Transition {
-                    PropertyAnimation {
-                        property: "opacity"
-                        from: 1
-                        to: 0
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                    PropertyAnimation {
-                        property: "scale"
-                        from: 1
-                        to: 0.95
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                }
-
-                replaceEnter: Transition {
-                    PropertyAnimation {
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                    PropertyAnimation {
-                        property: "scale"
-                        from: 0.8
-                        to: 1
-                        duration: Config.animDuration
-                        easing.type: Easing.OutBack
-                        easing.overshoot: 1.2
-                    }
-                }
-
-                replaceExit: Transition {
-                    PropertyAnimation {
-                        property: "opacity"
-                        from: 1
-                        to: 0
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                    PropertyAnimation {
-                        property: "scale"
-                        from: 1
-                        to: 1.05
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                }
+                pushEnter: Transition {}
+                pushExit: Transition {}
+                popEnter: Transition {}
+                popExit: Transition {}
+                replaceEnter: Transition {}
+                replaceExit: Transition {}
             }
+
+            Binding {
+                target: stackViewInternal.currentItem
+                property: "morphCloseness"
+                value: notchContainer.morphCloseness
+                when: stackViewInternal.currentItem !== null && stackViewInternal.currentItem.hasOwnProperty("morphCloseness")
+            }
+
+            Binding {
+                target: stackViewInternal.currentItem
+                property: "opacity"
+                value: Math.pow(notchContainer.morphCloseness, 1.3)
+                when: stackViewInternal.currentItem !== null
+            }
+        }
+
+        Ame {
+            id: ameBead
+            anchors.fill: parent
+            z: 3
+            s: Math.max(0.85, Math.min(1.15, notchContainer.height / 44))
+            form: notchContainer.activeAmeForm
+            point: notchContainer.activeAmePoint
+            wake: Qt.point(notchRect.width / 2, Math.min(22, notchRect.height / 2))
+            heat: notchContainer.activeAmeHeat
+            wickDir: notchContainer.morphMode === "launcher" ? 1 : -1
         }
     }
 

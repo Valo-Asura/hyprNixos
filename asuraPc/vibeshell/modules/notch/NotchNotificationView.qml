@@ -21,9 +21,9 @@ Item {
     Behavior on implicitWidth {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.2
+            duration: Motion.morph
+            easing.type: Motion.easeMorph
+            easing.bezierCurve: Motion.morphCurve
         }
     }
 
@@ -33,6 +33,10 @@ Item {
     property bool notchHovered: false
     property bool isNavigating: false
     property bool hovered: notchHovered || isNavigating
+    property real morphCloseness: 1
+    property string ameForm: currentNotification ? "rowseam" : "off"
+    property point amePoint: Qt.point(16, Math.max(20, height / 2))
+    property real ameHeat: 0
 
     // Índice actual para navegación
     property int currentIndex: 0
@@ -379,9 +383,8 @@ Item {
                             Behavior on spacing {
                                 enabled: Config.animDuration > 0
                                 NumberAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutBack
-                                    easing.overshoot: 1.2
+                                    duration: Motion.standard
+                                    easing.type: Motion.easeStandard
                                 }
                             }
 

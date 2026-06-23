@@ -11,14 +11,18 @@ import qs.config
 Item {
     id: root
 
-    implicitWidth: 440
-    implicitHeight: 360
+    implicitWidth: 370
+    implicitHeight: 334
     focus: true
 
     property var appsById: ({})
     property string searchText: GlobalStates.launcherSearchText
     property int selectedIndex: GlobalStates.launcherSelectedIndex
     property point lastPointer: Qt.point(-1, -1)
+    property real morphCloseness: 1
+    property string ameForm: "caret"
+    property point amePoint: searchInput ? searchInput.cursorCenterIn(root) : Qt.point(width / 2, 32)
+    property real ameHeat: 0
 
     function focusSearchInput() {
         Qt.callLater(() => searchInput.focusInput());
@@ -113,48 +117,43 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 10
+        spacing: 8
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: 8
 
             Text {
-                text: Icons.apps
-                font.family: Icons.font
-                font.pixelSize: 24
-                color: Styling.srItem("overprimary")
+                text: "探"
+                font.family: Config.theme.font
+                font.pixelSize: 18
+                color: Colors.tertiary
                 Layout.alignment: Qt.AlignVCenter
             }
 
-            ColumnLayout {
+            Text {
                 Layout.fillWidth: true
-                spacing: 0
+                text: "SEARCH APPS"
+                color: Colors.overBackground
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(0)
+                font.weight: Font.Bold
+                elide: Text.ElideRight
+            }
 
-                Text {
-                    Layout.fillWidth: true
-                    text: "Launcher"
-                    color: Colors.overBackground
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(2)
-                    font.weight: Font.Bold
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "Type, pick, launch. The notch stays one morphing surface."
-                    color: Colors.outline
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    elide: Text.ElideRight
-                }
+            Text {
+                text: appsModel.count + " / " + AppSearch.getAllApps().length
+                color: Colors.outline
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-2)
+                Layout.alignment: Qt.AlignVCenter
             }
         }
 
         SearchInput {
             id: searchInput
             Layout.fillWidth: true
+            Layout.preferredHeight: 38
             text: GlobalStates.launcherSearchText
             placeholderText: "Search applications..."
             iconText: Icons.launch
@@ -199,7 +198,7 @@ Item {
             clip: true
             model: appsModel
             currentIndex: root.selectedIndex
-            spacing: 4
+            spacing: 3
             boundsBehavior: Flickable.StopAtBounds
 
             Behavior on contentY {
@@ -212,9 +211,11 @@ Item {
 
             highlightMoveDuration: Config.animDuration > 0 ? Math.max(120, Config.animDuration / 2) : 0
             highlightResizeDuration: highlightMoveDuration
-            highlight: StyledRect {
-                variant: "primary"
-                radius: Styling.radius(0)
+            highlight: Rectangle {
+                radius: 10
+                color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.16)
+                border.width: 1
+                border.color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.45)
             }
 
             delegate: Item {
@@ -228,7 +229,7 @@ Item {
                 required property int index
 
                 width: resultsList.width
-                height: 50
+                height: 42
 
                 readonly property bool selected: root.selectedIndex === index
 
@@ -253,11 +254,11 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: 10
                     anchors.rightMargin: 10
-                    spacing: 12
+                    spacing: 10
 
                     Item {
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
 
                         Image {
                             id: appIconImage
@@ -286,9 +287,9 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             text: appName
-                            color: row.selected ? Styling.srItem("primary") : Colors.overBackground
+                            color: row.selected ? Colors.primaryFixed : Colors.overBackground
                             font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(0)
+                            font.pixelSize: Styling.fontSize(-1)
                             font.weight: Font.Bold
                             elide: Text.ElideRight
                         }
@@ -296,9 +297,9 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             text: appComment.length > 0 ? appComment : appExecString
-                            color: row.selected ? Styling.srItem("primary") : Colors.outline
+                            color: row.selected ? Colors.secondaryFixedDim : Colors.outline
                             font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-2)
+                            font.pixelSize: Styling.fontSize(-3)
                             elide: Text.ElideRight
                         }
                     }
@@ -306,8 +307,8 @@ Item {
                     Text {
                         text: Icons.enter
                         font.family: Icons.font
-                        font.pixelSize: 18
-                        color: row.selected ? Styling.srItem("primary") : Colors.outline
+                        font.pixelSize: 16
+                        color: row.selected ? Colors.tertiary : Colors.outline
                         opacity: row.selected ? 1 : 0
                         Behavior on opacity {
                             enabled: Config.animDuration > 0

@@ -102,7 +102,7 @@ Singleton {
     Binding {
         target: SystemResources
         property: "monitorEnabled"
-        value: root.monitorVisible
+        value: root.monitorVisible || root.resourcePreviewVisible
     }
 
     // Persistent launcher state across monitors
@@ -179,6 +179,7 @@ Singleton {
 
     // System Monitor floating window state
     property bool monitorVisible: false
+    property bool resourcePreviewVisible: false
 
     // Screenshot Tool state
     property bool screenshotToolVisible: false
