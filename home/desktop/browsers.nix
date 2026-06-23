@@ -106,6 +106,9 @@ in
       "x-scheme-handler/https" = "brave-browser.desktop";
       "x-scheme-handler/unknown" = "brave-browser.desktop";
       "application/pdf" = "brave-browser.desktop";
+      "application/xdm-app" = "xdm-open.desktop";
+      "x-scheme-handler/xdm-app" = "xdm-open.desktop";
+      "x-scheme-handler/xdm+app" = "xdm-open.desktop";
     };
     associations.added = {
       "application/xhtml+xml" = "brave-browser.desktop";
@@ -115,6 +118,9 @@ in
       "x-scheme-handler/https" = "brave-browser.desktop";
       "x-scheme-handler/unknown" = "brave-browser.desktop";
       "application/pdf" = "brave-browser.desktop";
+      "application/xdm-app" = "xdm-open.desktop";
+      "x-scheme-handler/xdm-app" = "xdm-open.desktop";
+      "x-scheme-handler/xdm+app" = "xdm-open.desktop";
     };
   };
 

@@ -135,11 +135,61 @@ let
 
   hyprmod = pkgs.callPackage ./hyprmod.nix { };
   xdman = pkgs.callPackage ./xdman.nix { };
+  xdmParkWindow = pkgs.writeShellScript "xdm-park-window" ''
+    set -euo pipefail
+
+    for _ in $(${pkgs.coreutils}/bin/seq 1 40); do
+      addr="$(${pkgs.hyprland}/bin/hyprctl clients -j 2>/dev/null \
+        | ${pkgs.jq}/bin/jq -r '.[] | select(.class == "xdm-app") | .address' \
+        | ${pkgs.coreutils}/bin/head -n1 || true)"
+
+      if [ -n "$addr" ]; then
+        ${pkgs.hyprland}/bin/hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null 2>&1 || true
+        ${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.window.move({ workspace = "special:xdm", silent = true })' >/dev/null 2>&1 || true
+        exit 0
+      fi
+
+      ${pkgs.coreutils}/bin/sleep 0.25
+    done
+  '';
+  xdmOpen = pkgs.writeShellScriptBin "xdm-open" ''
+    set -euo pipefail
+
+    if ${pkgs.procps}/bin/pgrep -u "$(${pkgs.coreutils}/bin/id -u)" -f '/xdm-app( |$)' >/dev/null 2>&1; then
+      if [ "$#" -eq 0 ]; then
+        ${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.workspace.toggle_special("xdm")' >/dev/null 2>&1 || true
+        exit 0
+      fi
+    fi
+
+    exec ${xdman}/bin/xdman "$@"
+  '';
+  xdmOpenDesktop = pkgs.makeDesktopItem {
+    name = "xdm-open";
+    desktopName = "Xtreme Download Manager";
+    genericName = "Download Manager";
+    comment = "Open Xtreme Download Manager or pass browser links to it";
+    exec = "xdm-open %U";
+    icon = "xdm-logo";
+    categories = [
+      "Network"
+      "FileTransfer"
+      "GTK"
+    ];
+    mimeTypes = [
+      "application/xdm-app"
+      "x-scheme-handler/xdm-app"
+      "x-scheme-handler/xdm+app"
+    ];
+    startupNotify = false;
+  };
 in
 {
   environment.systemPackages =
     (with pkgs; [
       xdman
+      xdmOpen
+      xdmOpenDesktop
       # System Info & Terminal
       microfetch
       zsh
@@ -303,4 +353,29 @@ in
     ++ lib.optionals (builtins.hasAttr "windsurf" pkgs) [
       pkgs.windsurf
     ];
+
+  systemd.tmpfiles.rules = [
+    "L+ /opt/xdman - - - - ${xdman}"
+  ];
+
+  systemd.user.services.xdman = {
+    description = "Xtreme Download Manager browser and video capture bridge";
+    after = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    wantedBy = [ "graphical-session.target" ];
+    unitConfig = {
+      StartLimitBurst = 3;
+      StartLimitIntervalSec = 60;
+    };
+    serviceConfig = {
+      ExecStart = "${xdman}/bin/xdman";
+      ExecStartPost = "${xdmParkWindow}";
+      Restart = "on-failure";
+      RestartSec = 15;
+      Environment = [
+        "GTK_USE_PORTAL=1"
+        "GDK_PIXBUF_MODULE_FILE=${pkgs.librsvg}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+      ];
+    };
+  };
 }

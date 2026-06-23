@@ -1,23 +1,47 @@
 {
   lib,
   pkgs,
-  stdenv,
+  stdenvNoCC,
   autoPatchelfHook,
   dpkg,
   makeWrapper,
-  ffmpeg,
-  gtk3,
-  lttng-ust_2_12,
-  openssl,
 }:
 
-stdenv.mkDerivation rec {
-  pname = "xdm";
+let
+  runtimeLibs = with pkgs; [
+    atk
+    cairo
+    fontconfig
+    freetype
+    gdk-pixbuf
+    glib
+    gtk3
+    libayatana-appindicator
+    libnotify
+    librsvg
+    lttng-ust_2_12
+    openssl
+    pango
+    stdenv.cc.cc.lib
+    zlib
+    libx11
+    libxcomposite
+    libxcursor
+    libxdamage
+    libxext
+    libxfixes
+    libxi
+    libxrandr
+    libxrender
+  ];
+in
+stdenvNoCC.mkDerivation rec {
+  pname = "xdman-gtk";
   version = "8.0.29";
 
   src = pkgs.fetchurl {
     url = "https://github.com/subhra74/xdm/releases/download/8.0.29/xdman_gtk_8.0.29_amd64.deb";
-    sha256 = "04cydd5i94qbnsi2535mswapng6hbwc567jhzbq8s715n0nvnn9n";
+    hash = "sha256-Nlm7LbAlHI3w+lAeUxhf0Dx7Fde1jCKitguTFEtrnhE=";
   };
 
   nativeBuildInputs = [
@@ -26,33 +50,42 @@ stdenv.mkDerivation rec {
     makeWrapper
   ];
 
-  buildInputs = [
-    ffmpeg
-    gtk3
-    lttng-ust_2_12
-    openssl
-    pkgs.adwaita-icon-theme
-  ];
+  buildInputs = runtimeLibs;
 
-  unpackPhase = "true";
+  unpackPhase = ''
+    runHook preUnpack
+    dpkg-deb -x "$src" source
+    runHook postUnpack
+  '';
 
   installPhase = ''
-    dpkg-deb --extract $src $TMPDIR
+    runHook preInstall
 
     mkdir -p $out/bin
     mkdir -p $out/share/applications/
     mkdir -p $out/share/icons/hicolor/scalable/apps/
+    mkdir -p $out/share/pixmaps
 
-    cp -av $TMPDIR/usr/bin/xdman $out/bin/
-    cp -av $TMPDIR/usr/share/applications/xdm-app.desktop $out/share/applications/
-    cp -av $TMPDIR/opt/xdman/xdm-logo.svg $out/share/icons/hicolor/scalable/apps/
-    cp -av $TMPDIR/opt/xdman/* $out/
-
-    rm -rf $TMPDIR/*
+    cp -av source/usr/bin/xdman $out/bin/
+    cp -av source/usr/share/applications/xdm-app.desktop $out/share/applications/
+    cp -av source/opt/xdman/. $out/
+    cp -av source/opt/xdman/xdm-logo.svg $out/share/icons/hicolor/scalable/apps/
+    ln -sf $out/share/icons/hicolor/scalable/apps/xdm-logo.svg $out/share/pixmaps/xdm-logo.svg
 
     sed -i "s|/opt/xdman/xdm-app|$out/xdm-app|g" $out/bin/xdman
-    sed -i "s|/opt/xdman/xdm-app|$out/bin/xdman|g" $out/share/applications/xdm-app.desktop
-    sed -i "s|/opt/xdman/xdm-logo.svg|$out/share/icons/hicolor/scalable/apps/xdm-logo.svg|g" $out/share/applications/xdm-app.desktop
+    substituteInPlace $out/share/applications/xdm-app.desktop \
+      --replace-fail "env GTK_USE_PORTAL=1 /opt/xdman/xdm-app" "$out/bin/xdman" \
+      --replace-fail "/opt/xdman/xdm-logo.svg" "$out/share/icons/hicolor/scalable/apps/xdm-logo.svg"
+    substituteInPlace $out/share/applications/xdm-app.desktop \
+      --replace-fail "MimeType=application/xdm-app;x-scheme-handler/xdm-app;" \
+      "MimeType=application/xdm-app;x-scheme-handler/xdm-app;x-scheme-handler/xdm+app;"
+    substituteInPlace $out/share/applications/xdm-app.desktop \
+      --replace-fail "Categories=Network;" "Categories=Network;FileTransfer;GTK;" \
+      --replace-fail "StartupNotify=true" "StartupNotify=false"
+    printf '%s\n' \
+      'StartupWMClass=xdm-app' \
+      'DBusActivatable=false' \
+      >> $out/share/applications/xdm-app.desktop
 
     find $out -type d -exec chmod 755 {} +
     find $out -type f -exec chmod 644 {} +
@@ -62,17 +95,22 @@ stdenv.mkDerivation rec {
     chmod +x $out/share/applications/xdm-app.desktop
 
     wrapProgram $out/xdm-app \
-      --prefix LD_LIBRARY_PATH : "${gtk3.out}/lib:${openssl.out}/lib" \
-      --set GTK_USE_PORTAL 1
+      --set GTK_USE_PORTAL 1 \
+      --set GDK_PIXBUF_MODULE_FILE "${pkgs.librsvg}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache" \
+      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath runtimeLibs}"
 
     wrapProgram $out/bin/xdman \
-      --prefix LD_LIBRARY_PATH : "${gtk3.out}/lib:${openssl.out}/lib"
+      --set GTK_USE_PORTAL 1 \
+      --set GDK_PIXBUF_MODULE_FILE "${pkgs.librsvg}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache" \
+      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath runtimeLibs}"
+
+    runHook postInstall
   '';
 
   meta = with lib; {
     description = "Powerful download accelerator and video downloader";
     homepage = "https://github.com/subhra74/xdm";
-    license = licenses.gpl2Only;
+    license = licenses.gpl2Plus;
     mainProgram = "xdman";
     platforms = [ "x86_64-linux" ];
   };

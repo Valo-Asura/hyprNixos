@@ -1,0 +1,9 @@
+[Plymouth Theme]
+Name=circle_hud
+Description=display circle hud
+Comment=created By Aditya Shakya (@adi1090x)
+ModuleName=script
+
+[script]
+ImageDir=/nix/store/r9k8zhipra00pszqagni1mxpg4p1qiy0-adi1090x-plymouth-themes-1.0/share/plymouth/themes/circle_hud
+ScriptFile=/nix/store/r9k8zhipra00pszqagni1mxpg4p1qiy0-adi1090x-plymouth-themes-1.0/share/plymouth/themes/circle_hud/circle_hud.script

@@ -6,42 +6,27 @@ let
   linuxEspPartUuid = "30d0727b-1228-439e-a04f-0d9402748e9d";
   windowsEspPartUuid = "98a6f918-4a0b-4479-a940-784bb92cfa77";
   plymouthTheme = pkgs.stdenvNoCC.mkDerivation {
-    pname = "vibeshell-plymouth-theme";
+    pname = "asura-xs15-circle-hud-plymouth-theme";
     version = "1.0.0";
-    # File is committed as .svg but content is JPEG (JFIF); rsvg-convert cannot parse it.
-    src = ../assets/vibeshell-loading.svg;
-    nativeBuildInputs = [ pkgs.imagemagick ];
-    dontUnpack = true;
+    src = ../plymouth/circle_hud;
+    dontConfigure = true;
+    dontBuild = true;
     installPhase = ''
-      theme_dir="$out/share/plymouth/themes/vibeshell"
+      theme_dir="$out/share/plymouth/themes/circle_hud"
       mkdir -p "$theme_dir"
-      ${pkgs.imagemagick}/bin/magick convert "$src" -resize 256x256 -gravity center -extent 256x256 "$theme_dir/logo.png"
+      cp -a "$src"/. "$theme_dir"/
+      chmod -R u+w "$theme_dir"
 
-      cat > "$theme_dir/vibeshell.plymouth" <<'EOF'
-[Plymouth Theme]
-Name=Vibeshell
-Description=Quiet Vibeshell boot splash
-ModuleName=script
-
-[script]
-ImageDir=/share/plymouth/themes/vibeshell
-ScriptFile=/share/plymouth/themes/vibeshell/vibeshell.script
-EOF
-
-      cat > "$theme_dir/vibeshell.script" <<'EOF'
-Window.SetBackgroundTopColor(0.02, 0.03, 0.04);
-Window.SetBackgroundBottomColor(0.02, 0.03, 0.04);
-
-logo.image = Image("logo.png");
-logo.sprite = Sprite(logo.image);
-logo.sprite.SetX(Window.GetWidth() / 2 - logo.image.GetWidth() / 2);
-logo.sprite.SetY(Window.GetHeight() / 2 - logo.image.GetHeight() / 2 - 24);
-
-label.image = Image.Text("Vibeshell", 0.92, 0.96, 1.00);
-label.sprite = Sprite(label.image);
-label.sprite.SetX(Window.GetWidth() / 2 - label.image.GetWidth() / 2);
-label.sprite.SetY(Window.GetHeight() / 2 + logo.image.GetHeight() / 2 + 16);
-EOF
+      {
+        printf '%s\n' '[Plymouth Theme]'
+        printf '%s\n' 'Name=circle_hud'
+        printf '%s\n' 'Description=XS15 circle HUD boot splash'
+        printf '%s\n' 'ModuleName=script'
+        printf '%s\n' ""
+        printf '%s\n' '[script]'
+        printf '%s\n' "ImageDir=$theme_dir"
+        printf '%s\n' "ScriptFile=$theme_dir/circle_hud.script"
+      } > "$theme_dir/circle_hud.plymouth"
     '';
   };
   preferSignedBootEntry = pkgs.writeShellScript "prefer-signed-boot-entry" ''
@@ -161,7 +146,7 @@ in
 
     plymouth = {
       enable = true;
-      theme = "vibeshell";
+      theme = "circle_hud";
       themePackages = [ plymouthTheme ];
     };
 
