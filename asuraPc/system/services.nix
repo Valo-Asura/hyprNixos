@@ -118,10 +118,20 @@ in
     extraPortals = [
       pkgs.xdg-desktop-portal-gtk
     ];
-    config.common.default = [
-      "hyprland"
-      "gtk"
-    ];
+    config.common = {
+      default = [
+        "hyprland"
+        "gtk"
+      ];
+      "org.freedesktop.impl.portal.Access" = "gtk";
+      "org.freedesktop.impl.portal.AppChooser" = "gtk";
+      "org.freedesktop.impl.portal.FileChooser" = "gtk";
+      "org.freedesktop.impl.portal.OpenURI" = "gtk";
+      "org.freedesktop.impl.portal.Print" = "gtk";
+      "org.freedesktop.impl.portal.ScreenCast" = "hyprland";
+      "org.freedesktop.impl.portal.Screenshot" = "hyprland";
+      "org.freedesktop.impl.portal.GlobalShortcuts" = "hyprland";
+    };
     config.qtile.default = [
       "gtk"
     ];

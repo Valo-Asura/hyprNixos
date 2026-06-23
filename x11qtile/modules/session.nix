@@ -13,6 +13,7 @@ let
   xorgModulePath = lib.concatStringsSep "," (
     map (module: "${module}/lib/xorg/modules") config.services.xserver.modules
   );
+  hyprlandCommand = "${pkgs.uwsm}/bin/uwsm start -F -e -D Hyprland -- ${config.programs.hyprland.package}/bin/start-hyprland";
 
   xsessionWrapper = pkgs.writeShellScriptBin "start-x11qtile-xserver" ''
     set -uo pipefail
@@ -127,7 +128,7 @@ let
     [Desktop Entry]
     Name=Hyprland (Wayland)
     Comment=An intelligent dynamic tiling Wayland compositor
-    Exec=${config.programs.hyprland.package}/bin/start-hyprland
+    Exec=${hyprlandCommand}
     Type=Application
   '';
 
@@ -146,7 +147,7 @@ let
     + "--xsessions ${qtileSession}/share/xsessions "
     + "--xsession-wrapper ${xsessionWrapper}/bin/start-x11qtile-xserver "
     + "--asterisks --container-padding 2 --time --time-format '%I:%M %p | %a • %h | %F' "
-    + "--cmd ${config.programs.hyprland.package}/bin/start-hyprland";
+    + "--cmd ${lib.escapeShellArg hyprlandCommand}";
 in
 {
   # Add session selection while preserving Hyprland as the default command.

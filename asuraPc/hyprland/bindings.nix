@@ -10,6 +10,7 @@ let
   superShift = "SUPER + SHIFT";
   superAlt = "SUPER + ALT";
   ctrlKey = "CTRL";
+  uwsm = "${pkgs.uwsm}/bin/uwsm";
 
   mkBind = keys: dispatcher: opts: {
     _args = [
@@ -19,7 +20,7 @@ let
     ++ lib.optional (opts != null) opts;
   };
 
-  exec = command: "hl.dsp.exec_cmd(${toLuaString command})";
+  exec = command: "hl.dsp.exec_cmd(${toLuaString "${uwsm} app -- ${command}"})";
   focusWorkspace = workspace: "hl.dsp.focus({ workspace = ${toLuaString workspace} })";
   moveToWorkspace = workspace: "hl.dsp.window.move({ workspace = ${toLuaString workspace} })";
 in

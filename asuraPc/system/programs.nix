@@ -28,7 +28,14 @@
       enable = true;
       package = pkgs.hyprland;
       portalPackage = pkgs.xdg-desktop-portal-hyprland;
+      withUWSM = true;
       xwayland.enable = true;
+    };
+
+    uwsm.waylandCompositors.hyprland = {
+      prettyName = "Hyprland";
+      comment = "Hyprland compositor managed by UWSM";
+      binPath = "/run/current-system/sw/bin/Hyprland";
     };
 
     chromium = {

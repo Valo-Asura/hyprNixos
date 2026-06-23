@@ -245,7 +245,7 @@ in
             (lib.generators.mkLuaInline ''
               function()
                 hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP LANG LC_CTYPE LC_TIME LC_MONETARY LC_NUMERIC LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION")
-                hl.exec_cmd("${vibeshellStart}/bin/vibeshell-start")
+                hl.exec_cmd("${pkgs.uwsm}/bin/uwsm app -- ${vibeshellStart}/bin/vibeshell-start")
                 local f = io.open(os.getenv("HOME") .. "/.config/hypr/hyprland-gui.conf", "r")
                 if f ~= nil then
                   io.close(f)
